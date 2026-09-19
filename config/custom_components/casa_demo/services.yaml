@@ -1,0 +1,13 @@
+repor:
+definir_tempo:
+  fields:
+    modo:
+      required: true
+      example: "Chuva"
+      selector:
+        select:
+          options:
+            - "Automático"
+            - "Céu limpo"
+            - "Nublado"
+            - "Chuva"

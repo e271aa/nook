@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+<defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#cda96e" stroke-opacity="0.05"/></pattern><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2822"/><stop offset="1" stop-color="#231f1b"/></linearGradient></defs>
+<rect width="1600" height="1000" fill="#161311"/><rect width="1600" height="1000" fill="url(#g)"/>
+<text x="60" y="84" fill="#cda96e" font-family="-apple-system,system-ui,sans-serif" font-size="26" font-weight="700" letter-spacing="4">PISO 0</text>
+<rect x="60" y="120" width="380" height="420" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="82" y="516" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Sala</text>
+<rect x="440" y="120" width="320" height="280" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="462" y="376" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Cozinha</text>
+<rect x="440" y="400" width="320" height="240" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="462" y="616" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Escritório</text>
+<rect x="60" y="540" width="240" height="360" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="82" y="876" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Entrada</text>
+<rect x="300" y="540" width="140" height="360" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="322" y="876" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Hall</text>
+<rect x="440" y="640" width="320" height="260" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="462" y="876" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Garagem</text>
+<text x="840" y="84" fill="#cda96e" font-family="-apple-system,system-ui,sans-serif" font-size="26" font-weight="700" letter-spacing="4">PISO 1</text>
+<rect x="840" y="120" width="380" height="440" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="862" y="536" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Suite</text>
+<rect x="1220" y="120" width="320" height="340" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="1242" y="436" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Quarto</text>
+<rect x="1220" y="460" width="320" height="240" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="1242" y="676" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Casa de banho</text>
+<rect x="1220" y="700" width="320" height="200" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="1242" y="876" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Lavandaria</text>
+<rect x="840" y="560" width="380" height="340" fill="url(#f)" stroke="#8c7a5e" stroke-width="6"/>
+<text x="862" y="876" fill="#a79f90" font-family="-apple-system,system-ui,sans-serif" font-size="24" font-weight="600">Corredor</text>
+<line x1="300" y1="700" x2="300" y2="780" stroke="#161311" stroke-width="10"/>
+<line x1="440" y1="600" x2="440" y2="680" stroke="#161311" stroke-width="10"/>
+<line x1="560" y1="400" x2="640" y2="400" stroke="#161311" stroke-width="10"/>
+<line x1="560" y1="640" x2="640" y2="640" stroke="#161311" stroke-width="10"/>
+<line x1="1220" y1="600" x2="1220" y2="680" stroke="#161311" stroke-width="10"/>
+<line x1="1330" y1="460" x2="1410" y2="460" stroke="#161311" stroke-width="10"/>
+<line x1="1330" y1="700" x2="1410" y2="700" stroke="#161311" stroke-width="10"/>
+<line x1="1000" y1="560" x2="1080" y2="560" stroke="#161311" stroke-width="10"/>
+<line x1="140" y1="900" x2="220" y2="900" stroke="#161311" stroke-width="10"/>
+<line x1="140" y1="120" x2="340" y2="120" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="520" y1="120" x2="680" y2="120" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="760" y1="460" x2="760" y2="580" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="60" y1="200" x2="60" y2="440" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="940" y1="120" x2="1120" y2="120" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="1300" y1="120" x2="1460" y2="120" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="1540" y1="520" x2="1540" y2="640" stroke="#9fc7e6" stroke-width="8" stroke-opacity="0.7"/>
+<line x1="500" y1="900" x2="700" y2="900" stroke="#cda96e" stroke-width="10" stroke-dasharray="14 8"/>
+</svg>

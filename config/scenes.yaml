@@ -1,0 +1,25 @@
+- id: cena_jantar
+  name: Jantar
+  icon: mdi:silverware-fork-knife
+  entities:
+    light.sala_teto:
+      state: "on"
+      brightness: 150
+      color_temp_kelvin: 2700
+    light.sala_candeeiro:
+      state: "on"
+      brightness: 120
+      rgb_color: [255, 170, 90]
+    light.cozinha_bancada:
+      state: "on"
+      brightness: 200
+- id: cena_leitura
+  name: Leitura
+  icon: mdi:book-open-variant
+  entities:
+    light.sala_teto:
+      state: "on"
+      brightness: 255
+      color_temp_kelvin: 4500
+    light.sala_candeeiro:
+      state: "off"

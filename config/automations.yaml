@@ -1,0 +1,130 @@
+- id: estores_nascer_do_sol
+  alias: Abrir estores ao nascer do sol
+  description: Abre os estores da sala e da cozinha 20 min depois do nascer do sol.
+  triggers:
+    - trigger: sun
+      event: sunrise
+      offset: "00:20:00"
+  actions:
+    - action: cover.open_cover
+      target:
+        entity_id: [cover.estore_sala_janela, cover.estore_sala_porta, cover.estore_cozinha]
+  mode: single
+
+- id: luzes_exterior_por_do_sol
+  alias: Luzes exteriores ao pôr-do-sol
+  triggers:
+    - trigger: sun
+      event: sunset
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: [light.jardim, light.fachada]
+  mode: single
+
+- id: luzes_exterior_desligar
+  alias: Desligar luzes exteriores à 01:00
+  triggers:
+    - trigger: time
+      at: "01:00:00"
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id: [light.jardim, light.fachada]
+  mode: single
+
+- id: luz_entrada_movimento
+  alias: Luz da entrada com movimento (de noite)
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.movimento_entrada
+      to: "on"
+  conditions:
+    - condition: sun
+      after: sunset
+      before: sunrise
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.entrada
+    - delay: "00:02:00"
+    - action: light.turn_off
+      target:
+        entity_id: light.entrada
+  mode: restart
+
+- id: carregar_carro_excedente_solar
+  alias: Carregar o carro com excedente solar
+  description: Liga o carregador quando se exporta mais de 3 kW para a rede.
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.potencia_rede
+      below: -3000
+      for: "00:02:00"
+  conditions:
+    - condition: numeric_state
+      entity_id: sensor.carro_bateria
+      below: 80
+  actions:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.carregador_ve
+  mode: single
+
+- id: rega_madrugada
+  alias: Rega do jardim às 06:30 (15 min)
+  triggers:
+    - trigger: time
+      at: "06:30:00"
+  conditions:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: weather.casa
+          state: rainy
+  actions:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.rega
+    - delay: "00:15:00"
+    - action: switch.turn_off
+      target:
+        entity_id: switch.rega
+  mode: single
+
+- id: rega_desligar_seguranca
+  alias: Rega desliga sozinha ao fim de 15 min
+  triggers:
+    - trigger: state
+      entity_id: switch.rega
+      to: "on"
+      for: "00:15:00"
+  actions:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.rega
+  mode: single
+
+- id: aviso_maquina_concluida
+  alias: Aviso quando um programa termina
+  triggers:
+    - trigger: event
+      event_type: casa_demo_programa_concluido
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: Programa concluído
+        message: >-
+          {{ {'washer': 'A máquina de lavar roupa', 'dryer': 'A máquina de secar',
+              'dishwasher': 'A máquina da loiça'}[trigger.event.data.aparelho] }} terminou.
+  mode: queued
+
+- id: repor_demo_madrugada
+  alias: Repor a demo todas as noites às 04:00
+  triggers:
+    - trigger: time
+      at: "04:00:00"
+  actions:
+    - action: casa_demo.repor
+  mode: single
+

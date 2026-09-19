@@ -1,0 +1,15 @@
+{
+  "services": {
+    "repor": {
+      "name": "Repor demo",
+      "description": "Repõe luzes, estores, clima e eletrodomésticos no estado inicial (mantém o histórico de energia)."
+    },
+    "definir_tempo": {
+      "name": "Definir tempo simulado",
+      "description": "Força o tempo lá fora (útil para mostrar o céu animado dos estores).",
+      "fields": {
+        "modo": { "name": "Modo", "description": "Automático, Céu limpo, Nublado ou Chuva." }
+      }
+    }
+  }
+}

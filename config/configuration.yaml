@@ -1,0 +1,67 @@
+# ───────────────────────────────────────────────────────────────
+#  Nook — Demo
+#  Home Assistant com uma moradia simulada (integração casa_demo)
+# ───────────────────────────────────────────────────────────────
+
+default_config:
+
+homeassistant:
+  name: Casa Demo
+  latitude: 38.7369
+  longitude: -9.1427
+  elevation: 70
+  unit_system: metric
+  currency: EUR
+  country: PT
+  language: pt
+  time_zone: Europe/Lisbon
+  # Entrada direta como "Visitante" (sem permissões de admin), tal como a
+  # demo oficial do Home Assistant. O administrador entra com password
+  # escolhendo "Home Assistant Local" no ecrã de login.
+  auth_providers:
+    - type: trusted_networks
+      trusted_networks:
+        - 0.0.0.0/0
+        - ::/0
+      trusted_users: !include demo_trusted_users.yaml
+      allow_bypass_login: true
+    - type: homeassistant
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+logger:
+  default: warning
+  logs:
+    custom_components.casa_demo: info
+
+recorder:
+  purge_keep_days: 14
+  commit_interval: 5
+
+lovelace:
+  dashboards:
+    dashboard-nook:
+      mode: yaml
+      filename: dashboards/nook.yaml
+      title: Nook
+      icon: mdi:home-heart
+      show_in_sidebar: true
+      require_admin: false
+
+# Casa simulada
+casa_demo:
+
+person:
+  - name: Ana
+    id: ana
+    device_trackers:
+      - device_tracker.ana_telemovel
+  - name: Miguel
+    id: miguel
+    device_trackers:
+      - device_tracker.miguel_telemovel
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml

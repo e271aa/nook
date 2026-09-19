@@ -1,0 +1,85 @@
+modo_cinema:
+  alias: Modo cinema
+  icon: mdi:movie-open
+  sequence:
+    - action: cover.set_cover_position
+      target:
+        entity_id: [cover.estore_sala_janela, cover.estore_sala_porta]
+      data:
+        position: 0
+    - action: light.turn_off
+      target:
+        entity_id: [light.sala_teto, light.cozinha_teto, light.cozinha_bancada]
+    - action: light.turn_on
+      target:
+        entity_id: light.sala_led_tv
+      data:
+        brightness_pct: 35
+        rgb_color: [110, 80, 255]
+    - action: light.turn_on
+      target:
+        entity_id: light.sala_candeeiro
+      data:
+        brightness_pct: 15
+        rgb_color: [255, 150, 80]
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+
+sair_de_casa:
+  alias: Sair de casa
+  icon: mdi:home-export-outline
+  sequence:
+    - action: light.turn_off
+      target:
+        entity_id: all
+    - action: climate.turn_off
+      target:
+        entity_id: all
+    - action: switch.turn_off
+      target:
+        entity_id: [switch.sala_tv, switch.escritorio_pc, switch.cozinha_cafe, switch.wc_toalheiro]
+    - action: lock.lock
+      target:
+        entity_id: lock.porta_entrada
+    - action: cover.close_cover
+      target:
+        entity_id: cover.portao_garagem
+
+boa_noite:
+  alias: Boa noite
+  icon: mdi:weather-night
+  sequence:
+    - action: cover.close_cover
+      target:
+        entity_id: [cover.estore_sala_janela, cover.estore_sala_porta, cover.estore_cozinha, cover.estore_escritorio, cover.estore_suite, cover.estore_quarto]
+    - action: light.turn_off
+      target:
+        entity_id: all
+    - action: light.turn_on
+      target:
+        entity_id: light.suite_cabeceira
+      data:
+        brightness_pct: 10
+    - action: lock.lock
+      target:
+        entity_id: lock.porta_entrada
+    - action: cover.close_cover
+      target:
+        entity_id: cover.portao_garagem
+
+bom_dia:
+  alias: Bom dia
+  icon: mdi:weather-sunset-up
+  sequence:
+    - action: cover.open_cover
+      target:
+        entity_id: [cover.estore_sala_janela, cover.estore_sala_porta, cover.estore_cozinha, cover.estore_suite]
+    - action: switch.turn_on
+      target:
+        entity_id: switch.cozinha_cafe
+    - action: light.turn_on
+      target:
+        entity_id: light.cozinha_bancada
+      data:
+        brightness_pct: 80

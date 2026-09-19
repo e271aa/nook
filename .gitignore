@@ -1,0 +1,19 @@
+# Segredos
+.env
+
+# Estado de runtime do Home Assistant
+config/.storage/
+config/.cloud/
+config/deps/
+config/tts/
+config/blueprints/
+config/home-assistant.log*
+config/home-assistant_v2.db*
+config/.HA_VERSION
+config/secrets.yaml
+config/demo_trusted_users.yaml
+
+# Python / macOS
+__pycache__/
+*.pyc
+.DS_Store

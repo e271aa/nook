@@ -1,0 +1,16 @@
+{
+  "domain": "casa_demo",
+  "name": "Casa Demo (simulação)",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [
+    "http",
+    "recorder",
+    "sun"
+  ],
+  "documentation": "https://github.com/",
+  "iot_class": "calculated",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}

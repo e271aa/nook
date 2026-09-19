@@ -1,0 +1,9 @@
+title: Nook
+views:
+  - title: Nook
+    path: nook
+    icon: mdi:home-heart
+    type: panel
+    cards:
+      - type: iframe
+        aspect_ratio: "100%"

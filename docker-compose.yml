@@ -1,0 +1,37 @@
+name: acasa-demo
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.9.3
+    container_name: acasa-demo-ha
+    restart: unless-stopped
+    ports:
+      - "${DEMO_PORT:-8123}:8123"
+    environment:
+      TZ: ${TZ:-Europe/Lisbon}
+    volumes:
+      - ./config:/config
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8123/manifest.json"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  # Corre uma vez: faz o onboarding do HA, cria o utilizador "Visitante" (sem
+  # permissões de administrador) e liga a entrada direta. Depois termina.
+  bootstrap:
+    image: python:3.13-alpine
+    container_name: acasa-demo-bootstrap
+    restart: "no"
+    depends_on:
+      homeassistant:
+        condition: service_healthy
+    environment:
+      HA_URL: http://homeassistant:8123
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD no ficheiro .env}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador}
+    volumes:
+      - ./bootstrap/bootstrap.py:/bootstrap.py:ro
+    command: ["python", "-u", "/bootstrap.py"]
