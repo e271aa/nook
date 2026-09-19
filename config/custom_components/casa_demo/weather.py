@@ -26,7 +26,7 @@ class CasaWeather(CasaEntity, WeatherEntity):
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_native_wind_speed_unit = UnitOfSpeed.KILOMETERS_PER_HOUR
     _attr_native_pressure_unit = UnitOfPressure.HPA
-    _attr_supported_features = WeatherEntityFeature.FORECAST_DAILY
+    _attr_supported_features = WeatherEntityFeature.FORECAST_DAILY | WeatherEntityFeature.FORECAST_HOURLY
 
     def __init__(self, engine) -> None:
         super().__init__(engine, entity_id="weather.casa", unique_id="weather_casa",
@@ -63,7 +63,43 @@ class CasaWeather(CasaEntity, WeatherEntity):
         super()._handle_tick()
         if self.engine.condition != self._last_condition:
             self._last_condition = self.engine.condition
-            self.hass.async_create_task(self.async_update_listeners(("daily",)))
+            self.hass.async_create_task(self.async_update_listeners(("daily", "hourly")))
+
+    async def async_forecast_hourly(self) -> list[Forecast]:
+        """24 h de previsão, com o mesmo modelo do motor."""
+        out: list[Forecast] = []
+        now = dt_util.now().replace(minute=0, second=0, microsecond=0)
+        for i in range(1, 25):
+            t = now + timedelta(hours=i)
+            cond, cloud = self.engine.auto_condition(t)
+            if self.engine.weather_mode != "Automático":
+                cond, cloud = self.engine.condition.replace("clear-night", "sunny"), self.engine.cloud
+            h = t.hour
+            seasonal = 16.5 - 6.5 * math.cos((t.timetuple().tm_yday - 20) / 365 * math.tau)
+            daily = 5.5 * math.sin((h - 9) / 24 * math.tau)
+            temp = seasonal + daily * (1 - 0.6 * cloud) - 2.5 * (cloud > 0.8)
+            try:
+                from astral import Observer
+                from astral.sun import elevation
+
+                elev = elevation(
+                    Observer(latitude=self.hass.config.latitude, longitude=self.hass.config.longitude),
+                    dt_util.as_utc(t),
+                )
+            except (ValueError, TypeError):
+                elev = 10
+            if elev <= 0 and cond == "sunny":
+                cond = "clear-night"
+            out.append(
+                Forecast(
+                    datetime=t.isoformat(),
+                    condition=cond,
+                    native_temperature=round(temp, 1),
+                    precipitation_probability=round(cloud * 90) if cloud > 0.5 else round(cloud * 20),
+                    humidity=round(max(30.0, min(98.0, 62 - daily * 3.2 + cloud * 25))),
+                )
+            )
+        return out
 
     async def async_forecast_daily(self) -> list[Forecast]:
         out: list[Forecast] = []
