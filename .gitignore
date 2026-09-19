@@ -17,3 +17,4 @@ config/demo_trusted_users.yaml
 __pycache__/
 *.pyc
 .DS_Store
+config/.ha_run.lock
