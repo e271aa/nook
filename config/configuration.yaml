@@ -49,6 +49,17 @@ lovelace:
       show_in_sidebar: true
       require_admin: false
 
+input_select:
+  tv_sala_fonte:
+    name: Fonte da TV
+    icon: mdi:television
+    options:
+      - TV
+      - HDMI 1
+      - HDMI 2
+      - HDMI 3
+    initial: TV
+
 # Casa simulada
 casa_demo:
 

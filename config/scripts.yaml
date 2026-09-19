@@ -83,3 +83,81 @@ bom_dia:
         entity_id: light.cozinha_bancada
       data:
         brightness_pct: 80
+
+abrir_netflix:
+  alias: Abrir Netflix
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "Netflix"
+
+abrir_disney:
+  alias: Abrir Disney+
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "Disney+"
+
+abrir_spotify:
+  alias: Abrir Spotify
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "Spotify"
+
+abrir_max:
+  alias: Abrir HBO Max
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "HBO Max"
+
+abrir_prime_video:
+  alias: Abrir Prime Video
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "Prime Video"
+
+abrir_youtube:
+  alias: Abrir YouTube
+  icon: mdi:television-play
+  sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.sala_tv
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.tv_sala
+      data:
+        source: "YouTube"

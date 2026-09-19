@@ -148,6 +148,9 @@ class Engine:
             "started": None,
         }
 
+        # TV da sala
+        self.tv = {"on": True, "paused": False, "source": "TV", "volume": 0.24, "muted": False}
+
         # Águas quentes, VE, frigorífico
         self.boiler_on = True
         self.boiler_temp = 52.0
@@ -228,6 +231,7 @@ class Engine:
             self.room_temp.update(data.get("room_temp", {}))
             self.plugs.update({k: v for k, v in data.get("plugs", {}).items() if k in self.plugs})
             self.garage.position = self.garage.target = data.get("garage", 0)
+            self.tv.update(data.get("tv", {}))
         except (KeyError, TypeError, ValueError):
             _LOGGER.warning("Estado guardado inválido; a usar valores por omissão")
         return True
@@ -249,6 +253,7 @@ class Engine:
             "room_temp": self.room_temp,
             "plugs": self.plugs,
             "garage": round(self.garage.target),
+            "tv": self.tv,
         }
 
     @callback
@@ -270,6 +275,7 @@ class Engine:
         self.oven.power = self.cooktop.power = self.hood.power = False
         self.hood.extra["speed"] = "Desligado"
         self.vacuum.update(activity="docked", area=0.0, started=None)
+        self.tv.update(on=True, paused=False, source="TV", volume=0.24, muted=False)
         self._init_defaults()
         self.energy, self.circuit_energy, self.battery_soc, self.ev_soc = energy, circuit, soc, ev
         self.notify_all()

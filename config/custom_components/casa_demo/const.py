@@ -15,15 +15,18 @@ SIM_SPEED = 12
 PLATFORMS = [
     "binary_sensor",
     "button",
+    "calendar",
     "camera",
     "climate",
     "cover",
     "device_tracker",
     "light",
     "lock",
+    "media_player",
     "select",
     "sensor",
     "switch",
+    "todo",
     "vacuum",
     "weather",
 ]
