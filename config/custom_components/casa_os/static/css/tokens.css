@@ -1,0 +1,178 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ *  Casa OS — cores, tipografia e medidas.
+ *
+ *  Uma paleta = um bloco [data-theme]. Todo o resto do CSS usa só estes
+ *  tokens, por isso trocar de tema muda a interface inteira ao vivo.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme="lilas"] {
+  color-scheme: dark;
+  --bg: #15152a;
+  --bg-2: #1c1c34;
+  --surface: #24243e;
+  --surface-2: #2c2c48;
+  --text: #ffffff;
+  --text-2: #b6bfd4;
+  --text-3: #7b83a0;
+  --accent: #ce93d8;
+  --accent-2: #8c7dff;
+  --accent-rgb: 206, 147, 216;
+  --on-accent: #241033;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --fg-rgb: 255, 255, 255;
+  --shadow-rgb: 6, 6, 18;
+  --good: #4ad295;
+  --warn: #f4c145;
+  --bad: #ff6b6b;
+  --hero-1: #2d2a55;
+  --hero-2: #15152a;
+  --warm-1: #ffe2a8;
+  --warm-2: #c5841f;
+}
+
+[data-theme="ouro"] {
+  color-scheme: dark;
+  --bg: #131110;
+  --bg-2: #1a1715;
+  --surface: #262119;
+  --surface-2: #322b21;
+  --text: #f6f1e7;
+  --text-2: #b3a894;
+  --text-3: #7e7461;
+  --accent: #d9b071;
+  --accent-2: #e08f5a;
+  --accent-rgb: 217, 176, 113;
+  --on-accent: #2b1f0c;
+  --line: rgba(255, 246, 232, 0.1);
+  --line-strong: rgba(255, 246, 232, 0.2);
+  --fg-rgb: 255, 246, 232;
+  --shadow-rgb: 12, 8, 4;
+  --good: #59cf9b;
+  --warn: #e6bb45;
+  --bad: #ef6a52;
+  --hero-1: #3a2f22;
+  --hero-2: #131110;
+  --warm-1: #ffe2a8;
+  --warm-2: #c5841f;
+}
+
+[data-theme="oceano"] {
+  color-scheme: dark;
+  --bg: #0a1622;
+  --bg-2: #0f1e2c;
+  --surface: #16293a;
+  --surface-2: #1d3448;
+  --text: #eaf4fb;
+  --text-2: #9ab5c9;
+  --text-3: #6b8599;
+  --accent: #4fc3f7;
+  --accent-2: #38e0c8;
+  --accent-rgb: 79, 195, 247;
+  --on-accent: #032234;
+  --line: rgba(234, 244, 251, 0.1);
+  --line-strong: rgba(234, 244, 251, 0.2);
+  --fg-rgb: 234, 244, 251;
+  --shadow-rgb: 2, 12, 22;
+  --good: #3ddc97;
+  --warn: #ffcf5c;
+  --bad: #ff7a7a;
+  --hero-1: #183b52;
+  --hero-2: #0a1622;
+  --warm-1: #ffe2a8;
+  --warm-2: #c5841f;
+}
+
+[data-theme="floresta"] {
+  color-scheme: dark;
+  --bg: #0d1a13;
+  --bg-2: #13241a;
+  --surface: #1a3124;
+  --surface-2: #224030;
+  --text: #edf6ef;
+  --text-2: #a3c0ad;
+  --text-3: #73917d;
+  --accent: #5fd38a;
+  --accent-2: #b6d95f;
+  --accent-rgb: 95, 211, 138;
+  --on-accent: #062114;
+  --line: rgba(237, 246, 239, 0.1);
+  --line-strong: rgba(237, 246, 239, 0.2);
+  --fg-rgb: 237, 246, 239;
+  --shadow-rgb: 3, 14, 8;
+  --good: #5fd38a;
+  --warn: #f0c14b;
+  --bad: #ef6a52;
+  --hero-1: #1c4030;
+  --hero-2: #0d1a13;
+  --warm-1: #ffe2a8;
+  --warm-2: #c5841f;
+}
+
+[data-theme="brasa"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-2: #0b0b0b;
+  --surface: #151515;
+  --surface-2: #1f1f1f;
+  --text: #fafafa;
+  --text-2: #a8a8a8;
+  --text-3: #6f6f6f;
+  --accent: #ff9e5e;
+  --accent-2: #ff6b6b;
+  --accent-rgb: 255, 158, 94;
+  --on-accent: #2a1204;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --fg-rgb: 255, 255, 255;
+  --shadow-rgb: 0, 0, 0;
+  --good: #4ad295;
+  --warn: #ffc107;
+  --bad: #ff5252;
+  --hero-1: #241608;
+  --hero-2: #000000;
+  --warm-1: #ffd8a0;
+  --warm-2: #b05f12;
+}
+
+[data-theme="claro"] {
+  color-scheme: light;
+  --bg: #eceef6;
+  --bg-2: #f4f5fa;
+  --surface: #ffffff;
+  --surface-2: #f2f3f9;
+  --text: #1a1c26;
+  --text-2: #565c72;
+  --text-3: #868ca3;
+  --accent: #6c4bf0;
+  --accent-2: #2f8ce0;
+  --accent-rgb: 108, 75, 240;
+  --on-accent: #ffffff;
+  --line: rgba(26, 28, 38, 0.1);
+  --line-strong: rgba(26, 28, 38, 0.2);
+  --fg-rgb: 26, 28, 38;
+  --shadow-rgb: 60, 66, 110;
+  --good: #2e9e5b;
+  --warn: #c98a00;
+  --bad: #d94141;
+  --hero-1: #dfe2f5;
+  --hero-2: #eceef6;
+  --warm-1: #ffd98a;
+  --warm-2: #d08a1a;
+}
+
+:root {
+  --radius: 22px;
+  --radius-sm: 14px;
+  --radius-lg: 28px;
+  --gap: 14px;
+  --shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.28);
+  --shadow-lg: 0 24px 50px rgba(var(--shadow-rgb), 0.4);
+  --rail: 76px;
+  --rail-wide: 232px;
+  --tabbar: 68px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter",
+    system-ui, "Segoe UI", Roboto, sans-serif;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}

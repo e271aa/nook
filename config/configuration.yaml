@@ -63,6 +63,11 @@ input_select:
 # Casa simulada
 casa_demo:
 
+# Casa OS — a interface unificada (demo principal)
+casa_os:
+  demo_user: Visitante
+  title: Casa
+
 person:
   - name: Ana
     id: ana

@@ -1,0 +1,325 @@
+{
+  "name": "Casa Demo",
+  "floors": [
+    {
+      "id": "piso_0",
+      "name": "Piso 0"
+    },
+    {
+      "id": "piso_1",
+      "name": "Piso 1"
+    },
+    {
+      "id": "exterior",
+      "name": "Exterior"
+    }
+  ],
+  "weather": "weather.casa",
+  "weather_select": "select.tempo_simulado",
+  "outdoor": {
+    "temperature": "sensor.temperatura_exterior",
+    "humidity": "sensor.humidade_exterior"
+  },
+  "indoor_temperature": "sensor.temperatura_sala",
+  "people": [
+    {
+      "entity": "person.ana",
+      "name": "Ana",
+      "battery": "sensor.ana_telemovel_bateria"
+    },
+    {
+      "entity": "person.miguel",
+      "name": "Miguel",
+      "battery": "sensor.miguel_telemovel_bateria"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Modo cinema",
+      "entity": "script.modo_cinema",
+      "icon": "movie"
+    },
+    {
+      "name": "Bom dia",
+      "entity": "script.bom_dia",
+      "icon": "sunrise"
+    },
+    {
+      "name": "Boa noite",
+      "entity": "script.boa_noite",
+      "icon": "moon"
+    },
+    {
+      "name": "Sair de casa",
+      "entity": "script.sair_de_casa",
+      "icon": "exit"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "sala",
+      "name": "Sala",
+      "floor": "piso_0",
+      "image": "/local/nook/divisoes/sala.svg",
+      "lights": [
+        "light.sala_teto",
+        "light.sala_candeeiro",
+        "light.sala_led_tv"
+      ],
+      "covers": [
+        "cover.estore_sala_janela",
+        "cover.estore_sala_porta"
+      ],
+      "climate": "climate.ac_sala",
+      "temperature": "sensor.temperatura_sala",
+      "humidity": "sensor.humidade_sala",
+      "switches": [
+        {
+          "entity": "switch.sala_tv",
+          "name": "TV",
+          "icon": "tv"
+        }
+      ],
+      "motion": "binary_sensor.movimento_sala"
+    },
+    {
+      "id": "cozinha",
+      "name": "Cozinha",
+      "floor": "piso_0",
+      "image": "/local/nook/divisoes/cozinha.svg",
+      "lights": [
+        "light.cozinha_teto",
+        "light.cozinha_bancada"
+      ],
+      "covers": [
+        "cover.estore_cozinha"
+      ],
+      "temperature": "sensor.temperatura_cozinha",
+      "humidity": "sensor.humidade_cozinha",
+      "switches": [
+        {
+          "entity": "switch.cozinha_cafe",
+          "name": "Máquina de café",
+          "icon": "coffee"
+        }
+      ]
+    },
+    {
+      "id": "escritorio",
+      "name": "Escritório",
+      "floor": "piso_0",
+      "image": "/local/nook/divisoes/escritorio.svg",
+      "lights": [
+        "light.escritorio_teto"
+      ],
+      "covers": [
+        "cover.estore_escritorio"
+      ],
+      "climate": "climate.ac_escritorio",
+      "temperature": "sensor.temperatura_escritorio",
+      "humidity": "sensor.humidade_escritorio",
+      "switches": [
+        {
+          "entity": "switch.escritorio_pc",
+          "name": "Computador",
+          "icon": "plug"
+        }
+      ]
+    },
+    {
+      "id": "entrada",
+      "name": "Entrada",
+      "floor": "piso_0",
+      "image": "/local/nook/divisoes/entrada.svg",
+      "lights": [
+        "light.entrada"
+      ],
+      "camera": "camera.entrada",
+      "lock": "lock.porta_entrada",
+      "contact": "binary_sensor.porta_entrada",
+      "motion": "binary_sensor.movimento_entrada"
+    },
+    {
+      "id": "garagem",
+      "name": "Garagem",
+      "floor": "piso_0",
+      "image": "/local/nook/divisoes/garagem.svg",
+      "lights": [
+        "light.garagem"
+      ],
+      "covers": [
+        "cover.portao_garagem"
+      ],
+      "camera": "camera.garagem",
+      "switches": [
+        {
+          "entity": "switch.carregador_ve",
+          "name": "Carregador VE",
+          "icon": "ev"
+        }
+      ]
+    },
+    {
+      "id": "jardim",
+      "name": "Jardim",
+      "floor": "exterior",
+      "image": "/local/nook/divisoes/jardim.svg",
+      "lights": [
+        "light.jardim",
+        "light.fachada"
+      ],
+      "camera": "camera.jardim",
+      "switches": [
+        {
+          "entity": "switch.rega",
+          "name": "Rega",
+          "icon": "water"
+        }
+      ],
+      "motion": "binary_sensor.movimento_jardim"
+    },
+    {
+      "id": "suite",
+      "name": "Suite",
+      "floor": "piso_1",
+      "image": "/local/nook/divisoes/suite.svg",
+      "lights": [
+        "light.suite_teto",
+        "light.suite_cabeceira"
+      ],
+      "covers": [
+        "cover.estore_suite"
+      ],
+      "climate": "climate.ac_suite",
+      "temperature": "sensor.temperatura_suite",
+      "humidity": "sensor.humidade_suite"
+    },
+    {
+      "id": "quarto",
+      "name": "Quarto",
+      "floor": "piso_1",
+      "image": "/local/nook/divisoes/quarto.svg",
+      "lights": [
+        "light.quarto_teto"
+      ],
+      "covers": [
+        "cover.estore_quarto"
+      ],
+      "climate": "climate.ac_quarto",
+      "temperature": "sensor.temperatura_quarto",
+      "humidity": "sensor.humidade_quarto"
+    },
+    {
+      "id": "wc",
+      "name": "Casa de banho",
+      "floor": "piso_1",
+      "image": "/local/nook/divisoes/wc.svg",
+      "lights": [
+        "light.wc_espelho"
+      ],
+      "temperature": "sensor.temperatura_wc",
+      "humidity": "sensor.humidade_wc",
+      "switches": [
+        {
+          "entity": "switch.wc_toalheiro",
+          "name": "Toalheiro",
+          "icon": "heat"
+        }
+      ]
+    },
+    {
+      "id": "lavandaria",
+      "name": "Lavandaria",
+      "floor": "piso_1",
+      "image": "/local/nook/divisoes/lavandaria.svg",
+      "lights": [
+        "light.lavandaria"
+      ],
+      "switches": [
+        {
+          "entity": "switch.maquina_roupa",
+          "name": "Máquina de lavar",
+          "icon": "washer"
+        },
+        {
+          "entity": "switch.secador",
+          "name": "Secador",
+          "icon": "dryer"
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "entity": "camera.entrada",
+      "name": "Entrada"
+    },
+    {
+      "entity": "camera.jardim",
+      "name": "Jardim"
+    },
+    {
+      "entity": "camera.garagem",
+      "name": "Garagem"
+    }
+  ],
+  "energy": {
+    "power": {
+      "home": "sensor.potencia_casa",
+      "solar": "sensor.potencia_solar",
+      "grid": "sensor.potencia_rede",
+      "battery": "sensor.potencia_bateria"
+    },
+    "battery_soc": "sensor.bateria_soc",
+    "battery_energy": "sensor.bateria_energia",
+    "car_soc": "sensor.carro_bateria",
+    "totals": {
+      "import": "sensor.energia_rede_importada",
+      "export": "sensor.energia_rede_exportada",
+      "solar": "sensor.energia_solar_produzida",
+      "home": "sensor.energia_casa_consumida",
+      "charge": "sensor.energia_bateria_carregada",
+      "discharge": "sensor.energia_bateria_descarregada"
+    },
+    "circuits": [
+      {
+        "name": "Climatização",
+        "entity": "sensor.energia_climatizacao",
+        "icon": "ac"
+      },
+      {
+        "name": "Cozinha",
+        "entity": "sensor.energia_cozinha",
+        "icon": "stove"
+      },
+      {
+        "name": "Águas quentes",
+        "entity": "sensor.energia_aguas_quentes",
+        "icon": "water"
+      },
+      {
+        "name": "Carregador VE",
+        "entity": "sensor.energia_carregador_ve",
+        "icon": "ev"
+      },
+      {
+        "name": "Lavandaria",
+        "entity": "sensor.energia_lavandaria",
+        "icon": "washer"
+      },
+      {
+        "name": "Iluminação",
+        "entity": "sensor.energia_iluminacao",
+        "icon": "bulb"
+      },
+      {
+        "name": "Outros",
+        "entity": "sensor.energia_outros",
+        "icon": "plug"
+      }
+    ],
+    "tariff": 0.1494,
+    "feed_in": 0.055,
+    "currency": "€"
+  }
+}

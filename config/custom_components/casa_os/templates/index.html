@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt" data-theme="lilas">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5"
+    />
+    <title>{{ title }}</title>
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="stylesheet" href="/casa_os_static/css/tokens.css?v={{ version }}" />
+    <link rel="stylesheet" href="/casa_os_static/css/app.css?v={{ version }}" />
+    <script>
+      // Tema guardado, aplicado antes de pintar (sem flash de cor)
+      (function () {
+        try {
+          var t = localStorage.getItem("casa_os_theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app" class="app" aria-busy="true">
+      <div class="boot" id="boot">
+        <div class="boot-mark"></div>
+        <p>A ligar à casa…</p>
+      </div>
+    </div>
+
+    <script id="casa-config" type="application/json">{{ config_json | safe }}</script>
+    <script>
+      window.CASA = {
+        token: "{{ token }}",
+        user: "{{ user_name }}",
+        title: "{{ title }}",
+        config: JSON.parse(document.getElementById("casa-config").textContent || "{}"),
+      };
+    </script>
+    <script src="/casa_os_static/js/ha.js?v={{ version }}"></script>
+    <script src="/casa_os_static/js/ui.js?v={{ version }}"></script>
+    <script src="/casa_os_static/js/views.js?v={{ version }}"></script>
+    <script src="/casa_os_static/js/app.js?v={{ version }}"></script>
+  </body>
+</html>
