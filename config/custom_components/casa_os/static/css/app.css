@@ -142,17 +142,16 @@ svg {
 .view {
   flex: 1;
   width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 var(--s-4) calc(var(--tabbar) + env(safe-area-inset-bottom, 0px) + var(--s-7));
+  --gutter: var(--s-4);
+  padding: 0 var(--gutter) calc(var(--tabbar) + env(safe-area-inset-bottom, 0px) + var(--s-7));
 }
 .view.bleed {
   padding-left: 0;
   padding-right: 0;
 }
 .view.bleed > *:not(.windowstrip) {
-  padding-left: var(--s-4);
-  padding-right: var(--s-4);
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
 }
 
 /* cabeçalho de ecrã: o título é o conteúdo, não uma barra */
@@ -1379,6 +1378,156 @@ button.li:hover {
 .themebtn .td {
   font-size: var(--t-xs);
   color: var(--c-ink-3);
+}
+
+
+/* ═════════ O ecrã manda (tablet de parede e TV) ═════════
+   Nestas classes o painel ocupa exatamente a altura do ecrã e nada rola:
+   as áreas crescem em frações do espaço disponível, não em píxeis. */
+
+html[data-screen="braco"],
+html[data-screen="sala"] {
+  height: 100%;
+  overflow: hidden;
+}
+html[data-screen="braco"] body,
+html[data-screen="sala"] body {
+  height: 100%;
+  overflow: hidden;
+}
+[data-screen="braco"] .app,
+[data-screen="sala"] .app {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+[data-screen="braco"] .main,
+[data-screen="sala"] .main {
+  min-height: 0;
+  overflow: hidden;
+}
+[data-screen="braco"] #outlet,
+[data-screen="sala"] #outlet {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+[data-screen="braco"] .view,
+[data-screen="sala"] .view {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: var(--s-4);
+  align-content: start;
+  --gutter: clamp(var(--s-4), 2.2vw, var(--s-8));
+  padding-bottom: var(--s-4);
+}
+
+/* o Início: janela · estado · resto (o resto ocupa o que sobra) */
+[data-screen="braco"] .view.home,
+[data-screen="sala"] .view.home {
+  grid-template-rows: minmax(150px, 24vh) auto minmax(0, 1fr);
+  gap: 0;
+}
+/* a janela preenche a linha da grelha em vez de ter altura fixa */
+[data-screen="braco"] .windowstrip,
+[data-screen="sala"] .windowstrip {
+  height: 100%;
+  min-height: 0;
+}
+
+/* com o ecrã apertado, a frase deixa de subir para cima da janela */
+[data-screen="braco"] .readout,
+[data-screen="sala"] .readout {
+  margin-top: var(--s-4);
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+[data-screen="braco"] .temps,
+[data-screen="sala"] .temps {
+  margin-top: var(--s-3);
+  padding-bottom: var(--s-4);
+}
+[data-screen="braco"] .home-cols,
+[data-screen="sala"] .home-cols {
+  min-height: 0;
+  margin-top: var(--s-5);
+  padding-bottom: var(--s-4);
+  align-items: stretch;
+}
+[data-screen="braco"] .home-cols > *,
+[data-screen="sala"] .home-cols > * {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+[data-screen="braco"] .home-cols .sect,
+[data-screen="sala"] .home-cols .sect {
+  margin-top: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* a secção das divisões é a que estica; as outras ficam com o tamanho natural */
+[data-screen="braco"] .home-cols .sect.grow,
+[data-screen="sala"] .home-cols .sect.grow {
+  flex: 1;
+  min-height: 0;
+}
+/* os cartões mantêm o tamanho natural; o que não cabe rola dentro da área
+   (a Fase 3 passa isto a páginas) */
+[data-screen="braco"] .sect.grow .gridauto,
+[data-screen="sala"] .sect.grow .gridauto {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: max-content;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+/* vistas com cabeçalho: cabeçalho · (controlos) · conteúdo que enche */
+[data-screen="braco"] .view.stack,
+[data-screen="sala"] .view.stack {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+[data-screen="braco"] .view.stack.withseg,
+[data-screen="sala"] .view.stack.withseg {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+/* Fase 1: o corpo da vista ocupa o espaço que sobra. As listas longas ainda
+   rolam dentro da sua área (a Fase 3 reorganiza-as para caberem de vez). */
+[data-screen="braco"] .view .body,
+[data-screen="sala"] .view .body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+[data-screen="braco"] .view .fill,
+[data-screen="sala"] .view .fill {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: var(--s-3);
+  grid-auto-rows: minmax(0, 1fr);
+}
+[data-screen="braco"] .view .head,
+[data-screen="sala"] .view .head {
+  padding-top: var(--s-5);
+  margin-bottom: 0;
+}
+
+/* Em tablet ao alto ainda não há barra lateral: a barra de baixo passa a
+   fazer parte da grelha (deixa de flutuar) para não tapar conteúdo. */
+[data-screen="braco"] .tabbar,
+[data-screen="sala"] .tabbar {
+  position: static;
+  flex: 0 0 auto;
+  backdrop-filter: none;
+  background: var(--c-bg-2);
 }
 
 /* ───────── Desktop ───────── */

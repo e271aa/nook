@@ -19,6 +19,28 @@
   ];
   const THEME_KEY = "casa_os_theme";
 
+  /* ───────── Classe de ecrã ─────────
+   * mão   — telemóvel: a página rola, como é hábito no telemóvel
+   * braço — tablet de parede: cabe tudo no ecrã, sem rolar
+   * sala  — TV: cabe tudo, e tudo maior, para se ler de longe
+   * Pode ser forçada para demonstrações: /casa?ecra=sala
+   */
+  function screenClass() {
+    const forced = new URLSearchParams(location.search).get("ecra");
+    if (["mao", "braco", "sala"].includes(forced)) return forced;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w < 700 || h < 480) return "mao";
+    return w >= 1500 ? "sala" : "braco";
+  }
+
+  function applyScreenClass() {
+    const cls = screenClass();
+    if (document.documentElement.getAttribute("data-screen") !== cls) {
+      document.documentElement.setAttribute("data-screen", cls);
+    }
+  }
+
   function applyTheme(id, persist = true) {
     if (!THEMES.some((t) => t.id === id)) return;
     document.documentElement.setAttribute("data-theme", id);
@@ -203,6 +225,12 @@
   // ───────── Arranque ─────────
 
   function boot() {
+    applyScreenClass();
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(applyScreenClass, 120);
+    });
     applyTheme(localStorage.getItem(THEME_KEY) || "lilas", false);
     app.innerHTML = "";
     app.append(side, main, tabbar);

@@ -679,7 +679,7 @@
   }
 
   function homeView() {
-    const node = el('<div class="view bleed"></div>');
+    const node = el('<div class="view home bleed"></div>');
     node.appendChild(windowStrip());
     node.appendChild(readout());
 
@@ -695,7 +695,7 @@
     }
 
     const roomsSect = el(
-      '<div class="sect"><div class="secthead"><h2>Divisões</h2><a href="#/divisoes">Ver todas</a></div></div>',
+      '<div class="sect grow"><div class="secthead"><h2>Divisões</h2><a href="#/divisoes">Ver todas</a></div></div>',
     );
     const grid = el('<div class="gridauto"></div>');
     rooms()
@@ -730,8 +730,9 @@
   // ═════════ Divisões ═════════
 
   function roomsView() {
-    const node = el('<div class="view"></div>');
+    const node = el('<div class="view stack"></div>');
     node.appendChild(el('<div class="head"><div><h1>Divisões</h1><div class="sub">Toca numa divisão para abrir tudo o que ela tem</div></div></div>'));
+    const body = el('<div class="body"></div>');
     (CFG.floors || []).forEach((floor) => {
       const list = rooms().filter((r) => r.floor === floor.id);
       if (!list.length) return;
@@ -739,8 +740,9 @@
       const grid = el('<div class="gridauto"></div>');
       list.forEach((r) => grid.appendChild(roomCard(r)));
       sect.appendChild(grid);
-      node.appendChild(sect);
+      body.appendChild(sect);
     });
+    node.appendChild(body);
     return node;
   }
 
@@ -753,7 +755,7 @@
   ];
 
   function controlsView(kind = "luzes") {
-    const node = el('<div class="view"></div>');
+    const node = el('<div class="view stack withseg"></div>');
     node.appendChild(el('<div class="head"><div><h1>Controlos</h1><div class="sub">Tudo o que se liga, abre e aquece</div></div></div>'));
     const seg = el(
       `<div class="segmented">${KINDS.map((k) => `<button data-k="${k[0]}" aria-pressed="${k[0] === kind}">${k[1]}</button>`).join("")}</div>`,
@@ -764,6 +766,8 @@
       }),
     );
     node.appendChild(seg);
+    const body = el('<div class="body"></div>');
+    node.appendChild(body);
 
     rooms().forEach((room) => {
       let items = [];
@@ -780,7 +784,7 @@
         else grid.appendChild(climateCard(it));
       });
       sect.appendChild(grid);
-      node.appendChild(sect);
+      body.appendChild(sect);
     });
     return node;
   }
@@ -788,9 +792,9 @@
   // ═════════ Câmaras ═════════
 
   function camerasView() {
-    const node = el('<div class="view"></div>');
+    const node = el('<div class="view stack"></div>');
     node.appendChild(el('<div class="head"><div><h1>Câmaras</h1><div class="sub">Imagem ao vivo, a atualizar de 2 em 2 segundos</div></div></div>'));
-    const grid = el('<div class="gridauto"></div>');
+    const grid = el('<div class="gridauto fill"></div>');
     (CFG.cameras || []).forEach((c) => grid.appendChild(cameraTile(c)));
     node.appendChild((CFG.cameras || []).length ? grid : el('<div class="empty">Sem câmaras nesta casa.</div>'));
     return node;
@@ -855,11 +859,13 @@
   function energyView(periodId = "hoje") {
     const E = CFG.energy || {};
     const period = PERIODS.find((p) => p.id === periodId) || PERIODS[0];
-    const node = el('<div class="view"></div>');
+    const node = el('<div class="view stack"></div>');
     node.appendChild(
       el('<div class="head"><div><h1>Energia</h1><div class="sub">De onde vem e para onde vai</div></div></div>'),
     );
-    node.appendChild(energyFlow());
+    const body = el('<div class="body"></div>');
+    node.appendChild(body);
+    body.appendChild(energyFlow());
 
     const seg = el(
       `<div class="segmented" style="margin-top:var(--s-6)">${PERIODS.map(
@@ -871,7 +877,7 @@
         location.hash = `#/energia/${b.dataset.p}`;
       }),
     );
-    node.appendChild(seg);
+    body.appendChild(seg);
 
     const chart = el(`<div class="chart" style="margin-top:var(--s-4)">
       <div class="secthead"><h2>Consumo</h2></div>
@@ -881,13 +887,13 @@
       <div class="xaxis"></div>
       <div class="legend"></div>
     </div>`);
-    node.appendChild(chart);
+    body.appendChild(chart);
 
     const totals = el('<div class="list" style="margin-top:var(--s-4)"></div>');
-    node.appendChild(totals);
+    body.appendChild(totals);
 
     const circuits = el('<div class="sect"><div class="secthead"><h2>Por circuito</h2></div><div class="list"></div></div>');
-    node.appendChild(circuits);
+    body.appendChild(circuits);
 
     loadEnergy(period, chart, totals, circuits.querySelector(".list"));
     return node;
