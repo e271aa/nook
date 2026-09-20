@@ -1,20 +1,21 @@
 /* ─────────────────────────────────────────────────────────────────────────
- *  Casa OS — esqueleto, navegação e temas.
+ *  Casa OS — esqueleto, navegação e paletas.
  * ───────────────────────────────────────────────────────────────────────── */
 (function () {
   "use strict";
 
-  const { el, esc, icon } = window.UI;
+  const { el, esc, icon, fmt, greeting } = window.UI;
   const HA = window.HA;
   const V = window.VIEWS;
+  const CFG = window.CASA.config;
 
   const THEMES = [
-    { id: "lilas", name: "Lilás", desc: "O original", c: ["#15152a", "#ce93d8"] },
-    { id: "ouro", name: "Ouro", desc: "Quente e sóbrio", c: ["#131110", "#d9b071"] },
-    { id: "oceano", name: "Oceano", desc: "Azul profundo", c: ["#0a1622", "#4fc3f7"] },
-    { id: "floresta", name: "Floresta", desc: "Verde natural", c: ["#0d1a13", "#5fd38a"] },
-    { id: "brasa", name: "Brasa", desc: "Preto OLED", c: ["#000000", "#ff9e5e"] },
-    { id: "claro", name: "Claro", desc: "Para o dia", c: ["#eceef6", "#6c4bf0"] },
+    { id: "lilas", name: "Lilás", desc: "A cor da casa", c: ["#100d17", "#b79cff"] },
+    { id: "dourado", name: "Dourado", desc: "Quente e sóbrio", c: ["#100d08", "#e3b567"] },
+    { id: "azul", name: "Azul", desc: "Frio e calmo", c: ["#07101a", "#5cc0f5"] },
+    { id: "verde", name: "Verde", desc: "Natural", c: ["#07120d", "#5fd39a"] },
+    { id: "oled", name: "Preto", desc: "Para tablets de parede", c: ["#000000", "#ffb066"] },
+    { id: "claro", name: "Claro", desc: "Para o dia", c: ["#f2f1ee", "#6b4de0"] },
   ];
   const THEME_KEY = "casa_os_theme";
 
@@ -29,21 +30,19 @@
       }
     }
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+    if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--c-bg").trim());
   }
 
-  function currentTheme() {
-    return document.documentElement.getAttribute("data-theme") || "lilas";
-  }
+  const currentTheme = () => document.documentElement.getAttribute("data-theme") || "lilas";
 
   function openThemes() {
     const body = el('<div class="themes"></div>');
     const paint = () =>
-      body.querySelectorAll("[data-t]").forEach((b) => b.classList.toggle("active", b.dataset.t === currentTheme()));
+      body.querySelectorAll("[data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === currentTheme())));
     THEMES.forEach((t) => {
-      const b = el(`<button class="theme-btn" data-t="${t.id}">
-        <span class="theme-dot" style="background:${t.c[0]}"><i style="background:${t.c[1]}"></i></span>
-        <span><span class="theme-name">${esc(t.name)}</span><span class="theme-desc">${esc(t.desc)}</span></span>
+      const b = el(`<button class="themebtn" data-t="${t.id}">
+        <span class="sq" style="background:${t.c[0]}"><i style="background:${t.c[1]}"></i></span>
+        <span><span class="tn">${esc(t.name)}</span><span class="td">${esc(t.desc)}</span></span>
       </button>`);
       b.addEventListener("click", () => {
         applyTheme(t.id);
@@ -52,7 +51,7 @@
       body.appendChild(b);
     });
     paint();
-    window.UI.sheet("Aparência", body);
+    window.UI.sheet("Aparência", body, { subtitle: "A mesma casa, na cor da instalação" });
   }
 
   // ───────── Rotas ─────────
@@ -60,26 +59,13 @@
   const ROUTES = [
     { id: "inicio", path: "/", title: "Início", icon: "home", view: () => V.homeView() },
     { id: "divisoes", path: "/divisoes", title: "Divisões", icon: "rooms", view: () => V.roomsView() },
-    {
-      id: "controlos",
-      path: "/controlos",
-      title: "Controlos",
-      icon: "sliders",
-      view: (parts) => V.controlsView(parts[1] || "luzes"),
-    },
-    {
-      id: "energia",
-      path: "/energia",
-      title: "Energia",
-      icon: "bolt",
-      view: (parts) => V.energyView(parts[1] || "hoje"),
-    },
+    { id: "controlos", path: "/controlos", title: "Controlos", icon: "sliders", view: (p) => V.controlsView(p[1] || "luzes") },
+    { id: "energia", path: "/energia", title: "Energia", icon: "bolt", view: (p) => V.energyView(p[1] || "hoje") },
     { id: "cameras", path: "/cameras", title: "Câmaras", icon: "camera", view: () => V.camerasView() },
   ];
 
   function parseHash() {
-    const raw = (location.hash || "#/").replace(/^#\/?/, "");
-    const parts = raw.split("/").filter(Boolean);
+    const parts = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
     const route = ROUTES.find((r) => r.path === `/${parts[0] || ""}`) || ROUTES[0];
     return { route, parts };
   }
@@ -87,73 +73,130 @@
   // ───────── Esqueleto ─────────
 
   const app = document.getElementById("app");
+  const title = window.CASA.title || "Casa";
 
-  const rail = el(`<nav class="rail" aria-label="Navegação principal">
-    <div class="rail-mark"><i>${esc((window.CASA.title || "C")[0])}</i><span>${esc(window.CASA.title || "Casa")}</span></div>
-    ${ROUTES.map(
-      (r) => `<a class="tab" href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
-    ).join("")}
-    <div class="rail-foot">
-      <button class="tab" id="rail-theme">${icon("palette")}<span>Aparência</span></button>
+  const side = el(`<aside class="side">
+    <div class="brand">
+      <span class="mark">${esc(title[0])}</span>
+      <span><span class="bn">${esc(title)}</span><span class="bs" id="side-sub">—</span></span>
     </div>
-  </nav>`);
+    <nav>${ROUTES.map(
+      (r) => `<a href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
+    ).join("")}</nav>
+    <div class="foot">
+      <div id="people"></div>
+      <button class="li" id="side-theme" style="border:0;padding:var(--s-2) var(--s-3);border-radius:var(--r-sm)">
+        ${icon("palette")}<span class="lname">Aparência</span>
+      </button>
+    </div>
+  </aside>`);
 
-  const main = el(`<div class="main">
-    <header class="topbar">
-      <button class="back-btn" id="back" hidden aria-label="Voltar">${icon("chevron")}</button>
-      <h1 class="topbar-title"></h1>
-      <div class="topbar-actions">
-        <span class="chip" id="status" hidden></span>
-        <button class="icon-btn" id="theme-btn" aria-label="Aparência">${icon("palette")}</button>
-      </div>
-    </header>
-    <div id="outlet"></div>
-  </div>`);
+  const main = el('<div class="main"><div id="outlet"></div></div>');
 
   const tabbar = el(`<nav class="tabbar" aria-label="Navegação">
     ${ROUTES.map(
-      (r) => `<a class="tab" href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
+      (r) => `<a href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
     ).join("")}
   </nav>`);
 
-  main.querySelector("#theme-btn").addEventListener("click", openThemes);
-  rail.querySelector("#rail-theme").addEventListener("click", openThemes);
-  main.querySelector("#back").addEventListener("click", () => history.back());
-  main.querySelector("#back").style.transform = "rotate(180deg)";
+  side.querySelector("#side-theme").addEventListener("click", openThemes);
+
+  /** Quem está em casa, no rodapé da barra lateral. */
+  function mountPeople() {
+    const host = side.querySelector("#people");
+    (CFG.people || []).forEach((p) => {
+      const row = el(`<div class="person"><span class="av">${esc(p.name[0])}</span><span class="pn">${esc(p.name)}</span><span class="pb"></span></div>`);
+      const update = () => {
+        const home = (HA.get(p.entity) || {}).state === "home";
+        row.querySelector(".pn").textContent = `${p.name} · ${home ? "em casa" : "fora"}`;
+        const bat = p.battery ? HA.num(p.battery) : null;
+        row.querySelector(".pb").textContent = bat !== null ? `${fmt.n(bat)} %` : "";
+        row.querySelector(".av").style.borderColor = home ? "var(--c-accent)" : "var(--c-line)";
+      };
+      HA.subscribe((id) => {
+        if (id === "*" || id === p.entity || id === p.battery) update();
+      });
+      update();
+      host.appendChild(row);
+    });
+  }
+
+  /** Resumo da casa por baixo do nome, na barra lateral. */
+  function mountSideSub() {
+    const sub = side.querySelector("#side-sub");
+    const update = () => {
+      const lights = (CFG.rooms || []).flatMap((r) => r.lights || []);
+      const on = lights.filter((l) => HA.isOn(l)).length;
+      sub.textContent = on ? `${on} ${on === 1 ? "luz ligada" : "luzes ligadas"}` : "tudo apagado";
+    };
+    HA.subscribe((id) => {
+      if (id === "*" || id.startsWith("light.")) update();
+    });
+    update();
+  }
 
   function render() {
     window.UI.closeSheets();
     const { route, parts } = parseHash();
     const outlet = main.querySelector("#outlet");
     outlet.innerHTML = "";
-    outlet.appendChild(route.view(parts));
-    main.querySelector(".topbar-title").textContent = route.id === "inicio" ? window.CASA.title || "Casa" : route.title;
-    [...rail.querySelectorAll("[data-route]"), ...tabbar.querySelectorAll("[data-route]")].forEach((a) =>
-      a.classList.toggle("active", a.dataset.route === route.id),
-    );
-    document.title = `${route.title} · ${window.CASA.title || "Casa"}`;
+    const view = route.view(parts);
+
+    // No Início, os botões flutuam sobre a janela; nas outras vistas vão no cabeçalho.
+    if (route.id === "inicio") {
+      const strip = view.querySelector(".windowstrip");
+      if (strip) {
+        const top = el(`<div class="wtop">
+          <span class="whello">${esc(greeting())}${window.CASA.user ? `, ${esc(window.CASA.user)}` : ""}</span>
+          <button class="iconbtn ghost" id="theme-btn" aria-label="Aparência">${icon("palette")}</button>
+        </div>`);
+        top.querySelector("#theme-btn").addEventListener("click", openThemes);
+        strip.appendChild(top);
+      }
+    } else {
+      const head = view.querySelector(".head");
+      if (head) {
+        const actions = el('<div class="head-actions"></div>');
+        const b = el(`<button class="iconbtn" aria-label="Aparência">${icon("palette")}</button>`);
+        b.addEventListener("click", openThemes);
+        actions.appendChild(b);
+        head.appendChild(actions);
+      }
+    }
+
+    outlet.appendChild(view);
+    [...side.querySelectorAll("[data-route]"), ...tabbar.querySelectorAll("[data-route]")].forEach((a) => {
+      if (a.dataset.route === route.id) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    document.title = route.id === "inicio" ? title : `${route.title} · ${title}`;
     window.scrollTo(0, 0);
-    outlet.scrollTop = 0;
   }
 
   window.addEventListener("hashchange", render);
 
-  // ───────── Estado da ligação ─────────
+  // ───────── Ligação ─────────
 
   function watchConnection() {
-    const badge = main.querySelector("#status");
+    let banner = null;
     HA.onStatus((status) => {
       if (status === "online") {
-        badge.hidden = true;
+        if (banner) {
+          banner.remove();
+          banner = null;
+        }
         return;
       }
-      badge.hidden = false;
-      badge.innerHTML =
-        status === "unauthorized"
-          ? `${icon("offline")}<span>Sem permissão</span>`
-          : `${icon("offline")}<span>${status === "offline" ? "A religar…" : "A ligar…"}</span>`;
-      badge.querySelector("svg").style.width = "16px";
-      badge.querySelector("svg").style.height = "16px";
+      if (!banner) {
+        banner = el(`<div class="offline">${icon("wifioff")}
+          <div><div class="ot">Sem ligação à casa</div><div class="os">A tentar outra vez…</div></div></div>`);
+      }
+      const view = main.querySelector(".view");
+      if (view && !banner.isConnected) view.prepend(banner);
+      if (status === "unauthorized" && banner) {
+        banner.querySelector(".ot").textContent = "Sessão sem permissão";
+        banner.querySelector(".os").textContent = "Volta a entrar no Home Assistant.";
+      }
     });
   }
 
@@ -162,13 +205,14 @@
   function boot() {
     applyTheme(localStorage.getItem(THEME_KEY) || "lilas", false);
     app.innerHTML = "";
-    app.append(rail, main, tabbar);
+    app.append(side, main, tabbar);
     app.setAttribute("aria-busy", "false");
+    mountPeople();
+    mountSideSub();
     render();
     watchConnection();
   }
 
-  // Espera pelos primeiros estados (ou arranca à mesma ao fim de 4 s)
   let started = false;
   const start = () => {
     if (started) return;

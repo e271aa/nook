@@ -69,6 +69,12 @@ async def _async_user_or_demo(hass: HomeAssistant, request: web.Request):
     return user, token
 
 
+def _load_sprite() -> str:
+    """Folha de ícones, lida uma vez do disco."""
+    path = BASE / "static" / "sprite.svg"
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
 def _load_config(hass: HomeAssistant) -> dict:
     """Configuração da casa: /config/casa_os.json tem prioridade sobre a incluída."""
     for path in (Path(hass.config.path("casa_os.json")), BASE / "config.json"):
@@ -93,6 +99,7 @@ class CasaOsPageView(HomeAssistantView):
             enable_async=True,
         )
         self._template: jinja2.Template | None = None
+        self._sprite: str | None = None
 
     async def _async_template(self) -> jinja2.Template:
         """Lê o template uma vez, fora do event loop (ler ficheiros bloqueia)."""
@@ -110,6 +117,8 @@ class CasaOsPageView(HomeAssistantView):
             return web.Response(status=401, text="Utilizador inativo.")
 
         config = await self.hass.async_add_executor_job(_load_config, self.hass)
+        if self._sprite is None:
+            self._sprite = await self.hass.async_add_executor_job(_load_sprite)
         template = await self._async_template()
         html = await template.render_async(
             token=token or "",
@@ -117,8 +126,15 @@ class CasaOsPageView(HomeAssistantView):
             config_json=json.dumps(config, ensure_ascii=False),
             version=int(time.time()),
             user_name=user.name,
+            sprite=self._sprite,
         )
-        return web.Response(body=html, content_type="text/html")
+        # A página traz o número de versão dos ficheiros estáticos; se ficar em
+        # cache, o browser fica preso a CSS/JS antigos.
+        return web.Response(
+            body=html,
+            content_type="text/html",
+            headers={"Cache-Control": "no-store, must-revalidate"},
+        )
 
 
 class CasaOsConfigView(HomeAssistantView):
