@@ -25,6 +25,9 @@
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
     { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
+    // As Definições não são uma secção da casa: têm o seu botão no fundo da
+    // barra e a sua linha no menu, e não entram na navegação principal.
+    { id: "definicoes", title: "Definições", icon: "definicoes", ecras: [], oculta: true },
     // A planta só existe se a casa tiver uma desenhada. É trabalho por
     // instalação, por isso não se promete onde não há.
     { id: "planta", title: "A casa", icon: "planta", ecras: ["sala"], se: () => !!CFG.planta },
@@ -60,6 +63,7 @@
     const raiz = document.documentElement;
     if (raiz.getAttribute("data-screen") === cls) return;
     raiz.setAttribute("data-screen", cls);
+    DEFS.aplicarTamanho(cls); // cada tipo de ecrã tem o seu tamanho
     if (aoMudar) aoMudar();
   }
 
@@ -99,9 +103,10 @@
    */
   const Q = CFG.quiosque || {};
   const PERTO_S = Q.perto_segundos ?? 45;
-  const VOLTAR_S = Q.voltar_ao_inicio_segundos ?? 180;
-  const REPOUSO_S = (Q.repouso_minutos ?? 10) * 60;
-  const SO_DE_NOITE = Q.repouso_so_de_noite !== false;
+  // Estes três a pessoa muda nas Definições; à falta de escolha vale o config.json
+  const VOLTAR_S = () => DEFS.get("voltar"); // 0 = nunca
+  const REPOUSO_S = () => DEFS.get("repouso") * 60; // 0 = nunca
+  const SO_DE_NOITE = () => DEFS.get("soDeNoite");
 
   let ultimoToque = Date.now();
   let aDescansar = false;
@@ -145,10 +150,11 @@
     const perto = movimento || desde < PERTO_S;
     marca("data-presenca", perto ? "perto" : "longe");
 
-    if (!perto && desde > VOLTAR_S && parseHash().sec !== "casa") go("casa");
+    if (VOLTAR_S() > 0 && !perto && desde > VOLTAR_S() && parseHash().sec !== "casa") go("casa");
 
     // o repouso pedido à mão vale até alguém acordar o painel
-    const descansar = repousoPedido || (!perto && desde > REPOUSO_S && (!SO_DE_NOITE || eNoite()));
+    const descansar =
+      repousoPedido || (REPOUSO_S() > 0 && !perto && desde > REPOUSO_S() && (!SO_DE_NOITE() || eNoite()));
     if (descansar !== aDescansar) {
       aDescansar = descansar;
       marca("data-repouso", descansar ? "sim" : "nao");
@@ -230,6 +236,14 @@
     marca("data-repouso", "sim");
   }
 
+  // O que as Definições vão buscar à casca (não é uma API: é o que ela mostra).
+  window.APP = {
+    THEMES, currentTheme, applyTheme,
+    emEcraCheio, trocarEcraCheio, descansarJa,
+    aDescansar: () => aDescansar,
+    wake: () => ({ ativo: !!wakeLock, porque: wakePorque === "por tentar" ? "ainda a tentar" : wakePorque }),
+  };
+
   // ───────── Rotas ─────────
 
   const sectionOf = (id) => SECTIONS.find((s) => s.id === id);
@@ -287,6 +301,9 @@
     const menu = el(`<button class="nb" aria-label="Menu">${icon("menu")}<span>Menu</span></button>`);
     menu.addEventListener("click", openMenu);
     foot.appendChild(menu);
+    const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições">${icon("definicoes")}<span>Definições</span></button>`);
+    defs.addEventListener("click", () => go("definicoes"));
+    foot.appendChild(defs);
   }
 
   // ───────── Menu ─────────
@@ -309,7 +326,7 @@
 
     const secs = el('<div></div>');
     secs.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Secções</div>'));
-    SECTIONS.forEach((s) => {
+    SECTIONS.filter((s) => !s.oculta).forEach((s) => {
       const fora = !s.ecras.includes(ecra);
       const r = el(
         `<button class="mrow"${s.id === atual ? ' aria-current="page"' : ""}>${icon(s.icon)}
@@ -324,53 +341,13 @@
     });
     drawer.appendChild(secs);
 
-    const temas = el('<div></div>');
-    temas.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Aparência</div>'));
-    const grelha = el('<div class="themes"></div>');
-    const pinta = () =>
-      grelha.querySelectorAll("[data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === currentTheme())));
-    THEMES.forEach((t) => {
-      const b = el(
-        `<button class="themebtn" data-t="${t.id}">
-          <span class="sq" style="background:${t.bg}"><i style="background:${t.tint}"></i></span>
-          <span class="tn">${esc(t.name)}</span></button>`,
-      );
-      b.addEventListener("click", () => {
-        applyTheme(t.id);
-        pinta();
-      });
-      grelha.appendChild(b);
+    // as opções do painel — tamanho, aparência, ecrã — vivem nas Definições
+    const defs = el(`<button class="mrow"${atual === "definicoes" ? ' aria-current="page"' : ""}>${icon("definicoes")}<span style="flex:1">Definições</span></button>`);
+    defs.addEventListener("click", () => {
+      closeMenu();
+      go("definicoes");
     });
-    pinta();
-    temas.appendChild(grelha);
-    drawer.appendChild(temas);
-
-    // o que é do ecrã, não da casa
-    if (ecra !== "mao") {
-      const bloco = el('<div></div>');
-      bloco.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Ecrã</div>'));
-
-      const cheio = el(`<button class="mrow">${icon("chev")}<span style="flex:1">${emEcraCheio() ? "Sair do ecrã cheio" : "Ecrã cheio"}</span></button>`);
-      cheio.addEventListener("click", () => {
-        closeMenu();
-        trocarEcraCheio();
-      });
-      bloco.appendChild(cheio);
-
-      const dormir = el(`<button class="mrow">${icon("moon")}<span style="flex:1">Pôr a descansar</span></button>`);
-      dormir.addEventListener("click", () => {
-        closeMenu();
-        descansarJa();
-      });
-      bloco.appendChild(dormir);
-
-      bloco.appendChild(
-        el(`<div class="ft dim2" style="padding:var(--s2) var(--s3)">${
-          wakeLock ? "O ecrã fica ligado enquanto o painel estiver aberto." : `O ecrã pode apagar-se sozinho: ${wakePorque}.`
-        }</div>`),
-      );
-      drawer.appendChild(bloco);
-    }
+    drawer.appendChild(defs);
 
     const fechar = el(`<button class="mrow" style="margin-top:auto">${icon("back")}<span>Fechar</span></button>`);
     fechar.addEventListener("click", closeMenu);
@@ -392,6 +369,8 @@
     if (V.limpar) V.limpar(); // a secção que sai deixa de ouvir a casa
     const { sec, partes } = parseHash();
     paintNav(sec);
+    const bd = side.querySelector('[data-sec="definicoes"]');
+    if (bd) sec === "definicoes" ? bd.setAttribute("aria-current", "page") : bd.removeAttribute("aria-current");
     body.innerHTML = "";
     const vista = V[sec](partes.slice(1));
 
@@ -449,6 +428,7 @@
 
   function boot() {
     applyScreen();
+    DEFS.aplicarTamanho(document.documentElement.getAttribute("data-screen"));
     applyTheme(localStorage.getItem(THEME_KEY) || "grafite", false);
     document.documentElement.setAttribute("data-presenca", "longe");
     document.documentElement.setAttribute("data-repouso", "nao");

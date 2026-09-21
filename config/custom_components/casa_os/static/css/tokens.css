@@ -16,9 +16,13 @@
   --f: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
     "Noto Sans", Helvetica, Arial, sans-serif;
 
-  /* Densidade: quanto vale uma unidade neste ecrã. A parede e a mão valem 1;
-     a TV cresce, porque se lê a três metros (definido no app.css). */
-  --u: 1;
+  /* Densidade: quanto vale uma unidade. É o produto de duas coisas:
+       --base   o que o ecrã pede (a TV cresce, porque se lê a três metros)
+       --zoom   o que a pessoa escolheu nas Definições, de 85 % a 120 %
+     Tudo o que é tamanho sai daqui, por isso o zoom muda tudo de uma vez. */
+  --base: 1;
+  --zoom: 1;
+  --u: calc(var(--base) * var(--zoom));
 
   /* Letra — oito passos, rácio apertado, como a da Apple */
   --t-c2: calc(11px * var(--u));
@@ -106,6 +110,13 @@
   --sh-2: none;
   --fill: rgba(120, 120, 128, 0.2);
   --fill-2: rgba(120, 120, 128, 0.32);
+}
+
+/* Com o dedo, o alvo de toque nunca desce dos 44 px — nem com o zoom a 85 %. */
+@media (pointer: coarse) {
+  :root {
+    --tap: max(44px, calc(44px * var(--u)));
+  }
 }
 
 [data-theme="lilas"] {

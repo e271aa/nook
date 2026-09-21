@@ -113,7 +113,7 @@ svg {
    do desenho. No telemóvel fica em 1: o desenho usava 0,92, mas isso punha os
    alvos de toque em 40 px e a regra dos 44 ganha. */
 [data-screen="sala"] {
-  --u: 1.6;
+  --base: 1.6;
 }
 
 [data-screen="mao"] .app {
@@ -222,7 +222,7 @@ svg {
 }
 .tabbar button {
   flex: 1;
-  min-height: calc(50px * var(--u));
+  min-height: max(var(--tap), calc(50px * var(--u)));
   border-radius: var(--r2);
   display: flex;
   flex-direction: column;
@@ -2271,6 +2271,81 @@ select.pill {
 .faixa-planta .pill {
   min-height: calc(38px * var(--u));
   padding: 0 var(--s4);
+}
+
+/* ═════════ Definições ═════════
+   É a única página do painel que pode rolar na parede: é uma lista de
+   escolhas que se fazem uma vez, não um ecrã que se lê de relance. */
+
+.def-corpo {
+  display: flex;
+  gap: var(--s5);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  align-items: flex-start;
+}
+.def-corpo::-webkit-scrollbar {
+  display: none;
+}
+.def-corpo > .col {
+  flex: 1;
+  min-width: 0;
+  gap: var(--s5);
+}
+.def-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.def-cartao {
+  gap: var(--s4);
+}
+.def-nota {
+  padding: 0 var(--s2);
+}
+.def-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  min-height: var(--tap);
+}
+/* as escolhas das Definições tocam-se com o dedo: 44 px, como o resto */
+.def-linha button.pill {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+  justify-content: center;
+}
+.def-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.def-legenda {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+.def-legenda .ft {
+  flex-basis: 100%;
+}
+/* a escala lê-se como uma escala: menos à esquerda, mais à direita */
+.def-escala {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--t-c1);
+  color: var(--label-3);
+}
+[data-screen="mao"] .def-corpo {
+  flex-direction: column;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+[data-screen="mao"] .def-corpo > .col {
+  width: 100%;
+  flex: 0 0 auto;
 }
 
 /* ═════════ Estados ═════════ */
