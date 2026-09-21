@@ -61,6 +61,9 @@
   --c-heat: #ff8d5a;
   --c-cool: #57b6e8;
   --c-warm-1: #ffe0a3;
+  /* a cor com que se escreve "luz acesa": no escuro é o próprio âmbar,
+     no claro tem de ser mais fundo para se ler */
+  --c-lit-ink: var(--c-warm-1);
   --c-warm-2: #c07d18;
 }
 
@@ -188,6 +191,7 @@
 /* ── Claro ── */
 [data-theme="claro"] {
   color-scheme: light;
+  --c-lit-ink: #8a5a08;
   --c-bg: #f2f1ee;
   --c-bg-2: #eceae5;
   --c-surface: #ffffff;

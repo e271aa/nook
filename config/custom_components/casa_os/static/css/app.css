@@ -833,7 +833,7 @@ svg {
 }
 .chip.lit {
   background: color-mix(in srgb, var(--c-warm-1) 22%, transparent);
-  color: var(--c-warm-1);
+  color: var(--c-lit-ink);
 }
 .chip.warn {
   color: var(--c-warn);
