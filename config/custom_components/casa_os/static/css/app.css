@@ -2776,3 +2776,186 @@ select.pill {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── gráficos SVG (séries e fluxo) ── */
+.gf-caixa,
+.gf {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.gf-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  touch-action: pan-y;
+}
+.gf-svg [hidden],
+.gf [hidden],
+.pagina[hidden] {
+  display: none !important;
+}
+.gf-grelha {
+  stroke: var(--sep);
+  stroke-width: 1;
+}
+.gf-zero {
+  stroke: var(--sep-2);
+  stroke-width: 1;
+}
+.gf-eixo {
+  fill: var(--label-3);
+  font-size: calc(11px * var(--u));
+  font-variant-numeric: tabular-nums;
+}
+.gf-area {
+  opacity: 0.28;
+}
+.gf-linha {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.gf-linha.tracejada {
+  stroke-dasharray: 5 4;
+}
+.gf-barra {
+  opacity: 0.9;
+}
+.gf-cursor {
+  stroke: var(--label-3);
+  stroke-width: 1;
+}
+.gf-sel {
+  fill: var(--tint);
+  opacity: 0.18;
+}
+.gf-tip {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--l3, var(--l2, var(--l1)));
+  border: 1px solid var(--sep-2);
+  border-radius: var(--r3);
+  padding: var(--s2) var(--s3);
+  box-shadow: var(--sh-2, var(--sh-1));
+  font-size: var(--t-c1);
+  color: var(--label);
+  white-space: nowrap;
+}
+.gf-tip-linha {
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--u));
+}
+.gf-tip-linha i {
+  width: calc(8px * var(--u));
+  height: calc(8px * var(--u));
+  border-radius: 2px;
+}
+.gf-tip-linha b {
+  margin-left: auto;
+  padding-left: var(--s3);
+  font-weight: 600;
+}
+.gf-repor {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+  border-radius: var(--rp);
+  background: var(--fill-2);
+  color: var(--label);
+  font-size: var(--t-c1);
+}
+.sk-fita {
+  opacity: 0.5;
+}
+.sk-nome {
+  fill: var(--label);
+  font-size: calc(12px * var(--u));
+}
+.sk-valor {
+  fill: var(--label-2);
+  font-size: calc(11px * var(--u));
+  font-variant-numeric: tabular-nums;
+}
+.energia .chart .empty-mini {
+  margin: auto;
+}
+.pagina {
+  gap: var(--s3);
+}
+.pagina > .col {
+  min-height: 0;
+  gap: var(--s3);
+}
+.pagina > .col > .chart {
+  flex: 1;
+}
+[data-screen="mao"] .energia .pagina {
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+[data-screen="mao"] .energia .pagina > .col {
+  flex: 0 0 auto;
+}
+[data-screen="mao"] .energia .pagina > .col > .chart {
+  flex: 0 0 auto;
+}
+
+/* ── o calendário de períodos ── */
+.cal {
+  position: fixed;
+  z-index: 42;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(360px * var(--u)), calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  background: var(--l2, var(--l1));
+  border-radius: var(--r4);
+  box-shadow: var(--sh-3, var(--sh-1));
+}
+.cal-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.cal-semana,
+.cal-grelha {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: calc(2px * var(--u));
+  text-align: center;
+}
+.cal-dia {
+  min-height: var(--tap);
+  border-radius: var(--r2, var(--r3));
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+.cal-dia:disabled {
+  color: var(--label-4);
+}
+.cal-dia.dentro {
+  background: var(--fill);
+}
+.cal-dia.ponta {
+  background: var(--tint);
+  color: var(--on-tint, #fff);
+}
+.cal-dia.hoje {
+  font-weight: 700;
+}
