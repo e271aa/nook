@@ -590,6 +590,258 @@ button.li:active {
   font-weight: var(--w-m);
 }
 
+/* ═════════ Casa ═════════
+   Quatro respostas, por ordem de quem passa à frente: o que está mal, o que
+   ficou ligado, o que se gasta, e quem está em casa. */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: calc(18px * var(--u));
+}
+
+.hero {
+  display: flex;
+  gap: var(--s5);
+  flex: 1;
+  min-height: 0;
+}
+.hero .vcol {
+  flex: 1.28;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.acol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--u));
+  min-height: 0;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--u));
+}
+/* o tamanho do veredicto é uma variável: na Fase 7 é ela que encolhe quando
+   alguém chega à frente do painel */
+.vline {
+  font-size: calc(var(--vsize, 76px) * var(--u));
+  font-weight: var(--w-b);
+  letter-spacing: var(--tr-tighter);
+  line-height: 0.98;
+  transition: font-size var(--d3) var(--ease);
+}
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: calc(3px * var(--u));
+}
+
+/* ── avisos ── */
+
+.alert {
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s4);
+  display: flex;
+  gap: calc(14px * var(--u));
+  align-items: flex-start;
+  box-shadow: var(--sh-1);
+  flex: 1;
+  min-height: 0;
+}
+.alert .ib {
+  width: calc(38px * var(--u));
+  height: calc(38px * var(--u));
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.alert.g-perigo .ib {
+  background: color-mix(in oklab, var(--danger) 20%, transparent);
+  color: var(--danger);
+}
+.alert.g-aviso .ib {
+  background: color-mix(in oklab, var(--warn) 20%, transparent);
+  color: var(--warn);
+}
+.alert.g-info .ib {
+  background: var(--tint-soft);
+  color: var(--tint);
+}
+.alert .tx {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(3px * var(--u));
+}
+.alert .acts {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+.alert .acts .pill {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+}
+.alert .acts .pill:disabled {
+  opacity: 0.5;
+}
+
+/* quando não há avisos, o espaço deles responde à pergunta na mesma */
+.calm {
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s5);
+  box-shadow: var(--sh-1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(6px * var(--u));
+}
+.calm .mark {
+  width: calc(42px * var(--u));
+  height: calc(42px * var(--u));
+  border-radius: var(--rp);
+  background: color-mix(in oklab, var(--good) 18%, transparent);
+  color: var(--good);
+  display: grid;
+  place-items: center;
+  margin-bottom: calc(6px * var(--u));
+}
+
+/* ── teclas ── */
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--s3);
+}
+.key {
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: calc(15px * var(--u));
+  min-height: calc(118px * var(--u));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s2);
+  box-shadow: var(--sh-1);
+  transition: background var(--d1) var(--ease-soft), transform var(--d1) var(--ease);
+}
+.key:hover {
+  background: var(--l2);
+}
+.key:active {
+  transform: scale(0.97);
+}
+.key:disabled {
+  opacity: 0.45;
+}
+.key.feito {
+  background: var(--tint-soft);
+}
+.key .ki {
+  color: var(--label-2);
+}
+.key.prime .ki {
+  color: var(--tint);
+}
+.key .kn {
+  display: block;
+  font-size: calc(16px * var(--u));
+  font-weight: var(--w-s);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.key .ks {
+  display: block;
+  font-size: var(--t-c1);
+  color: var(--label-3);
+}
+
+/* ── faixa da energia ── */
+
+.strip {
+  display: flex;
+  gap: var(--s3);
+  border-top: var(--hair) solid var(--sep);
+  padding-top: var(--s4);
+}
+.stat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--u));
+}
+.stat .v {
+  font-size: calc(30px * var(--u));
+  font-weight: var(--w-s);
+  letter-spacing: var(--tr-tighter);
+  line-height: 1;
+}
+.stat .v small {
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  color: var(--label-2);
+  letter-spacing: 0;
+}
+.stat .k {
+  font-size: var(--t-c1);
+  color: var(--label-3);
+}
+.stat.sol .v {
+  color: var(--solar);
+}
+.stat.bat .v {
+  color: var(--batt);
+}
+
+/* ── na mão ── */
+
+[data-screen="mao"] .home-mao {
+  gap: var(--s5);
+}
+[data-screen="mao"] .vline {
+  font-size: calc(34px * var(--u));
+  line-height: 1.08;
+}
+[data-screen="mao"] .keys {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+[data-screen="mao"] .key {
+  min-height: calc(96px * var(--u));
+}
+[data-screen="mao"] .strip {
+  flex-wrap: wrap;
+  border: 0;
+  padding: 0;
+}
+[data-screen="mao"] .strip .stat {
+  flex: 1 1 45%;
+  background: var(--l1);
+  border-radius: var(--r3);
+  padding: var(--s4);
+}
+/* na mão a coluna dos avisos não estica: cresce com o que tem dentro, senão
+   os cartões colapsam contra as teclas */
+[data-screen="mao"] .acol,
+[data-screen="mao"] .acol .alert,
+[data-screen="mao"] .acol .calm {
+  flex: 0 0 auto;
+}
+
 /* ═════════ Estados ═════════ */
 
 /* Secção por construir: diz o que vai viver aqui, em vez de mentir com

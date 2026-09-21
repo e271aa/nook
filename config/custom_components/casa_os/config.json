@@ -55,6 +55,47 @@
       "icon": "exit"
     }
   ],
+  "acoes": [
+    {
+      "nome": "Boa noite",
+      "icone": "moon",
+      "tipo": "cena",
+      "entidade": "script.boa_noite",
+      "detalhe": "Fecha tudo e baixa as luzes"
+    },
+    {
+      "nome": "Bom dia",
+      "icone": "sunrise",
+      "tipo": "cena",
+      "entidade": "script.bom_dia",
+      "detalhe": "Abre os estores"
+    },
+    {
+      "nome": "Modo cinema",
+      "icone": "movie",
+      "tipo": "cena",
+      "entidade": "script.modo_cinema",
+      "detalhe": "Sala a 15 %, TV ligada"
+    },
+    {
+      "nome": "Sair de casa",
+      "icone": "exit",
+      "tipo": "cena",
+      "entidade": "script.sair_de_casa",
+      "detalhe": "Tranca e desliga"
+    },
+    {
+      "nome": "Desligar as luzes",
+      "icone": "bulb",
+      "tipo": "luzes"
+    },
+    {
+      "nome": "Fechar os estores",
+      "icone": "blinds",
+      "tipo": "estores"
+    }
+  ],
+  "boiler": "switch.cilindro",
   "rooms": [
     {
       "id": "sala",

@@ -210,6 +210,7 @@
 
   function render() {
     closeMenu();
+    if (V.limpar) V.limpar(); // a secção que sai deixa de ouvir a casa
     const { sec, partes } = parseHash();
     paintNav(sec);
     body.innerHTML = "";
