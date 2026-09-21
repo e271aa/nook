@@ -315,5 +315,7 @@
     return raiz;
   }
 
+  K.porFechar = porFechar;
+  K.estadoFecho = estado;
   window.VIEWS.vigilancia = vigilancia;
 })();

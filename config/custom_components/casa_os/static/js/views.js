@@ -345,5 +345,6 @@
     page("Rotina", "O que a casa tem para tratar",
       porConstruir("list", "Os lembretes com prazo, a lista de compras, os próximos dias da agenda, e o que está a dar na TV.", "6"));
 
+  K.teclas = teclas;
   window.VIEWS = { casa, controlos, vigilancia, energia, rotina, limpar };
 })();

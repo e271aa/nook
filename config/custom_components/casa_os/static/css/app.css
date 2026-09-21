@@ -142,6 +142,9 @@ svg {
   display: flex;
   flex-direction: column;
   gap: calc(2px * var(--u));
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .nb {
@@ -2377,6 +2380,230 @@ select.pill {
 [data-screen="mao"] .def-corpo > .col {
   width: 100%;
   flex: 0 0 auto;
+}
+
+/* ═════════ Dashboard ═════════
+   Três colunas que se arrastam. As larguras vêm de variáveis (--c0, --c1, --c2)
+   para as pegas as poderem mudar sem tocar no resto. */
+
+.dash {
+  display: grid;
+  grid-template-columns:
+    var(--c0, 31fr) calc(8px * var(--u))
+    var(--c1, 36fr) calc(8px * var(--u))
+    var(--c2, 33fr);
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+.dash > .dcol {
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  gap: var(--s3);
+}
+.dash > .dcol::-webkit-scrollbar {
+  display: none;
+}
+[data-screen="mao"] .dash {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: var(--s5);
+}
+[data-screen="mao"] .dash > .dcol {
+  overflow: visible;
+}
+
+/* a pega: o traço é fino, a área de toque é larga — quem arrasta usa o dedo */
+.colgrip {
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+  align-self: stretch;
+}
+.colgrip::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(-14px * var(--u));
+}
+.colgrip span {
+  width: calc(3px * var(--u));
+  height: calc(46px * var(--u));
+  border-radius: var(--rp);
+  background: var(--sep-2);
+  transition: background var(--d1) var(--ease), height var(--d1) var(--ease);
+}
+.colgrip:hover span,
+.colgrip:focus-visible span,
+.colgrip.dragging span {
+  background: var(--tint);
+  height: calc(72px * var(--u));
+}
+.colgrip:focus-visible {
+  outline: none;
+}
+
+/* as teclas aqui não se escondem, e cabem numa coluna estreita */
+.dash .keys.fixas {
+  max-height: none;
+  opacity: 1;
+  overflow: visible;
+  pointer-events: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2);
+}
+.dash .keys .key {
+  min-height: calc(66px * var(--u));
+  padding: var(--s3);
+  gap: var(--s1);
+}
+.dash .keys .key .ki svg {
+  width: var(--ic);
+  height: var(--ic);
+}
+/* nas colunas os cartões são mais justos: cabe o que precisa de caber */
+/* na TV a escala é 1,6× e a coluna não cabe; "tudo de uma vez" repete as teclas
+   "Desligar as luzes" e "Fechar os estores", por isso é o que sai */
+[data-screen="sala"] .dash .comando {
+  display: none;
+}
+.dash .card {
+  padding: var(--s3);
+  gap: var(--s2);
+}
+.dash .pessoas .pill {
+  padding: calc(4px * var(--u)) var(--s3);
+}
+.dash .keys .key .kn {
+  font-size: var(--t-sb);
+}
+.dash .keys .key .ks {
+  font-size: var(--t-c2);
+}
+
+/* o mosaico: o menu, em grande, com o estado lá dentro */
+.mmenu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(calc(110px * var(--u)), 1fr);
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+.dtile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s2);
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s4);
+  box-shadow: var(--sh-1);
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  transition: background var(--d1) var(--ease-soft), transform var(--d1) var(--ease);
+}
+.dtile:hover {
+  background: var(--l2);
+}
+.dtile:active {
+  transform: scale(0.985);
+}
+.dtile .badge {
+  width: calc(44px * var(--u));
+  height: calc(44px * var(--u));
+  border-radius: var(--rp);
+  background: var(--tint-soft);
+  color: var(--tint);
+  display: grid;
+  place-items: center;
+}
+.dtile .dt-txt {
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--u));
+  min-width: 0;
+}
+.dtile .tn {
+  font-size: var(--t-c1);
+  letter-spacing: var(--tr-caps);
+  text-transform: uppercase;
+  color: var(--label-3);
+  font-weight: var(--w-s);
+}
+.dtile .tv {
+  font-size: var(--t-hd);
+  font-weight: var(--w-s);
+  letter-spacing: var(--tr-tight);
+  line-height: 1.2;
+}
+.dtile .ts {
+  font-size: var(--t-ft);
+  color: var(--label-2);
+}
+.dtile .seta {
+  position: absolute;
+  right: var(--s4);
+  top: var(--s4);
+  color: var(--label-3);
+}
+
+/* a coluna do meio dá-lhes um sítio; numa coluna estreita passam para a linha de baixo */
+.li.dupla {
+  flex-wrap: wrap;
+  row-gap: var(--s2);
+  padding-bottom: var(--s2);
+}
+.li.dupla .tres {
+  flex: 1 0 100%;
+}
+.tres {
+  display: flex;
+  gap: var(--s2);
+}
+.tres button {
+  flex: 1;
+  width: auto;
+  min-width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--rp);
+  background: var(--fill);
+  display: grid;
+  place-items: center;
+  color: var(--label-2);
+}
+.tres button:active {
+  background: var(--fill-2);
+}
+.sis {
+  display: flex;
+  gap: var(--s3);
+}
+.pessoas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.camstack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+.camstack .camtile {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+[data-screen="mao"] .camstack .camtile {
+  flex: 0 0 auto;
+  aspect-ratio: 16 / 9;
 }
 
 /* ═════════ Estados ═════════ */

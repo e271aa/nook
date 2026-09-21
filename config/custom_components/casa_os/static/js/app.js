@@ -20,6 +20,9 @@
    */
   const SECTIONS = [
     { id: "casa", title: "Casa", icon: "home", ecras: ["braco", "sala", "mao"] },
+    // O Dashboard não tem separador no telemóvel (são cinco e cabem cinco): lá
+    // chega-se pelo menu.
+    { id: "dashboard", title: "Dashboard", icon: "dashboard", ecras: ["braco", "sala"] },
     { id: "divisoes", title: "Divisões", icon: "rooms", ecras: ["braco", "sala", "mao"] },
     { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "mao"] },
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },

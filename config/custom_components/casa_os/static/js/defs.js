@@ -73,6 +73,8 @@
     aplicarTamanho(ecra) {
       const t = TAMANHOS[DEFS.tamanho(ecra)];
       document.documentElement.style.setProperty("--zoom", String(t.pct / 100));
+      // o que só cabe a certos tamanhos (as colunas do Dashboard) volta a medir-se
+      window.dispatchEvent(new Event("casa-tamanho"));
     },
 
     /** Foi a pessoa que escolheu, ou é o valor de origem? */

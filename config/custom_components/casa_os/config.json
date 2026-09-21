@@ -524,5 +524,10 @@
         ]
       }
     ]
+  },
+  "sistema": {
+    "cpu": "sensor.processor_use",
+    "temperatura": "sensor.processor_temperature",
+    "memoria": "sensor.memory_use_percent"
   }
 }
