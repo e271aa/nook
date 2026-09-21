@@ -1,9 +1,11 @@
 title: Nook
 views:
+  # O painel novo (casa_os) numa vista de painel: um só cartão, a ocupar a vista
+  # toda. Sem aspect_ratio, para encher a altura em vez de ficar quadrado e
   - title: Nook
     path: nook
     icon: mdi:home-heart
     type: panel
     cards:
       - type: iframe
-        aspect_ratio: "100%"
+        url: /casa
