@@ -24,7 +24,7 @@
     // chega-se pelo menu.
     { id: "dashboard", title: "Dashboard", icon: "dashboard", ecras: ["braco", "sala"] },
     { id: "divisoes", title: "Divisões", icon: "rooms", ecras: ["braco", "sala", "mao"] },
-    { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "mao"] },
+    { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "sala", "mao"] },
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
     { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },

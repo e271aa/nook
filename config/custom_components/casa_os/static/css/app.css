@@ -2606,6 +2606,34 @@ select.pill {
   aspect-ratio: 16 / 9;
 }
 
+/* o comando mestre, ao lado das ações de grupo */
+.mestre {
+  flex: 1 1 calc(230px * var(--u));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(3px * var(--u));
+  justify-content: center;
+}
+.mestre .cap {
+  padding-left: var(--s1);
+}
+/* com o dedo o slider mestre não desce dos 44 px */
+.mestre .slide {
+  height: max(var(--tap), calc(40px * var(--u)));
+}
+.mestre .stepper button {
+  width: var(--tap);
+  height: var(--tap);
+}
+.mestre .sb {
+  gap: var(--s3);
+}
+.acoes-mao .mestre {
+  grid-column: 1 / -1;
+  flex: 0 0 auto;
+}
+
 /* ═════════ Estados ═════════ */
 
 /* Secção por construir: diz o que vai viver aqui, em vez de mentir com

@@ -162,6 +162,13 @@
 
     if (tipo === "luzes") {
       const acesas = (ids) => ids.filter((l) => HA.isOn(l));
+      const alvoL = contextual ? doPiso : todos;
+      lista.push({
+        icone: "bulb", texto: contextual ? `Acender as do ${contextual}` : "Acender todas", ids: alvoL,
+        sub: () => (acesas(alvoL).length === alvoL.length ? "estão todas acesas" : `${fmt.n(alvoL.length - acesas(alvoL).length)} por acender`),
+        ativa: () => acesas(alvoL).length < alvoL.length,
+        corre: () => HA.call("light", "turn_on", alvoL),
+      });
       lista.push({
         icone: "bulb", texto: "Desligar todas", ids: todos,
         sub: () => (acesas(todos).length ? plural(acesas(todos).length, "acesa", "acesas") : "estão todas apagadas"),
@@ -190,9 +197,9 @@
         corre: () => HA.call("cover", "set_cover_position", alvo, { position: 100 }),
       });
       lista.push({
-        icone: "stop", texto: "A meio", ids: alvo, sub: () => "50 %",
+        icone: "stop", texto: "Parar", ids: alvo, sub: () => "os que estão a andar",
         ativa: () => alvo.length > 0,
-        corre: () => HA.call("cover", "set_cover_position", alvo, { position: 50 }),
+        corre: () => HA.call("cover", "stop_cover", alvo),
       });
       lista.push({
         icone: "down", texto: `Fechar ${quem}`, ids: alvo,
@@ -218,11 +225,6 @@
         ativa: () => true,
         corre: () => HA.call("climate", "set_hvac_mode", todos, { hvac_mode: "heat" }),
       });
-      lista.push({
-        icone: "thermo", texto: "21 °C", ids: todos, sub: () => "em todos",
-        ativa: () => true,
-        corre: () => HA.call("climate", "set_temperature", todos, { temperature: 21 }),
-      });
     } else {
       const ligadas = () => todos.filter((t) => HA.isOn(t));
       lista.push({
@@ -233,6 +235,103 @@
       });
     }
     return lista;
+  }
+
+  // ───────── O comando mestre ─────────
+  // Mandar em tudo de uma vez com a mesma finura com que se manda num só: um
+  // slider para o brilho de todas as luzes, outro para a posição de todos os
+  // estores, um stepper para a temperatura de todos os ares. Respeita o filtro
+  // de piso — "todas as do Piso 1" —, porque é o mesmo âmbito dos botões ao lado.
+
+  const regulavel = (id) => (HA.attr(id, "supported_color_modes", []) || []).some((m) => m !== "onoff");
+  const media = (lista) => (lista.length ? lista.reduce((t, v) => t + v, 0) / lista.length : null);
+
+  function mestreDe(tipo) {
+    const ids = doFiltro(itensDe(tipo)).map((i) => i.id);
+    if (!ids.length) return null;
+
+    if (tipo === "luzes") {
+      const dim = ids.filter(regulavel);
+      if (!dim.length) return null;
+      return {
+        tipo: "slider", rotulo: "Brilho", ids: dim,
+        // as acesas, ou todas se nenhuma estiver acesa
+        valor: () => {
+          const on = dim.filter((l) => HA.isOn(l));
+          return on.length ? media(on.map((l) => ((HA.attr(l, "brightness", 0) || 0) / 255) * 100)) : 0;
+        },
+        aplica: (v) => {
+          const on = dim.filter((l) => HA.isOn(l));
+          const alvo = on.length ? on : dim;
+          if (v <= 0) HA.call("light", "turn_off", alvo);
+          else HA.call("light", "turn_on", alvo, { brightness_pct: v });
+        },
+      };
+    }
+    if (tipo === "estores") {
+      return {
+        tipo: "slider", rotulo: "Abertos", tom: "estore", ids,
+        valor: () => media(ids.map(posicao)),
+        aplica: (v) => HA.call("cover", "set_cover_position", ids, { position: v }),
+      };
+    }
+    if (tipo === "clima") {
+      return {
+        tipo: "stepper", rotulo: "Temperatura", ids, min: 16, max: 30, passo: 0.5,
+        valor: () => {
+          const ligados = ids.filter((c) => (HA.get(c) || {}).state !== "off");
+          const de = ligados.length ? ligados : ids;
+          return media(de.map((c) => HA.attr(c, "temperature")).filter((t) => t !== null));
+        },
+        aplica: (t) => HA.call("climate", "set_temperature", ids, { temperature: t }),
+      };
+    }
+    return null;
+  }
+
+  function comandoMestre(m) {
+    const wrap = el('<div class="mestre"></div>');
+    if (m.tipo === "slider") {
+      const sl = K.slider({ rotulo: m.rotulo, tipo: m.tom || "luz", valor: 0, aoLargar: m.aplica });
+      let quando = 0;
+      sl.addEventListener("pointerup", () => (quando = Date.now()));
+      wrap.append(el(`<span class="cap">${esc(m.rotulo)} de todos</span>`), sl);
+      return bind(wrap, entre(m.ids), () => {
+        const v = m.valor();
+        if (Date.now() - quando > 1500) sl.definir(v === null ? 0 : v);
+      });
+    }
+
+    // stepper: o valor mostra-se já, e o comando sai meio segundo depois do último toque
+    const num = el('<span class="t3 num"></span>');
+    const menos = el(`<button aria-label="Baixar a temperatura de todos">${icon("minus", "ic-s")}</button>`);
+    const mais = el(`<button aria-label="Subir a temperatura de todos">${icon("plus", "ic-s")}</button>`);
+    const passo = el('<div class="stepper"></div>');
+    passo.append(menos, mais);
+    const linha = el('<div class="sb"></div>');
+    linha.append(num, passo);
+    wrap.append(el(`<span class="cap">${esc(m.rotulo)} de todos</span>`), linha);
+
+    let pedida = null;
+    let quando = 0;
+    let espera = null;
+    const mostra = () => (num.innerHTML = pedida === null ? "—" : `${fmt.n(pedida, 1)}<small class="dim"> °C</small>`);
+    [[menos, -1], [mais, 1]].forEach(([b, d]) =>
+      b.addEventListener("click", () => {
+        const base = pedida === null ? 22 : pedida;
+        pedida = Math.max(m.min, Math.min(m.max, Math.round((base + d * m.passo) / m.passo) * m.passo));
+        quando = Date.now();
+        mostra();
+        clearTimeout(espera);
+        espera = setTimeout(() => m.aplica(pedida), 500);
+      }),
+    );
+    return bind(wrap, entre(m.ids), () => {
+      if (Date.now() - quando > 1500) {
+        pedida = m.valor();
+        mostra();
+      }
+    });
   }
 
   function botaoAcao(a) {
@@ -289,6 +388,8 @@
       K.dentro(esc2, () => {
         acoes.innerHTML = "";
         acoesDe(tipo).forEach((a) => acoes.appendChild(botaoAcao(a)));
+        const mestre = mestreDe(tipo);
+        if (mestre) acoes.appendChild(comandoMestre(mestre));
 
         const todos = doFiltro(itensDe(tipo));
         const paginas = Math.max(1, Math.ceil(todos.length / POR_PAGINA));
@@ -357,6 +458,8 @@
 
     const acoes = el('<div class="acoes-mao"></div>');
     acoesDe(tipo).forEach((a) => acoes.appendChild(botaoAcao(a)));
+    const mestre = mestreDe(tipo);
+    if (mestre) acoes.appendChild(comandoMestre(mestre));
     raiz.appendChild(acoes);
 
     PISOS.forEach((f) => {
