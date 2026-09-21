@@ -1050,6 +1050,9 @@ button.li:hover {
 .bars > div {
   flex: 1;
   min-width: 0;
+  /* com poucas horas registadas (de madrugada, por exemplo) uma barra
+     sozinha não se transforma numa parede de cor */
+  max-width: 72px;
   /* o contentor alinha em baixo; a coluna tem de esticar para as
      percentagens de cada troço terem altura contra que resolver */
   align-self: stretch;
@@ -1381,6 +1384,114 @@ button.li:hover {
 }
 
 
+
+/* ═════════ Painel de três colunas (do painel anterior) ═════════
+   As larguras são variáveis para a Fase 3b as tornar arrastáveis. */
+
+.panel3 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  margin-top: var(--s-5);
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  min-width: 0;
+}
+/* no telemóvel: casa primeiro, depois o que se mexe, depois o que se vigia.
+   Só na mão — no tablet e na TV a ordem é a da grelha. */
+/* no telemóvel o painel começa logo a seguir às temperaturas */
+[data-screen="mao"] .panel3 {
+  margin-top: var(--s-3);
+}
+[data-screen="mao"] .col > .sect:first-child {
+  margin-top: var(--s-5);
+}
+[data-screen="mao"] .col-centro { order: 1; }
+[data-screen="mao"] .col-esq { order: 2; }
+[data-screen="mao"] .col-dir { order: 3; }
+
+/* relógio */
+.clock {
+  padding: var(--s-2) 0 var(--s-1);
+}
+.clock .ctime {
+  font-size: clamp(38px, 5.2vw, 56px);
+  font-weight: var(--w-semi);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.clock .cdate {
+  font-size: var(--t-sm);
+  color: var(--c-ink-3);
+  margin-top: 2px;
+}
+
+/* linhas de ação rápida */
+.quickrow {
+  gap: var(--s-3);
+}
+.quickrow.on .ic {
+  color: var(--c-accent);
+}
+.qbtns {
+  display: flex;
+  gap: var(--s-2);
+}
+.qbtns button {
+  width: 40px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--c-bg-2);
+  border: 1px solid var(--c-line);
+  color: var(--c-ink-2);
+  display: grid;
+  place-items: center;
+}
+.qbtns button:hover {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+}
+/* cenas em botões: uma linha só, à mão de quem passa */
+.scenebtns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-top: 1px solid var(--c-line);
+}
+.scenebtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--s-3) var(--s-2);
+  border-radius: var(--r-md);
+  background: var(--c-bg-2);
+  border: 1px solid transparent;
+  color: var(--c-ink-3);
+  font-size: var(--t-xs);
+  line-height: 1.15;
+  text-align: center;
+}
+.scenebtn span {
+  color: var(--c-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.scenebtn:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+.camstack {
+  display: grid;
+  gap: var(--s-3);
+}
+
 /* ═════════ O ecrã manda (tablet de parede e TV) ═════════
    Nestas classes o painel ocupa exatamente a altura do ecrã e nada rola:
    as áreas crescem em frações do espaço disponível, não em píxeis. */
@@ -1424,6 +1535,196 @@ html[data-screen="sala"] body {
   padding-bottom: var(--s-4);
 }
 
+
+/* Num tablet de parede o ecrã é pequeno e a barra lateral comia-o: fica só com
+   os ícones, como nos painéis de parede a sério. Na TV volta a ter palavras. */
+[data-screen="braco"] .side {
+  --rail: 76px;
+  width: 76px;
+  padding: var(--s-5) var(--s-2);
+  align-items: center;
+}
+[data-screen="braco"] .side .brand {
+  padding: 0 0 var(--s-5);
+}
+[data-screen="braco"] .side nav {
+  align-self: stretch;
+}
+[data-screen="braco"] .side nav a {
+  justify-content: center;
+  padding: 0;
+}
+[data-screen="braco"] .side .foot {
+  padding: 0;
+  align-items: center;
+  gap: var(--s-2);
+}
+[data-screen="braco"] .side .person {
+  gap: 0;
+}
+[data-screen="braco"] .side #side-theme {
+  padding: var(--s-2);
+}
+/* as palavras saem do ecrã mas continuam a ser lidas por quem ouve o ecrã */
+[data-screen="braco"] .side .brand > span > span,
+[data-screen="braco"] .side nav a span,
+[data-screen="braco"] .side .person .pn,
+[data-screen="braco"] .side .person .pb,
+[data-screen="braco"] .side #side-theme .lname {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* três colunas a sério a partir do tablet; as larguras saem de variáveis */
+[data-screen="braco"] .panel3,
+[data-screen="sala"] .panel3 {
+  display: grid;
+  grid-template-columns: var(--col-esq, 30%) var(--col-centro, 40%) var(--col-dir, 30%);
+  gap: var(--s-5);
+  min-height: 0;
+  padding: 0 var(--gutter) var(--s-4);
+  margin-top: var(--s-4);
+}
+[data-screen="braco"] .col,
+[data-screen="sala"] .col {
+  min-height: 0;
+  overflow: hidden;
+}
+/* dentro de uma coluna a secção é ela própria uma coluna: cabeçalho fixo,
+   conteúdo a ocupar o resto. Sem isto o flex:1 não chega ao conteúdo. */
+[data-screen="braco"] .col .sect,
+[data-screen="sala"] .col .sect {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+[data-screen="braco"] .col .sect.grow,
+[data-screen="sala"] .col .sect.grow {
+  flex: 1;
+  min-height: 0;
+}
+/* as divisões repartem a coluna em partes iguais: enchem-na, não a transbordam */
+[data-screen="braco"] .rooms,
+[data-screen="sala"] .rooms {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+}
+[data-screen="braco"] .camstack,
+[data-screen="sala"] .camstack {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  grid-auto-rows: minmax(0, 1fr);
+}
+/* botões de estore mais estreitos, para a linha caber na coluna */
+[data-screen="braco"] .qbtns button {
+  width: 34px;
+  height: 32px;
+}
+[data-screen="braco"] .clock,
+[data-screen="sala"] .clock {
+  padding-top: 0;
+}
+
+/* A três metros de distância a letra tem de crescer com o ecrã: os mesmos
+   blocos, lidos do sofá. */
+html[data-screen="sala"] {
+  --t-xs: 13px;
+  --t-sm: 15px;
+  --t-md: 18px;
+  --t-lg: 22px;
+  --t-xl: 28px;
+  --t-2xl: 40px;
+  --t-3xl: 56px;
+  --t-hero: 76px;
+}
+[data-screen="sala"] .clock .ctime {
+  font-size: clamp(56px, 4.4vw, 84px);
+}
+[data-screen="sala"] .panel3 .li {
+  min-height: 52px;
+}
+[data-screen="sala"] .chip {
+  height: 30px;
+  padding: 0 12px;
+}
+
+/* À distância de um braço o painel vive de densidade: linhas e cartões mais
+   justos, para caberem sem cortar nada. */
+[data-screen="braco"] .panel3 .li {
+  min-height: 36px;
+  padding: var(--s-2) var(--s-3);
+}
+[data-screen="braco"] .col {
+  gap: var(--s-4);
+}
+[data-screen="braco"] .col .secthead {
+  margin-bottom: var(--s-2);
+}
+[data-screen="braco"] .clock {
+  padding-bottom: 0;
+}
+[data-screen="braco"] .clock .cdate {
+  font-size: var(--t-xs);
+}
+/* na parede as cenas ficam deitadas: ocupam menos altura e leem-se igual */
+[data-screen="braco"] .panel3 .scenebtns {
+  padding: var(--s-2);
+}
+[data-screen="braco"] .panel3 .scenebtn {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--s-2);
+  min-height: 34px;
+  padding: 0 var(--s-2);
+  text-align: left;
+}
+[data-screen="braco"] .panel3 .card.room {
+  padding: var(--s-3);
+  gap: var(--s-2);
+}
+[data-screen="braco"] .rooms .chip {
+  height: 22px;
+  padding: 0 7px;
+  gap: 4px;
+}
+[data-screen="braco"] .rooms .rchips {
+  gap: 4px;
+}
+[data-screen="braco"] .clock .ctime {
+  font-size: clamp(30px, 3.6vw, 40px);
+}
+/* a câmara enche a fatia que lhe toca em vez de impor 16:9 */
+[data-screen="braco"] .camstack .cam,
+[data-screen="sala"] .camstack .cam,
+[data-screen="braco"] .camgrid .cam,
+[data-screen="sala"] .camgrid .cam {
+  aspect-ratio: auto;
+  height: 100%;
+}
+/* mosaico de vigilância: a câmara principal por cima, larga, e as outras
+   lado a lado por baixo — enche o ecrã sem cortar as imagens ao alto */
+[data-screen="braco"] .camgrid,
+[data-screen="sala"] .camgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  grid-template-rows: 1.5fr minmax(0, 1fr);
+}
+[data-screen="braco"] .camgrid .cam:first-child,
+[data-screen="sala"] .camgrid .cam:first-child {
+  grid-column: 1 / -1;
+}
+
 /* o Início: janela · estado · resto (o resto ocupa o que sobra) */
 [data-screen="braco"] .view.home,
 [data-screen="sala"] .view.home {
@@ -1437,49 +1738,58 @@ html[data-screen="sala"] body {
   min-height: 0;
 }
 
-/* com o ecrã apertado, a frase deixa de subir para cima da janela */
+/* Numa parede o estado da casa é uma faixa, não um bloco: a frase à esquerda,
+   as temperaturas à direita, tudo na mesma linha e sem a margem negativa. */
 [data-screen="braco"] .readout,
 [data-screen="sala"] .readout {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
   margin-top: var(--s-4);
-  padding-left: var(--gutter);
-  padding-right: var(--gutter);
+  padding: 0 var(--gutter) var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+[data-screen="braco"] .readout .line,
+[data-screen="sala"] .readout .line {
+  font-size: var(--t-md);
+  white-space: nowrap;
+}
+[data-screen="braco"] .readout .meta,
+[data-screen="sala"] .readout .meta {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 [data-screen="braco"] .temps,
 [data-screen="sala"] .temps {
-  margin-top: var(--s-3);
-  padding-bottom: var(--s-4);
-}
-[data-screen="braco"] .home-cols,
-[data-screen="sala"] .home-cols {
-  min-height: 0;
-  margin-top: var(--s-5);
-  padding-bottom: var(--s-4);
-  align-items: stretch;
-}
-[data-screen="braco"] .home-cols > *,
-[data-screen="sala"] .home-cols > * {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  align-items: center;
   gap: var(--s-5);
 }
-[data-screen="braco"] .home-cols .sect,
-[data-screen="sala"] .home-cols .sect {
-  margin-top: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+[data-screen="braco"] .temp .k,
+[data-screen="sala"] .temp .k {
+  margin-bottom: 2px;
 }
-/* a secção das divisões é a que estica; as outras ficam com o tamanho natural */
-[data-screen="braco"] .home-cols .sect.grow,
-[data-screen="sala"] .home-cols .sect.grow {
-  flex: 1;
-  min-height: 0;
+[data-screen="braco"] .temp.in .v {
+  font-size: var(--t-2xl);
+}
+[data-screen="braco"] .temp.out .v,
+[data-screen="sala"] .temp.out .v {
+  font-size: var(--t-xl);
+}
+[data-screen="braco"] .temp.out,
+[data-screen="sala"] .temp.out {
+  padding-bottom: 0;
 }
 /* os cartões mantêm o tamanho natural; o que não cabe rola dentro da área
    (a Fase 3 passa isto a páginas) */
-[data-screen="braco"] .sect.grow .gridauto,
-[data-screen="sala"] .sect.grow .gridauto {
+[data-screen="braco"] .sect.grow .gridauto:not(.rooms),
+[data-screen="sala"] .sect.grow .gridauto:not(.rooms) {
   flex: 1;
   min-height: 0;
   grid-auto-rows: max-content;
@@ -1663,19 +1973,6 @@ html[data-screen="sala"] body {
     border-bottom: 0;
     margin-top: 0;
     padding-bottom: 0;
-  }
-  .home-cols {
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
-    gap: var(--s-7);
-    align-items: start;
-    margin-top: var(--s-7);
-  }
-  .home-cols > * {
-    min-width: 0;
-  }
-  .home-cols .sect:first-child {
-    margin-top: 0;
   }
   .sheet {
     inset: 50% auto auto 50%;

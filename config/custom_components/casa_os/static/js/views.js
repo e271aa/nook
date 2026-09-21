@@ -633,6 +633,107 @@
 
   // ═════════ Início ═════════
 
+  /** Relógio grande — a primeira coisa que se lê num painel de parede. */
+  function clockBlock() {
+    const node = el(`<div class="clock">
+      <div class="ctime num"></div>
+      <div class="cdate"></div>
+    </div>`);
+    const paint = () => {
+      const d = new Date();
+      node.querySelector(".ctime").textContent = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      const data = d.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" });
+      node.querySelector(".cdate").textContent = data.charAt(0).toUpperCase() + data.slice(1);
+    };
+    paint();
+    const t = setInterval(() => (node.isConnected || !node.__mounted ? paint() : clearInterval(t)), 10000);
+    return node;
+  }
+
+  /** Ações rápidas: o que se mexe todos os dias, sempre à vista. */
+  function quickActions() {
+    const node = el('<div class="list quick"></div>');
+
+    // todos os estores
+    const covers = el(`<div class="li quickrow">
+      ${icon("blinds")}<span class="lname">Estores</span>
+      <span class="qbtns">
+        <button data-p="100" aria-label="Abrir todos">${icon("up", "ic-sm")}</button>
+        <button data-p="50" aria-label="Meio">${icon("stop", "ic-sm")}</button>
+        <button data-p="0" aria-label="Fechar todos">${icon("down", "ic-sm")}</button>
+      </span></div>`);
+    covers.querySelectorAll("button").forEach((b) =>
+      b.addEventListener("click", () => {
+        HA.call("cover", "set_cover_position", allBlinds(), { position: Number(b.dataset.p) });
+        window.UI.toast(b.dataset.p === "0" ? "A fechar os estores" : b.dataset.p === "100" ? "A abrir os estores" : "Estores a meio");
+      }),
+    );
+    node.appendChild(covers);
+
+    // todas as luzes
+    const lights = el(`<div class="li quickrow">
+      ${icon("bulb")}<span class="lname">Iluminação</span>
+      <span class="lval lightcount"></span>
+      <button class="sw" role="switch" aria-label="Apagar tudo"></button></div>`);
+    lights.querySelector(".sw").addEventListener("click", () => {
+      const on = allLights().filter((l) => HA.isOn(l));
+      if (on.length) HA.call("light", "turn_off", allLights());
+      else HA.call("light", "turn_on", (rooms().find((r) => r.id === "sala") || {}).lights || allLights().slice(0, 2));
+    });
+    bind(lights, (id) => id.startsWith("light."), () => {
+      const on = allLights().filter((l) => HA.isOn(l)).length;
+      lights.querySelector(".lightcount").textContent = `${on}/${allLights().length}`;
+      lights.classList.toggle("on", on > 0);
+      lights.querySelector(".sw").classList.toggle("on", on > 0);
+      lights.querySelector(".sw").setAttribute("aria-checked", String(on > 0));
+    });
+    node.appendChild(lights);
+
+    // cenas: botões lado a lado — ocupam uma linha em vez de três
+    const scenes = CFG.scenes || [];
+    if (scenes.length) {
+      const row = el('<div class="scenebtns"></div>');
+      scenes.forEach((sc) => {
+        const b = el(`<button class="scenebtn">${icon(sc.icon || "movie")}<span>${esc(sc.name)}</span></button>`);
+        b.addEventListener("click", () => {
+          HA.call(sc.entity.split(".")[0], "turn_on", sc.entity);
+          window.UI.toast(sc.name);
+        });
+        row.appendChild(b);
+      });
+      node.appendChild(row);
+    }
+    return node;
+  }
+
+  /** Estado da casa: presenças, porta, fechadura — em linha, sem cartões. */
+  function houseState() {
+    const node = el('<div class="list"></div>');
+    (CFG.people || []).forEach((p) => {
+      const row = el(`<div class="li">${icon("person")}<span class="lname">${esc(p.name)}</span><span class="lval"></span></div>`);
+      bind(row, (id) => id === p.entity || id === p.battery, () => {
+        const home = (HA.get(p.entity) || {}).state === "home";
+        const bat = p.battery ? HA.num(p.battery) : null;
+        row.querySelector(".lval").innerHTML = `${home ? "Em casa" : "Fora"}${bat !== null ? `<small>${fmt.n(bat)} %</small>` : ""}`;
+        row.querySelector(".ic").style.color = home ? "var(--c-accent)" : "var(--c-ink-3)";
+      });
+      node.appendChild(row);
+    });
+    const porta = rooms().find((r) => r.contact);
+    if (porta) {
+      const row = el(`<div class="li">${icon("door")}<span class="lname">Porta de entrada</span><span class="lval"></span></div>`);
+      bind(row, (id) => id === porta.contact || id === porta.lock, () => {
+        const aberta = HA.isOn(porta.contact);
+        const trancada = porta.lock ? (HA.get(porta.lock) || {}).state === "locked" : null;
+        row.querySelector(".lval").innerHTML = `${aberta ? "Aberta" : "Fechada"}${trancada !== null ? `<small>${trancada ? "trancada" : "destrancada"}</small>` : ""}`;
+        row.querySelector(".ic").style.color = aberta ? "var(--c-warn)" : "var(--c-ink-3)";
+      });
+      node.appendChild(row);
+    }
+    return node;
+  }
+
+
   function scenesRow() {
     const scenes = CFG.scenes || [];
     if (!scenes.length) return null;
@@ -683,46 +784,61 @@
     node.appendChild(windowStrip());
     node.appendChild(readout());
 
-    const cols = el('<div class="home-cols"></div>');
-    const left = el("<div></div>");
-    const right = el("<div></div>");
+    // Três colunas, como no painel anterior: o que se mexe · a casa · o que se vigia
+    const cols = el('<div class="panel3"></div>');
+    const esq = el('<div class="col col-esq"></div>');
+    const centro = el('<div class="col col-centro"></div>');
+    const dir = el('<div class="col col-dir"></div>');
 
-    const scenes = scenesRow();
-    if (scenes) {
-      const s = el('<div class="sect"><div class="secthead"><h2>Cenas</h2></div></div>');
-      s.appendChild(scenes);
-      left.appendChild(s);
-    }
+    // ── esquerda: relógio, ações rápidas, estado da casa
+    esq.appendChild(clockBlock());
+    const accoes = el('<div class="sect"><div class="secthead"><h2>Ações rápidas</h2></div></div>');
+    accoes.appendChild(quickActions());
+    esq.appendChild(accoes);
+    const estado = el('<div class="sect"><div class="secthead"><h2>Em casa</h2></div></div>');
+    estado.appendChild(houseState());
+    esq.appendChild(estado);
 
+    // ── centro: as divisões
+    const controlaveis = rooms().filter((r) => (r.lights || []).length || (r.covers || []).length || r.climate);
+    // Na parede e na TV cabe o que cabe: as primeiras divisões, sem rolar.
+    // No telemóvel a página rola, por isso mostram-se todas.
+    const ecra = document.documentElement.getAttribute("data-screen");
+    const naMao = ecra === "mao";
+    const cabem = { mao: controlaveis.length, braco: 6, sala: 9 }[ecra] || 6;
+    const mostra = controlaveis.slice(0, cabem);
+    const resto = controlaveis.length - mostra.length;
     const roomsSect = el(
-      '<div class="sect grow"><div class="secthead"><h2>Divisões</h2><a href="#/divisoes">Ver todas</a></div></div>',
+      `<div class="sect grow"><div class="secthead"><h2>Divisões</h2>
+        <a href="#/divisoes">${resto ? `Mais ${resto}` : "Ver todas"}</a></div></div>`,
     );
-    const grid = el('<div class="gridauto"></div>');
-    rooms()
-      .filter((r) => (r.lights || []).length || (r.covers || []).length || r.climate)
-      .slice(0, 6)
-      .forEach((r) => grid.appendChild(roomCard(r)));
+    const grid = el('<div class="gridauto rooms"></div>');
+    mostra.forEach((r) => grid.appendChild(roomCard(r)));
     roomsSect.appendChild(grid);
-    left.appendChild(roomsSect);
+    centro.appendChild(roomsSect);
 
+    // ── direita: energia e câmaras
     const energySect = el(
       '<div class="sect"><div class="secthead"><h2>Energia agora</h2><a href="#/energia">Ver tudo</a></div></div>',
     );
     energySect.appendChild(energyRow());
-    right.appendChild(energySect);
+    dir.appendChild(energySect);
 
-    const cams = (CFG.cameras || []).slice(0, 3);
+    // Na parede as câmaras que cabem; o resto fica na vista das câmaras.
+    const todasCams = CFG.cameras || [];
+    const cams = naMao ? todasCams : todasCams.slice(0, 2);
     if (cams.length) {
       const camSect = el(
-        '<div class="sect"><div class="secthead"><h2>Câmaras</h2><a href="#/cameras">Ver todas</a></div></div>',
+        `<div class="sect grow"><div class="secthead"><h2>Câmaras</h2>
+          <a href="#/cameras">${todasCams.length > cams.length ? `Mais ${todasCams.length - cams.length}` : "Ver todas"}</a></div></div>`,
       );
-      const camRow = el('<div class="scroller"></div>');
-      cams.forEach((c) => camRow.appendChild(cameraTile(c, { small: true })));
-      camSect.appendChild(camRow);
-      right.appendChild(camSect);
+      const camWrap = el('<div class="camstack"></div>');
+      cams.forEach((c) => camWrap.appendChild(cameraTile(c)));
+      camSect.appendChild(camWrap);
+      dir.appendChild(camSect);
     }
 
-    cols.append(left, right);
+    cols.append(esq, centro, dir);
     node.appendChild(cols);
     return node;
   }
@@ -794,7 +910,7 @@
   function camerasView() {
     const node = el('<div class="view stack"></div>');
     node.appendChild(el('<div class="head"><div><h1>Câmaras</h1><div class="sub">Imagem ao vivo, a atualizar de 2 em 2 segundos</div></div></div>'));
-    const grid = el('<div class="gridauto fill"></div>');
+    const grid = el('<div class="gridauto fill camgrid"></div>');
     (CFG.cameras || []).forEach((c) => grid.appendChild(cameraTile(c)));
     node.appendChild((CFG.cameras || []).length ? grid : el('<div class="empty">Sem câmaras nesta casa.</div>'));
     return node;
@@ -933,9 +1049,9 @@
             ${seg(imp[i], "b-imp")}${seg(sol[i], "b-sol")}${seg(bat[i], "b-bat")}</div>`;
         })
         .join("");
-      chart.querySelector(".xaxis").innerHTML = labels.length
-        ? `<span>${labels[0]}</span><span>${labels[Math.floor(labels.length / 2)]}</span><span>${labels[labels.length - 1]}</span>`
-        : "";
+      // com uma ou duas colunas não se repete a mesma etiqueta três vezes
+      const marcas = [...new Set([labels[0], labels[Math.floor(labels.length / 2)], labels[labels.length - 1]])].filter(Boolean);
+      chart.querySelector(".xaxis").innerHTML = marcas.map((l) => `<span>${l}</span>`).join("");
       chart.querySelector(".legend").innerHTML = `
         <span><i style="background:var(--c-solar)"></i>Solar</span>
         <span><i style="background:var(--c-grid)"></i>Rede</span>
