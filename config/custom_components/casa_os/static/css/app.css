@@ -60,6 +60,17 @@ svg {
   outline-offset: calc(2px * var(--u));
   border-radius: var(--r1);
 }
+/* dentro de um cartão que corta o que sai, o traço do foco tem de ficar por
+   dentro, senão o cartão come-o */
+.tile :focus-visible,
+.room:focus-visible,
+.tile:focus-visible,
+.camtile:focus-visible,
+.key:focus-visible,
+.gact:focus-visible,
+.slide:focus-visible {
+  outline-offset: calc(-3px * var(--u));
+}
 
 .ic {
   width: var(--ic);
@@ -1174,7 +1185,9 @@ button.li:active {
   min-height: calc(150px * var(--u));
   border-radius: var(--r4);
   overflow: hidden;
-  background: var(--l2);
+  /* uma câmara é um ecrã: escuro em todas as paletas. Na clara, o nome branco
+     por cima de um cartão branco desaparecia enquanto a imagem não chegava. */
+  background: #0b0b0d;
   padding: 0;
   flex: 1 1 auto;
 }
@@ -1407,7 +1420,6 @@ button.li:active {
 .mosaico .camtile {
   min-height: 0;
   height: 100%;
-  background: var(--l1);
 }
 /* numa câmara de vigilância não se corta a imagem: a data e o nome que ela
    traz escritos ficam sempre à vista */
@@ -1950,6 +1962,24 @@ select.pill {
 [data-repouso="sim"] .facts,
 [data-repouso="sim"] .strip {
   transition: opacity var(--d3) var(--ease-soft);
+}
+
+/* ═════════ Sem resposta ═════════
+   Um aparelho que não responde não pode parecer apagado: fica esbatido, com
+   o contorno a tracejado e sem nada para tocar. */
+
+.sem-resposta {
+  opacity: 0.5;
+}
+.room.sem-resposta,
+.tile.sem-resposta {
+  box-shadow: none;
+  outline: var(--hair) dashed var(--sep-2);
+  outline-offset: calc(-1px * var(--u));
+}
+.sem-resposta .sw,
+.sem-resposta .slide {
+  pointer-events: none;
 }
 
 /* ═════════ Estados ═════════ */

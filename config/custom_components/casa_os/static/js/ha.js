@@ -15,6 +15,7 @@
   const pending = new Map();
   let retry = 0;
   let status = "connecting";
+  let ultimoContacto = null;
   let token = window.CASA.token;
 
   function setStatus(next) {
@@ -33,6 +34,7 @@
 
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+      ultimoContacto = Date.now(); // para se poder dizer de quando são os valores
 
       if (msg.type === "auth_required") {
         socket.send(JSON.stringify({ type: "auth", access_token: token }));
@@ -142,6 +144,11 @@
         service_data: data,
         ...(target ? { target } : {}),
       });
+    },
+
+    /** Quando a casa falou connosco pela última vez. */
+    ultimoContacto() {
+      return ultimoContacto;
     },
 
     /** Quantos aparelhos a casa já nos contou. */

@@ -68,6 +68,7 @@
       const h = r.humidity ? HA.num(r.humidity) : null;
       const alertas = avisosDe(r);
 
+      K.marcarResposta(node, [...luzes(r), ...(r.covers || []), r.climate].filter(Boolean));
       node.classList.toggle("lit", on > 0);
       node.classList.toggle("alerta", alertas.length > 0);
       node.querySelector(".rtemp").textContent = t !== null ? `${fmt.n(t, 1)}°` : "";
@@ -287,7 +288,11 @@
         const pct = Math.round(((HA.attr(id, "brightness", 0) || 0) / 255) * 100);
         sw.definir(on);
         bloco.querySelector(".lic").style.color = on ? "var(--tint)" : "var(--label-3)";
-        bloco.querySelector(".lsub").textContent = !on ? "Apagada" : regulavel ? `${fmt.n(pct)} % de brilho` : "Acesa";
+        const morta = K.marcarResposta(bloco, id);
+        bloco.querySelector(".lsub").textContent = morta
+          ? "Sem resposta"
+          : !on ? "Apagada" : regulavel ? `${fmt.n(pct)} % de brilho` : "Acesa";
+        sw.disabled = morta;
         if (brilho) {
           brilho.hidden = !on;
           brilho.definir(pct);

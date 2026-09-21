@@ -82,6 +82,14 @@
     return bind(node, entre([id]), () => {
       const on = HA.isOn(id);
       const pct = Math.round(((HA.attr(id, "brightness", 0) || 0) / 255) * 100);
+      const morto = K.marcarResposta(node, id);
+      main.disabled = morto;
+      if (morto) {
+        node.classList.remove("on");
+        sub.textContent = `${r.name} · sem resposta`;
+        if (brilho) brilho.hidden = true;
+        return;
+      }
       node.classList.toggle("on", on);
       main.setAttribute("aria-checked", String(on));
       sw.setAttribute("aria-checked", String(on));

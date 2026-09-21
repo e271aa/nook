@@ -85,8 +85,11 @@
   --sep: rgba(255, 255, 255, 0.09);
   --sep-2: rgba(255, 255, 255, 0.16);
   --label: #f5f5f7;
+  /* Os níveis de texto seguem a hierarquia da Apple, mas com o terciário mais
+     forte do que lá: aqui o texto pequeno é lido a um metro de distância, e a
+     38 % ficava nos 2,3 de contraste — metade do mínimo. */
   --label-2: rgba(235, 235, 245, 0.62);
-  --label-3: rgba(235, 235, 245, 0.38);
+  --label-3: rgba(235, 235, 245, 0.56);
   --label-4: rgba(235, 235, 245, 0.22);
   --tint: #4c9aff;
   --tint-ink: #04203d;
@@ -114,7 +117,7 @@
   --sep-2: rgba(230, 220, 255, 0.18);
   --label: #f4f0ff;
   --label-2: rgba(236, 228, 255, 0.62);
-  --label-3: rgba(236, 228, 255, 0.38);
+  --label-3: rgba(236, 228, 255, 0.56);
   --label-4: rgba(236, 228, 255, 0.22);
   --tint: #a98bff;
   --tint-ink: #180a33;
@@ -133,7 +136,7 @@
   --sep-2: rgba(255, 240, 215, 0.18);
   --label: #fbf5e9;
   --label-2: rgba(250, 240, 220, 0.62);
-  --label-3: rgba(250, 240, 220, 0.38);
+  --label-3: rgba(250, 240, 220, 0.56);
   --label-4: rgba(250, 240, 220, 0.22);
   --tint: #e0a94f;
   --tint-ink: #241601;
@@ -153,7 +156,7 @@
   --sep-2: rgba(220, 255, 235, 0.18);
   --label: #eef8f1;
   --label-2: rgba(225, 245, 232, 0.62);
-  --label-3: rgba(225, 245, 232, 0.38);
+  --label-3: rgba(225, 245, 232, 0.56);
   --label-4: rgba(225, 245, 232, 0.22);
   --tint: #4bd6a0;
   --tint-ink: #03251a;
@@ -173,7 +176,7 @@
   --sep-2: rgba(255, 255, 255, 0.2);
   --label: #ffffff;
   --label-2: rgba(255, 255, 255, 0.6);
-  --label-3: rgba(255, 255, 255, 0.36);
+  --label-3: rgba(255, 255, 255, 0.56);
   --label-4: rgba(255, 255, 255, 0.2);
   --tint: #ffffff;
   --tint-ink: #000000;
@@ -193,13 +196,13 @@
   --sep: rgba(60, 60, 67, 0.14);
   --sep-2: rgba(60, 60, 67, 0.24);
   --label: #1c1c1e;
-  --label-2: rgba(60, 60, 67, 0.66);
-  --label-3: rgba(60, 60, 67, 0.44);
+  --label-2: rgba(60, 60, 67, 0.78);
+  --label-3: rgba(60, 60, 67, 0.75);
   --label-4: rgba(60, 60, 67, 0.24);
   --tint: #0a66d6;
   --tint-ink: #ffffff;
   --tint-soft: rgba(10, 102, 214, 0.12);
-  --warn: #b8690a;
+  --warn: #9a5a06;
   --danger: #c8352b;
   --good: #12855c;
   --solar: #b8791a;

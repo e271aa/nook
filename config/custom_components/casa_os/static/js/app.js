@@ -423,9 +423,17 @@
       }
       if (!banner) {
         banner = el(`<div class="offline"><span class="spin"></span>
-          <div><div class="bd">Sem ligação à casa</div>
-          <div class="ft">A tentar outra vez…</div></div></div>`);
+          <div class="grow"><div class="bd">Sem ligação à casa</div>
+          <div class="ft"></div></div>${icon("wifioff", "ic-s")}</div>`);
       }
+      // dizer de quando são os valores, em vez de os mostrar como se fossem de agora
+      const t = HA.ultimoContacto();
+      const hm = t
+        ? `${String(new Date(t).getHours()).padStart(2, "0")}:${String(new Date(t).getMinutes()).padStart(2, "0")}`
+        : null;
+      banner.querySelector(".ft").textContent = hm
+        ? `A religar. Os valores são os últimos conhecidos, das ${hm}.`
+        : "A tentar outra vez…";
       if (estado === "unauthorized") {
         banner.querySelector(".bd").textContent = "Sessão sem permissão";
         banner.querySelector(".ft").textContent = "Volta a entrar no Home Assistant.";

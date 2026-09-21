@@ -280,6 +280,19 @@
   let aberta = null;
   const fechar = () => aberta && aberta();
 
+  /** Está sem resposta? (só quando a casa já falou connosco pelo menos uma vez) */
+  const semResposta = (id) => !!id && HA.count() > 0 && HA.isUnavailable(id);
+
+  /** Marca um cartão ou linha como sem resposta, e diz porquê a quem lê. */
+  function marcarResposta(node, ids) {
+    const lista = [].concat(ids).filter(Boolean);
+    const mortos = lista.filter(semResposta);
+    node.classList.toggle("sem-resposta", mortos.length > 0 && mortos.length === lista.length);
+    if (mortos.length) node.title = "Sem resposta";
+    else node.removeAttribute("title");
+    return mortos.length > 0 && mortos.length === lista.length;
+  }
+
   /** Numa lista que não rola, esconde as linhas que não cabem — nunca corta uma a meio. */
   function cabem(lista) {
     const ajusta = () => {
@@ -307,6 +320,6 @@
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
-    slider, interruptor, segmentado, camara, ampliar, linha, cabem,
+    slider, interruptor, segmentado, camara, ampliar, linha, cabem, semResposta, marcarResposta,
   };
 })();
