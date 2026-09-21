@@ -472,6 +472,12 @@ button.li:active {
 .segc button[aria-pressed="true"] {
   color: var(--label);
 }
+/* com o dedo, o segmentado tem alvo de 44 — com o rato chega o desenho */
+@media (pointer: coarse) {
+  .segc button {
+    min-height: var(--tap);
+  }
+}
 
 /* ═════════ Cabeçalho de secção ═════════ */
 
@@ -1209,6 +1215,175 @@ button.li:active {
   50% {
     opacity: 0.25;
   }
+}
+
+/* ═════════ Controlos ═════════ */
+
+.barra {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+.acoes-grupo {
+  gap: var(--s2);
+  flex-wrap: wrap;
+  flex: 1;
+}
+/* ação de grupo: diz o que faz e, em miúdo, a quantas coisas */
+.gact {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: calc(56px * var(--u));
+  padding: 0 var(--s4);
+  background: var(--l1);
+  border-radius: var(--r3);
+  box-shadow: var(--sh-1);
+  transition: background var(--d1) var(--ease-soft), transform var(--d1) var(--ease);
+}
+.gact:hover {
+  background: var(--l2);
+}
+.gact:active {
+  transform: scale(0.97);
+}
+.gact:disabled {
+  opacity: 0.45;
+}
+.gact.feito {
+  background: var(--tint-soft);
+}
+.gact .gi {
+  color: var(--tint);
+  display: grid;
+  place-items: center;
+}
+.gact .gt {
+  display: flex;
+  flex-direction: column;
+}
+.gact .gn {
+  font-size: var(--t-sb);
+  font-weight: var(--w-s);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.gact .gs {
+  font-size: var(--t-c1);
+  color: var(--label-3);
+}
+.acoes-mao {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2);
+}
+.acoes-mao .gact {
+  min-width: 0;
+}
+
+/* a grelha de cartões, que enche como a das divisões */
+.tiles {
+  display: grid;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+.tiles.poucas {
+  flex: 0 0 auto;
+}
+.tile {
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: var(--sh-1);
+  transition: background var(--d1) var(--ease-soft);
+}
+.tile.on {
+  background: var(--l2);
+  box-shadow: var(--sh-1), inset 0 0 0 var(--hair) var(--tint-soft);
+}
+.tile-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s2);
+  text-align: left;
+  width: 100%;
+}
+.tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.tile .badge {
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--label-3);
+  transition: background var(--d2) var(--ease-soft), color var(--d2) var(--ease-soft);
+}
+.tile.on .badge {
+  background: var(--tint);
+  color: var(--tint-ink);
+}
+.tile .tn {
+  display: block;
+  font-size: var(--t-sb);
+  font-weight: var(--w-s);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.tile .tr {
+  display: block;
+  font-size: var(--t-ft);
+  color: var(--label-3);
+}
+.tile-cab {
+  display: flex;
+  flex-direction: column;
+}
+.tile.estore {
+  justify-content: space-between;
+}
+.slide.compacto {
+  height: calc(34px * var(--u));
+  border-radius: var(--r2);
+}
+.slide.compacto .tg {
+  font-size: var(--t-ft);
+  padding: 0 var(--s3);
+}
+.piso-seg {
+  flex: 0 0 auto;
+}
+
+/* ── na mão ── */
+.tiles.mao {
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tiles.mao.estores,
+.tiles.mao.clima {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tiles.mao .tile {
+  min-height: calc(132px * var(--u));
+}
+.tiles.mao.clima .tile,
+.tiles.mao.estores .tile {
+  min-height: 0;
 }
 
 /* ═════════ Estados ═════════ */

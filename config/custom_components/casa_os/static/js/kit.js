@@ -17,12 +17,43 @@
   // Tudo o que se liga desliga-se quando a secção sai do ecrã: sem isto,
   // navegar dez vezes deixava dez cópias de cada coisa a ouvir a casa.
 
-  let ligacoes = [];
-  let relogios = [];
+  // Um pedaço de ecrã que se redesenha (um filtro, uma página) tem o seu
+  // escopo: ao redesenhar, larga o que ouvia. Sem isto, cada clique num
+  // filtro deixava mais cartões mortos a ouvir a casa.
+  const geral = { ligacoes: [], relogios: [] };
+  let escopos = [geral];
+  let alvo = geral;
+
+  function escopo() {
+    const e = { ligacoes: [], relogios: [] };
+    escopos.push(e);
+    return e;
+  }
+
+  const soltar = (e) => {
+    e.ligacoes.forEach((u) => u());
+    e.ligacoes = [];
+    e.relogios.forEach((t) => clearInterval(t));
+    e.relogios = [];
+  };
+
+  /** Larga o que o escopo ouvia (mas o escopo continua a poder ser usado). */
+  const esvaziar = (e) => soltar(e);
+
+  /** Tudo o que se ligar dentro de `fn` fica no escopo `e`. */
+  function dentro(e, fn) {
+    const anterior = alvo;
+    alvo = e;
+    try {
+      return fn();
+    } finally {
+      alvo = anterior;
+    }
+  }
 
   /** Chama `pinta` agora e sempre que mudar uma entidade que `interessa`. */
   function bind(node, interessa, pinta) {
-    ligacoes.push(
+    alvo.ligacoes.push(
       HA.subscribe((id) => {
         if (id === "*" || interessa(id)) pinta();
       }),
@@ -39,14 +70,13 @@
 
   function intervalo(fn, ms = 1000) {
     fn();
-    relogios.push(setInterval(fn, ms));
+    alvo.relogios.push(setInterval(fn, ms));
   }
 
   function limpar() {
-    ligacoes.forEach((u) => u());
-    ligacoes = [];
-    relogios.forEach((t) => clearInterval(t));
-    relogios = [];
+    escopos.forEach(soltar);
+    escopos = [geral];
+    alvo = geral;
   }
 
   // ───────── A casa, por divisões ─────────
@@ -70,6 +100,12 @@
     const s = HA.get(AVISOS);
     return (s && s.attributes && s.attributes.calma_desde) || null;
   };
+
+  /** Quantas colunas e linhas para n cartões, sem deixar buracos. */
+  function medidas(n) {
+    const linhas = n <= 3 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : 4;
+    return { linhas, colunas: Math.max(1, Math.ceil(n / linhas)) };
+  }
 
   /** O ícone existe na folha? Senão, a tomada — nunca um buraco no ecrã. */
   const ico = (nome) => (nome && document.getElementById(`i-${nome}`) ? nome : "plug");
@@ -207,7 +243,7 @@
 
   window.KIT = {
     CFG, AVISOS,
-    bind, entre, intervalo, limpar,
+    bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
     slider, interruptor, segmentado, camara,

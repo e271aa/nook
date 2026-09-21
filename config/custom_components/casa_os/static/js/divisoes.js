@@ -103,14 +103,8 @@
 
   // ───────── A grelha que enche ─────────
 
-  /** Quantas colunas e linhas para n cartões, sem deixar buracos. */
-  function medidas(n) {
-    const linhas = n <= 3 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : 4;
-    return { linhas, colunas: Math.max(1, Math.ceil(n / linhas)) };
-  }
-
   function grelha(lista) {
-    const { linhas, colunas } = medidas(lista.length);
+    const { linhas, colunas } = K.medidas(lista.length);
     const node = el('<div class="rooms"></div>');
     node.style.gridTemplateColumns = `repeat(${colunas}, minmax(0, 1fr))`;
     node.style.gridTemplateRows =
@@ -150,14 +144,16 @@
     raiz.appendChild(zona);
 
     let pagina = 0;
+    const esc = K.escopo();
     const desenha = () => {
+      K.esvaziar(esc);
       const todas = divisoes().filter((r) => filtro === "todos" || r.floor === filtro);
       const paginas = Math.max(1, Math.ceil(todas.length / POR_PAGINA));
       pagina = Math.min(pagina, paginas - 1);
       const daPagina = todas.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
 
       zona.innerHTML = "";
-      zona.appendChild(grelha(daPagina));
+      zona.appendChild(K.dentro(esc, () => grelha(daPagina)));
       if (paginas > 1) {
         const pontos = el('<div class="dots" role="tablist"></div>');
         for (let i = 0; i < paginas; i++) {
@@ -208,7 +204,7 @@
     </div>`);
   }
 
-  function climaCard(r) {
+  function climaCard(r, titulo) {
     const id = r.climate;
     const modos = (HA.attr(id, "hvac_modes", []) || []).filter((m) => MODOS[m] && m !== "dry");
     const min = HA.attr(id, "min_temp", 16);
@@ -216,7 +212,7 @@
     const passo = HA.attr(id, "target_temp_step", 0.5) || 0.5;
 
     const node = el(`<div class="card">
-      <div class="sb"><span class="cap">Ar condicionado</span><span class="estado"></span></div>
+      <div class="sb"><span class="cap titulo"></span><span class="estado"></span></div>
       <div class="sb">
         <div><span class="t1 num alvo"></span><span class="hd dim"> °C pedidos</span>
           <div class="ft agora"></div></div>
@@ -226,6 +222,7 @@
         </div>
       </div></div>`);
 
+    node.querySelector(".titulo").textContent = titulo || "Ar condicionado";
     let pedida = HA.attr(id, "temperature", 22);
     let quando = 0;
     let espera = null;
@@ -497,4 +494,7 @@
   }
 
   window.VIEWS.divisoes = divisoesView;
+  // os Controlos reutilizam estas duas peças
+  K.climaCard = climaCard;
+  K.rotuloEstore = rotuloEstore;
 })();
