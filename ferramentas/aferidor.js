@@ -83,7 +83,7 @@ window.AFERIR = (function () {
       }
       if (doc.dataset.screen === "mao" && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.getAttribute("role") === "slider")) {
         // o segmentado é a exceção: com rato fica nos 34 px do desenho
-        if (cx.height < 43.5 && !el.closest(".segc")) r.alvos.push(`${el.className || el.tagName}:${Math.round(cx.height)}`);
+        if (cx.height < 43.5 && !el.closest(".segc") && !el.matches(".sw")) /* o .sw alarga a área de toque com ::before */ r.alvos.push(`${el.className || el.tagName}:${Math.round(cx.height)}`);
       }
     });
     r.contraste.sort((a, b) => a.r - b.r);
