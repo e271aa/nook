@@ -29,44 +29,6 @@
 
   const potencia = (v) => (v === null || v === undefined ? "—" : Math.abs(v) >= 1000 ? `${fmt.n(v / 1000, 2)} kW` : `${fmt.n(v)} W`);
 
-  // ───────── O fluxo de agora ─────────
-
-  function fluxo() {
-    const node = el(`<div class="flow">
-      <div class="node sol"><span class="rg">${icon("solar")}</span><span class="nv num"></span><span class="nk">Solar</span></div>
-      <span class="wire s"><i></i></span>
-      <div class="node hs"><span class="rg">${icon("house-power")}</span><span class="nv num"></span><span class="nk">Casa</span></div>
-      <span class="wire b"><i></i></span>
-      <div class="node bt"><span class="rg">${icon("battery")}</span><span class="nv num"></span><span class="nk"></span></div>
-      <span class="wire g"><i></i></span>
-      <div class="node gr"><span class="rg">${icon("grid")}</span><span class="nv num"></span><span class="nk"></span></div>
-    </div>`);
-    const [sol, casa, bat, rede] = node.querySelectorAll(".node");
-    const [fio1, fio2, fio3] = node.querySelectorAll(".wire");
-
-    return bind(node, entre([P.home, P.solar, P.grid, P.battery, E.battery_soc]), () => {
-      const s = watts(P.solar) || 0;
-      const h = watts(P.home) || 0;
-      const g = watts(P.grid) || 0;
-      const b = watts(P.battery) || 0;
-      const soc = watts(E.battery_soc);
-
-      sol.querySelector(".nv").textContent = potencia(s);
-      sol.classList.toggle("off", s < 20);
-      casa.querySelector(".nv").textContent = potencia(h);
-      bat.querySelector(".nv").textContent = soc === null ? "—" : `${fmt.n(soc)} %`;
-      bat.querySelector(".nk").textContent = b > 20 ? "Bateria · a carregar" : b < -20 ? "Bateria · a dar à casa" : "Bateria";
-      bat.classList.toggle("off", Math.abs(b) < 20);
-      rede.querySelector(".nv").textContent = potencia(Math.abs(g));
-      rede.querySelector(".nk").textContent = g > 20 ? "Rede · a comprar" : g < -20 ? "Rede · a vender" : "Rede";
-      rede.classList.toggle("off", Math.abs(g) < 20);
-
-      fio1.classList.toggle("d", s < 20); // o sol alimenta a casa
-      fio2.classList.toggle("d", Math.abs(b) < 20); // a casa e a bateria trocam
-      fio3.classList.toggle("d", Math.abs(g) < 20); // a bateria e a rede
-    });
-  }
-
   /** A frase que resume o momento: o que se lê primeiro. */
   function frase() {
     const s = watts(P.solar) || 0;
@@ -178,25 +140,47 @@
 
   // ───────── Vista ─────────
 
+  // "Agora" é o fluxo instantâneo; os outros três são o histórico
+  const MODOS = [{ id: "agora", nome: "Agora" }, ...PERIODOS];
+
   function energia(args) {
-    const periodo = PERIODOS.find((p) => p.id === (args && args[0])) || PERIODOS[2];
+    const pedido = args && args[0];
+    const periodo = PERIODOS.find((p) => p.id === pedido);
+    return periodo ? relatorio(periodo) : agora();
+  }
+
+  function cabecalho(ativo) {
     const naMao = ecra() === "mao";
-
-    const raiz = el(`<div class="${naMao ? "scroll " : ""}pad col grow energia"></div>`);
-
     const sub = el('<div class="ft"></div>');
     const head = el('<div class="head"><div><div class="t2">Energia</div></div></div>');
     head.firstElementChild.appendChild(sub);
     bind(sub, entre([P.home, P.solar, P.grid, P.battery]), () => (sub.textContent = frase()));
-
-    const seg = K.segmentado(PERIODOS.map((p) => p.nome), PERIODOS.indexOf(periodo), (i) => {
-      location.hash = `#/energia/${PERIODOS[i].id}`;
+    const seg = K.segmentado(MODOS.map((m) => m.nome), MODOS.findIndex((m) => m.id === ativo), (i) => {
+      location.hash = i === 0 ? "#/energia" : `#/energia/${MODOS[i].id}`;
     }, { cheio: naMao });
+    return { head, seg };
+  }
+
+  function agora() {
+    const naMao = ecra() === "mao";
+    const raiz = el(`<div class="${naMao ? "scroll " : ""}pad col grow energia"></div>`);
+    const { head, seg } = cabecalho("agora");
     if (!naMao) head.appendChild(seg);
     raiz.appendChild(head);
     if (naMao) raiz.appendChild(seg);
+    raiz.appendChild(K.fluxoAgora());
+    return raiz;
+  }
 
-    raiz.appendChild(fluxo());
+  function relatorio(periodo) {
+    const naMao = ecra() === "mao";
+
+    const raiz = el(`<div class="${naMao ? "scroll " : ""}pad col grow energia"></div>`);
+
+    const { head, seg } = cabecalho(periodo.id);
+    if (!naMao) head.appendChild(seg);
+    raiz.appendChild(head);
+    if (naMao) raiz.appendChild(seg);
 
     const grafico = graficoCard(periodo);
     let circuitos = el('<div class="card circuitos"><span class="cap">Por circuito</span></div>');

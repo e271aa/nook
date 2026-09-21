@@ -1548,95 +1548,6 @@ button.li:active {
 .meio > .col {
   min-height: 0;
 }
-.flow {
-  background: var(--l1);
-  border-radius: var(--r4);
-  padding: var(--s5);
-  box-shadow: var(--sh-1);
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  flex: 0 0 auto;
-}
-.node {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(6px * var(--u));
-  text-align: center;
-}
-.node .rg {
-  width: calc(58px * var(--u));
-  height: calc(58px * var(--u));
-  border-radius: var(--rp);
-  display: grid;
-  place-items: center;
-  background: var(--fill);
-  color: var(--label-2);
-}
-.node .nv {
-  font-size: var(--t-hd);
-  font-weight: var(--w-s);
-  letter-spacing: var(--tr-tight);
-}
-.node .nk {
-  font-size: var(--t-c1);
-  color: var(--label-3);
-}
-.node.sol .rg {
-  background: color-mix(in oklab, var(--solar) 18%, transparent);
-  color: var(--solar);
-}
-.node.hs .rg {
-  background: var(--tint-soft);
-  color: var(--tint);
-}
-.node.bt .rg {
-  background: color-mix(in oklab, var(--batt) 18%, transparent);
-  color: var(--batt);
-}
-.node.off {
-  opacity: 0.42;
-}
-/* o fio é uma linha de traços que andam quando há energia a passar */
-.wire {
-  flex: 0 0 auto;
-  width: calc(52px * var(--u));
-  height: calc(3px * var(--u));
-  border-radius: var(--rp);
-  background: var(--fill-2);
-  position: relative;
-  overflow: hidden;
-}
-.wire i {
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 18px);
-  mask-image: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 18px);
-  animation: march 1.1s linear infinite;
-}
-.wire.s {
-  color: var(--solar);
-}
-.wire.b {
-  color: var(--batt);
-}
-.wire.g {
-  color: var(--grid);
-}
-.wire.d i {
-  animation: none;
-  opacity: 0.25;
-}
-@keyframes march {
-  to {
-    transform: translateX(18px);
-  }
-}
-
 .chart {
   background: var(--l1);
   border-radius: var(--r4);
@@ -1733,19 +1644,6 @@ button.li:active {
 .totais .stat .v {
   font-size: calc(21px * var(--u));
 }
-[data-screen="mao"] .energia .flow {
-  padding: var(--s4) var(--s3);
-}
-[data-screen="mao"] .energia .node .rg {
-  width: calc(42px * var(--u));
-  height: calc(42px * var(--u));
-}
-[data-screen="mao"] .energia .node .nv {
-  font-size: var(--t-sb);
-}
-[data-screen="mao"] .energia .wire {
-  width: calc(14px * var(--u));
-}
 [data-screen="mao"] .energia .meio {
   flex-direction: column;
   flex: 0 0 auto;
@@ -1767,6 +1665,190 @@ button.li:active {
   background: var(--l1);
   border-radius: var(--r3);
   padding: var(--s4);
+}
+
+/* ── o fluxo de agora ──
+   Fontes à esquerda, a casa ao meio, os circuitos à direita; as linhas vão
+   por baixo, num SVG do tamanho do palco. */
+
+.agora-fluxo {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.palco-fluxo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 1.3fr);
+  column-gap: calc(64px * var(--u));
+  align-items: center;
+}
+.palco-fluxo > .fios {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.palco-fluxo > :not(.fios) {
+  position: relative; /* por cima das linhas */
+}
+.fio {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-width var(--d2) var(--ease), opacity var(--d2) var(--ease-soft);
+}
+.fio.parado {
+  stroke-dasharray: 2 5;
+}
+
+.col-fontes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+.fonte {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s3) var(--s4);
+  box-shadow: var(--sh-1);
+  transition: opacity var(--d2) var(--ease-soft);
+}
+.fonte.off {
+  opacity: 0.55;
+}
+.fonte .badge,
+.nocasa .badge {
+  width: calc(46px * var(--u));
+  height: calc(46px * var(--u));
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.fonte.sol .badge {
+  background: color-mix(in oklab, var(--solar) 20%, transparent);
+  color: var(--solar);
+}
+.fonte.rede .badge {
+  background: color-mix(in oklab, var(--grid) 20%, transparent);
+  color: var(--grid);
+}
+.fonte.bat .badge {
+  background: color-mix(in oklab, var(--batt) 20%, transparent);
+  color: var(--batt);
+}
+.fonte .v {
+  font-size: var(--t-hd);
+  font-weight: var(--w-s);
+  letter-spacing: var(--tr-tight);
+  line-height: 1.1;
+}
+.fonte .k {
+  font-size: var(--t-ft);
+  color: var(--label);
+}
+.fonte .s {
+  font-size: var(--t-c1);
+  color: var(--label-2);
+}
+
+.col-casa {
+  display: flex;
+  justify-content: center;
+}
+.nocasa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s2);
+  background: var(--l1);
+  border-radius: var(--r5);
+  padding: var(--s5) var(--s4);
+  box-shadow: var(--sh-1), inset 0 0 0 var(--hair) var(--tint-soft);
+  width: 100%;
+}
+.nocasa .badge {
+  width: calc(64px * var(--u));
+  height: calc(64px * var(--u));
+  background: var(--tint-soft);
+  color: var(--tint);
+}
+.nocasa .v {
+  font-size: var(--t-t1);
+  font-weight: var(--w-b);
+  letter-spacing: var(--tr-tighter);
+  line-height: 1;
+}
+.nocasa .k {
+  font-size: var(--t-ft);
+  color: var(--label-2);
+}
+
+.col-circ {
+  gap: 0;
+  padding: var(--s3) var(--s4);
+  align-self: stretch;
+  justify-content: space-evenly;
+}
+.circ-agora {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: calc(46px * var(--u));
+  transition: opacity var(--d2) var(--ease-soft);
+}
+.circ-agora.off {
+  opacity: 0.5;
+}
+.circ-agora .ig {
+  color: var(--tint);
+  display: grid;
+  place-items: center;
+}
+.circ-agora.off .ig {
+  color: var(--label-3);
+}
+.circ-agora .nm {
+  font-size: var(--t-sb);
+}
+.circ-agora .vl {
+  font-size: var(--t-sb);
+  font-weight: var(--w-s);
+}
+.circ-agora .meter {
+  margin-top: calc(5px * var(--u));
+}
+.circ-agora .meter i {
+  background: var(--tint);
+  transition: width var(--d3) var(--ease);
+}
+
+/* na mão: fontes lado a lado em cima, a casa, e os circuitos por baixo */
+.agora-fluxo.mao .palco-fluxo {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: calc(40px * var(--u));
+}
+.agora-fluxo.mao .col-fontes {
+  flex-direction: row;
+  gap: var(--s2);
+}
+.agora-fluxo.mao .fonte {
+  flex: 1;
+  flex-direction: column;
+  text-align: center;
+  padding: var(--s3) var(--s2);
+  gap: var(--s2);
+}
+.agora-fluxo.mao .fonte .v {
+  font-size: var(--t-bd);
 }
 
 /* ═════════ Rotina ═════════ */

@@ -333,37 +333,44 @@
       {
         "name": "Climatização",
         "entity": "sensor.energia_climatizacao",
-        "icon": "ac"
+        "icon": "ac",
+        "potencia": "sensor.potencia_climatizacao"
       },
       {
         "name": "Cozinha",
         "entity": "sensor.energia_cozinha",
-        "icon": "stove"
+        "icon": "stove",
+        "potencia": "sensor.potencia_cozinha"
       },
       {
         "name": "Águas quentes",
         "entity": "sensor.energia_aguas_quentes",
-        "icon": "water"
+        "icon": "water",
+        "potencia": "sensor.potencia_aguas_quentes"
       },
       {
         "name": "Carregador VE",
         "entity": "sensor.energia_carregador_ve",
-        "icon": "ev"
+        "icon": "ev",
+        "potencia": "sensor.potencia_carregador_ve"
       },
       {
         "name": "Lavandaria",
         "entity": "sensor.energia_lavandaria",
-        "icon": "washer"
+        "icon": "washer",
+        "potencia": "sensor.potencia_lavandaria"
       },
       {
         "name": "Iluminação",
         "entity": "sensor.energia_iluminacao",
-        "icon": "bulb"
+        "icon": "bulb",
+        "potencia": "sensor.potencia_iluminacao"
       },
       {
         "name": "Outros",
         "entity": "sensor.energia_outros",
-        "icon": "plug"
+        "icon": "plug",
+        "potencia": "sensor.potencia_outros"
       }
     ],
     "tariff": 0.1494,
