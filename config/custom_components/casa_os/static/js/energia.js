@@ -391,25 +391,54 @@
     const strip = el('<div class="strip totais"></div>');
 
     // no telemóvel as duas páginas são duas secções seguidas; na parede, uma de cada vez
+    const graficos = {};
+    const dadosG = {};
     const pontos = el('<div class="dots" role="tablist"></div>');
+    const anterior = el(`<button class="iconbtn" aria-label="Página anterior">${icon("back", "ic-s")}</button>`);
+    const seguinte = el(`<button class="iconbtn" aria-label="Página seguinte">${icon("chev", "ic-s")}</button>`);
     const mostra = (i) => {
+      i = Math.max(0, Math.min(1, i));
       paginaAtual = i;
       pag1.hidden = i !== 0;
       pag2.hidden = i !== 1;
+      anterior.disabled = i === 0;
+      seguinte.disabled = i === 1;
       [...pontos.children].forEach((b, j) => b.setAttribute("aria-selected", String(j === i)));
+      // um gráfico desenhado às escuras não tem tamanho: desenha-se de novo quando aparece
+      setTimeout(() => {
+        for (const k in graficos) {
+          const d = dadosG[k];
+          if (d) d.length === 2 ? graficos[k].atualizar(d[0], d[1]) : graficos[k].atualizar(d[0]);
+        }
+      }, 0);
     };
     ["Consumo e produção", "Fluxo de energia"].forEach((nome, i) => {
       const b = el(`<button role="tab" aria-label="${esc(nome)}"></button>`);
       b.addEventListener("click", () => mostra(i));
       pontos.appendChild(b);
     });
+    anterior.addEventListener("click", () => mostra(paginaAtual - 1));
+    seguinte.addEventListener("click", () => mostra(paginaAtual + 1));
+    const nav = el('<div class="row pag-nav"></div>');
+    nav.append(anterior, pontos, seguinte);
     if (naMao) raiz.append(pag1, pag2, strip);
     else {
-      raiz.append(pag1, pag2, pontos, strip);
+      raiz.append(pag1, pag2, nav, strip);
       mostra(paginaAtual);
+      // no toque, deslizar muda de página (só na horizontal, e não sobre o gráfico que faz zoom)
+      let x0 = null, y0 = 0;
+      raiz.addEventListener("touchstart", (e) => {
+        x0 = e.target.closest(".gf-svg") ? null : e.touches[0].clientX;
+        y0 = e.touches[0].clientY;
+      }, { passive: true });
+      raiz.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(e.changedTouches[0].clientY - y0)) mostra(paginaAtual + (dx < 0 ? 1 : -1));
+        x0 = null;
+      }, { passive: true });
     }
 
-    const graficos = {};
     const carrega = async () => {
       try {
         const stats = await ler(periodo);
@@ -434,6 +463,7 @@
         };
         const poe = (chave, cartao, dados) => {
           const caixa = cartao.querySelector(".gf-caixa");
+          dadosG[chave] = [dados];
           if (graficos[chave]) graficos[chave].atualizar(dados);
           else graficos[chave] = K.graficoSerie(caixa, dados);
         };
@@ -445,8 +475,11 @@
         const caixaFluxo = fluxo.querySelector(".gf-caixa");
         if (!fontes.length || !destinos.length) {
           caixaFluxo.innerHTML = '<div class="empty-mini">Sem consumo registado neste período.</div>';
-        } else if (graficos.fluxo) graficos.fluxo.atualizar(fontes, destinos);
-        else graficos.fluxo = K.sankey(caixaFluxo, fontes, destinos);
+        } else {
+          dadosG.fluxo = [fontes, destinos];
+          if (graficos.fluxo) graficos.fluxo.atualizar(fontes, destinos);
+          else graficos.fluxo = K.sankey(caixaFluxo, fontes, destinos);
+        }
 
         const novo = circuitosCard(stats);
         novo.style.flex = "1";
