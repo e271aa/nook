@@ -247,25 +247,184 @@
 
   // ───────── Câmaras ─────────
 
+  const CHAVE_ORDEM = () => `casa_os_cams_ordem_${ecra()}`;
+  const PROPORCAO_LINHAS = { braco: [60, 40], sala: [60, 40] };
+  const PROPORCAO_COLUNAS = { braco: [62, 38], sala: [62, 38] };
+
+  function lerOrdem() {
+    try {
+      const v = JSON.parse(localStorage.getItem(CHAVE_ORDEM()) || "null");
+      return Array.isArray(v) ? v : null;
+    } catch (e) {
+      return null; // modo privado, ou lixo guardado
+    }
+  }
+  function gravarOrdem(ids) {
+    try {
+      if (ids) localStorage.setItem(CHAVE_ORDEM(), JSON.stringify(ids));
+      else localStorage.removeItem(CHAVE_ORDEM());
+    } catch (e) {
+      /* modo privado */
+    }
+  }
+
+  /**
+   * Agarrar numa câmara e largá-la noutra troca-as. Com o rato basta arrastar;
+   * com o dedo é preciso segurar meio segundo primeiro, senão roubava o toque
+   * normal, que abre a câmara em ecrã cheio. Um arrasto que não chega a lado
+   * nenhum devolve a câmara ao sítio.
+   */
+  function arrastavel(tile, { tiles, troca }) {
+    let ini = null;
+    let ativo = false;
+    let timer = null;
+    let alvo = null;
+
+    const limpar = () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", fim);
+      window.removeEventListener("pointercancel", fim);
+      tile.classList.remove("a-arrastar");
+      tile.style.transform = "";
+      tiles().forEach((t) => t.classList.remove("alvo-troca"));
+      document.body.style.userSelect = "";
+      ini = null;
+      ativo = false;
+      alvo = null;
+    };
+    const comecar = () => {
+      ativo = true;
+      tile.classList.add("a-arrastar");
+      document.body.style.userSelect = "none";
+    };
+    const procura = (e) => {
+      const sob = document.elementFromPoint(e.clientX, e.clientY);
+      const t = sob && sob.closest(".camtile");
+      alvo = t && t !== tile && tiles().includes(t) ? t : null;
+      tiles().forEach((x) => x.classList.toggle("alvo-troca", x === alvo));
+    };
+    function mover(e) {
+      if (!ini) return;
+      const dx = e.clientX - ini.x;
+      const dy = e.clientY - ini.y;
+      if (!ativo) {
+        const d = Math.hypot(dx, dy);
+        if (ini.tipo === "mouse") {
+          if (d > 6) comecar();
+        } else if (d > 10) {
+          limpar(); // mexeu antes de os 0,4 s: não é um "segurar", é outra coisa
+          return;
+        }
+      }
+      if (ativo) {
+        tile.style.transform = `translate(${dx}px, ${dy}px)`;
+        procura(e);
+      }
+    }
+    function fim() {
+      const trocou = ativo && alvo;
+      const arrastou = ativo;
+      const destino = alvo;
+      limpar();
+      if (arrastou) {
+        tile.__arrastou = true; // o clique que vem a seguir ao arrasto não abre a câmara
+        setTimeout(() => (tile.__arrastou = false), 0);
+      }
+      if (trocou) troca(tile, destino);
+    }
+
+    tile.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || ini) return;
+      ini = { x: e.clientX, y: e.clientY, tipo: e.pointerType };
+      if (e.pointerType !== "mouse") timer = setTimeout(comecar, 380);
+      window.addEventListener("pointermove", mover);
+      window.addEventListener("pointerup", fim);
+      window.addEventListener("pointercancel", fim);
+    });
+    tile.addEventListener(
+      "click",
+      (e) => {
+        if (tile.__arrastou) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      },
+      true,
+    );
+  }
+
   function mosaico() {
-    const cams = (CFG.cameras || []).slice(0, MAX_CAMARAS).map((c) => ({
+    const naMaoAgora = ecra() === "mao";
+    let cams = (CFG.cameras || []).slice(0, MAX_CAMARAS).map((c) => ({
       ...c, sala: salas().find((r) => r.camera === c.entity),
     }));
-    // a que está a ver movimento agora vai para a grande
-    cams.sort((a, b) => Number(HA.isOn(b.sala && b.sala.motion)) - Number(HA.isOn(a.sala && a.sala.motion)));
 
-    const naMaoAgora = ecra() === "mao";
+    // A ordem que a pessoa escolheu manda; sem ela, a que vê movimento vai para a grande.
+    const guardada = naMaoAgora ? null : lerOrdem();
+    if (guardada) {
+      const pos = (c) => (guardada.includes(c.entity) ? guardada.indexOf(c.entity) : 99);
+      cams.sort((a, b) => pos(a) - pos(b));
+    } else {
+      cams.sort((a, b) => Number(HA.isOn(b.sala && b.sala.motion)) - Number(HA.isOn(a.sala && a.sala.motion)));
+    }
+
     const node = el(`<div class="mosaico${naMaoAgora ? " mao" : ""}"></div>`);
     const resto = Math.max(1, cams.length - 1);
     node.style.gridTemplateColumns = `repeat(${naMaoAgora ? Math.min(resto, 2) : Math.min(resto, 4)}, minmax(0, 1fr))`;
-    // na parede as linhas repartem a altura; na mão cada câmara tem a sua proporção
-    if (!naMaoAgora) node.style.gridTemplateRows = cams.length > 1 ? "minmax(0, 1.5fr) minmax(0, 1fr)" : "minmax(0, 1fr)";
-    cams.forEach((c, i) => {
-      const t = K.camara({ entidade: c.entity, nome: c.name, grande: i === 0, movimento: c.sala && c.sala.motion });
-      if (i === 0) t.style.gridColumn = "1 / -1";
-      node.appendChild(t);
-    });
-    if (!cams.length) node.appendChild(el('<div class="empty-mini">Sem câmaras nesta casa.</div>'));
+    const varias = cams.length > 1;
+
+    // na parede: câmara grande em cima, pequenas em baixo, e uma pega entre as duas linhas
+    if (!naMaoAgora) {
+      node.style.gridTemplateRows = varias
+        ? "minmax(0, var(--r0, 60fr)) calc(14px * var(--u)) minmax(0, var(--r1, 40fr))"
+        : "minmax(0, 1fr)";
+    }
+
+    const items = cams.map((c) => ({
+      c,
+      t: K.camara({ entidade: c.entity, nome: c.name, grande: false, movimento: c.sala && c.sala.motion }),
+    }));
+    items.forEach((it) => node.appendChild(it.t));
+
+    /** Põe cada câmara no seu sítio, pela ordem atual. */
+    const coloca = () => {
+      items.forEach((it, i) => {
+        if (naMaoAgora) {
+          it.t.style.gridColumn = i === 0 ? "1 / -1" : "";
+          it.t.style.order = String(i);
+        } else {
+          it.t.style.gridRow = i === 0 ? "1" : "3";
+          it.t.style.gridColumn = i === 0 ? "1 / -1" : String(i);
+          if (!varias) it.t.style.gridRow = "1";
+        }
+      });
+    };
+    coloca();
+
+    if (!items.length) node.appendChild(el('<div class="empty-mini">Sem câmaras nesta casa.</div>'));
+
+    if (!naMaoAgora && varias) {
+      const tiles = () => items.map((it) => it.t);
+      const troca = (a, b) => {
+        const ia = items.findIndex((it) => it.t === a);
+        const ib = items.findIndex((it) => it.t === b);
+        [items[ia], items[ib]] = [items[ib], items[ia]];
+        coloca();
+        gravarOrdem(items.map((it) => it.c.entity));
+      };
+      items.forEach((it) => arrastavel(it.t, { tiles, troca }));
+
+      K.linhasArrastaveis(node, {
+        chave: "vigilancia", padrao: PROPORCAO_LINHAS,
+        colunas: () => [items[0].t, items[1].t], // a que está em cima e uma das de baixo, sejam quais forem agora
+      });
+      // dois toques na pega repõem as proporções e a ordem
+      node.querySelector(".colgrip.linha").addEventListener("dblclick", () => {
+        gravarOrdem(null);
+        location.reload();
+      });
+    }
     return node;
   }
 
@@ -273,7 +432,8 @@
 
   function subtitulo() {
     const n = (CFG.cameras || []).length;
-    return `${fmt.n(n)} ${n === 1 ? "câmara" : "câmaras"} ao vivo`;
+    const dica = ecra() !== "mao" && n > 1 ? " · arrasta uma câmara para a trocar de sítio" : "";
+    return `${fmt.n(n)} ${n === 1 ? "câmara" : "câmaras"} ao vivo${dica}`;
   }
 
   function vigilancia() {
@@ -300,10 +460,13 @@
     raiz.appendChild(head);
 
     const corpo = el('<div class="vig"></div>');
-    corpo.appendChild(mosaico());
+    const mos = mosaico();
     const lado = el('<div class="lado"></div>');
     lado.append(cartaoFecho(), diario({ cabem: true }));
-    corpo.appendChild(lado);
+    mos.style.gridColumn = "1";
+    lado.style.gridColumn = "3";
+    corpo.append(mos, lado);
+    K.colunasArrastaveis(corpo, { chave: "vigilancia", padrao: PROPORCAO_COLUNAS, colunas: [mos, lado] });
     raiz.appendChild(corpo);
     return raiz;
   }

@@ -286,6 +286,7 @@
   // — por tipo de ecrã, porque a parede e a TV não querem as mesmas proporções.
 
   const MIN_COLUNA_PX = 190; // abaixo disto uma coluna deixa de caber o que tem
+  const MIN_LINHA_PX = 96; // e uma linha de câmaras deixa de se ver
 
   function lerLarguras(k, n) {
     try {
@@ -302,15 +303,19 @@
    * `padrao` diz as proporções por tipo de ecrã; sem entrada para o ecrã, não
    * há pegas (é o caso do telemóvel, onde as colunas se empilham).
    */
-  function colunasArrastaveis(painel, { chave, padrao, colunas }) {
+  function colunasArrastaveis(painel, { chave, padrao, colunas, eixo = "x" }) {
+    const vertical = eixo === "y"; // as mesmas pegas, para linhas em vez de colunas
     const ecraAtual = ecra();
     const base = padrao[ecraAtual];
     if (!base) return;
-    const n = colunas.length;
-    const k = `casa_os_cols_${chave}_${ecraAtual}`;
+    // as colunas podem ser uma função: quem as troca de sítio (as câmaras) muda quem é a primeira
+    const elems = () => (typeof colunas === "function" ? colunas() : colunas);
+    const n = elems().length;
+    const k = `casa_os_${vertical ? "rows" : "cols"}_${chave}_${ecraAtual}`;
     let larguras = lerLarguras(k, n) || base.slice();
 
-    const aplicar = () => larguras.forEach((v, i) => painel.style.setProperty(`--c${i}`, `${v}fr`));
+    const medida = (c) => c.getBoundingClientRect()[vertical ? "height" : "width"];
+    const aplicar = () => larguras.forEach((v, i) => painel.style.setProperty(`--${vertical ? "r" : "c"}${i}`, `${v}fr`));
     const guardar = () => {
       try {
         localStorage.setItem(k, JSON.stringify(larguras.map((v) => Math.round(v * 10) / 10)));
@@ -323,9 +328,9 @@
     // o mínimo é em píxeis, não em percentagem: 20 % de uma TV e 20 % de um
     // tablet não são a mesma coluna
     const minPct = () => {
-      const util = colunas.reduce((t, c) => t + c.getBoundingClientRect().width, 0);
+      const util = elems().reduce((t, c) => t + medida(c), 0);
       const soma = larguras.reduce((t, v) => t + v, 0);
-      return util > 0 ? (MIN_COLUNA_PX / util) * soma : 14;
+      return util > 0 ? ((vertical ? MIN_LINHA_PX : MIN_COLUNA_PX) / util) * soma : 14;
     };
 
     /** O que uma coluna ganha, a vizinha perde. `de` é o ponto de partida. */
@@ -340,10 +345,16 @@
     };
 
     for (let i = 0; i < n - 1; i++) {
-      const pega = el(`<div class="colgrip" role="separator" tabindex="0" aria-orientation="vertical"
-        aria-label="Largura das colunas ${i + 1} e ${i + 2}"><span></span></div>`);
-      pega.style.gridColumn = String(2 * i + 2);
-      pega.style.gridRow = "1";
+      const pega = el(`<div class="colgrip${vertical ? " linha" : ""}" role="separator" tabindex="0"
+        aria-orientation="${vertical ? "horizontal" : "vertical"}"
+        aria-label="${vertical ? "Altura" : "Largura"} de ${i + 1} e ${i + 2}"><span></span></div>`);
+      if (vertical) {
+        pega.style.gridRow = String(2 * i + 2);
+        pega.style.gridColumn = "1 / -1";
+      } else {
+        pega.style.gridColumn = String(2 * i + 2);
+        pega.style.gridRow = "1";
+      }
 
       let arrastar = false;
       let x0 = 0;
@@ -355,7 +366,7 @@
       const seguir = (e) => {
         if (!arrastar) return;
         const soma = de.reduce((t, v) => t + v, 0);
-        mover(i, ((e.clientX - x0) / util) * soma, de);
+        mover(i, (((vertical ? e.clientY : e.clientX) - x0) / util) * soma, de);
       };
       const largar = () => {
         if (!arrastar) return;
@@ -369,9 +380,9 @@
       };
       pega.addEventListener("pointerdown", (e) => {
         arrastar = true;
-        x0 = e.clientX;
+        x0 = vertical ? e.clientY : e.clientX;
         de = larguras.slice();
-        util = colunas.reduce((t, c) => t + c.getBoundingClientRect().width, 0);
+        util = elems().reduce((t, c) => t + medida(c), 0);
         pega.classList.add("dragging");
         document.body.style.userSelect = "none";
         window.addEventListener("pointermove", seguir);
@@ -383,8 +394,10 @@
       // teclado: as setas afinam, Home repõe
       pega.addEventListener("keydown", (e) => {
         const passo = e.shiftKey ? 5 : 2;
-        if (e.key === "ArrowLeft") mover(i, -passo, larguras.slice());
-        else if (e.key === "ArrowRight") mover(i, passo, larguras.slice());
+        const menos = vertical ? "ArrowUp" : "ArrowLeft";
+        const mais = vertical ? "ArrowDown" : "ArrowRight";
+        if (e.key === menos) mover(i, -passo, larguras.slice());
+        else if (e.key === mais) mover(i, passo, larguras.slice());
         else if (e.key === "Home") {
           larguras = base.slice();
           aplicar();
@@ -402,6 +415,9 @@
       painel.appendChild(pega);
     }
   }
+
+  /** As mesmas pegas, para linhas. */
+  const linhasArrastaveis = (painel, opcoes) => colunasArrastaveis(painel, { ...opcoes, eixo: "y" });
 
   /** Está sem resposta? (só quando a casa já falou connosco pelo menos uma vez) */
   const semResposta = (id) => !!id && HA.count() > 0 && HA.isUnavailable(id);
@@ -443,6 +459,6 @@
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
-    slider, interruptor, segmentado, camara, ampliar, linha, cabem, semResposta, marcarResposta, colunasArrastaveis,
+    slider, interruptor, segmentado, camara, ampliar, linha, cabem, semResposta, marcarResposta, colunasArrastaveis, linhasArrastaveis,
   };
 })();
