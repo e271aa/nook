@@ -78,6 +78,155 @@
     }
   }
 
+  /* ───────── Quiosque ─────────
+   * Um painel de parede não é um site aberto num tablet: está sempre ligado,
+   * ninguém lhe toca a maior parte do dia, e quem passa à frente quer ler, não
+   * mexer. Daí três comportamentos:
+   *
+   *   presença — de longe o veredicto ocupa o ecrã e não há nada tocável a
+   *              competir; com alguém à frente encolhe e as teclas aparecem.
+   *              Não se troca de ecrã: reescala-se o mesmo.
+   *   regresso — passado um tempo sem ninguém, volta sozinho ao Início. Quem
+   *              chega encontra sempre a mesma coisa.
+   *   repouso  — de noite e sem ninguém, o ecrã apaga-se até ao essencial.
+   *              O primeiro toque acorda-o e não faz mais nada.
+   *
+   * Na mão nada disto se aplica (o telemóvel está sempre "perto") e na TV o
+   * painel é para ser visto de longe, sempre.
+   */
+  const Q = CFG.quiosque || {};
+  const PERTO_S = Q.perto_segundos ?? 45;
+  const VOLTAR_S = Q.voltar_ao_inicio_segundos ?? 180;
+  const REPOUSO_S = (Q.repouso_minutos ?? 10) * 60;
+  const SO_DE_NOITE = Q.repouso_so_de_noite !== false;
+
+  let ultimoToque = Date.now();
+  let aDescansar = false;
+  let repousoPedido = false; // posto a descansar à mão, pelo menu
+  let wakeLock = null;
+  let wakePorque = "por tentar";
+
+  const raiz = document.documentElement;
+  const ecraAtual = () => raiz.getAttribute("data-screen");
+  const eNoite = () => (HA.get("sun.sun") || {}).state === "below_horizon";
+
+  function marca(atr, valor) {
+    if (raiz.getAttribute(atr) !== valor) raiz.setAttribute(atr, valor);
+  }
+
+  function acordar() {
+    ultimoToque = Date.now();
+    repousoPedido = false;
+    if (aDescansar) {
+      aDescansar = false;
+      marca("data-repouso", "nao");
+    }
+    avaliar();
+  }
+
+  function avaliar() {
+    const ecra = ecraAtual();
+    if (ecra === "mao") {
+      marca("data-presenca", "perto"); // na mão está-se sempre à frente
+      marca("data-repouso", "nao");
+      return;
+    }
+    if (ecra === "sala") {
+      marca("data-presenca", "longe"); // a TV vê-se do sofá, sempre
+      marca("data-repouso", "nao");
+      return;
+    }
+
+    const movimento = Q.presenca ? HA.isOn(Q.presenca) : false;
+    const desde = (Date.now() - ultimoToque) / 1000;
+    const perto = movimento || desde < PERTO_S;
+    marca("data-presenca", perto ? "perto" : "longe");
+
+    if (!perto && desde > VOLTAR_S && parseHash().sec !== "casa") go("casa");
+
+    // o repouso pedido à mão vale até alguém acordar o painel
+    const descansar = repousoPedido || (!perto && desde > REPOUSO_S && (!SO_DE_NOITE || eNoite()));
+    if (descansar !== aDescansar) {
+      aDescansar = descansar;
+      marca("data-repouso", descansar ? "sim" : "nao");
+    }
+  }
+
+  /** Num painel de parede o ecrã não se pode apagar sozinho. */
+  async function manterAcordado() {
+    if (ecraAtual() === "mao") return;
+    if (!("wakeLock" in navigator)) {
+      wakePorque = "este browser não sabe";
+      return;
+    }
+    if (!window.isSecureContext) {
+      // só em HTTPS ou em localhost; num tablet de parede é o que obriga a
+      // abrir o painel por https://
+      wakePorque = "o painel tem de ser aberto por HTTPS";
+      return;
+    }
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakePorque = "";
+      wakeLock.addEventListener("release", () => (wakeLock = null));
+    } catch (e) {
+      wakeLock = null;
+      wakePorque = "o sistema recusou";
+    }
+  }
+
+  function arrancarQuiosque() {
+    // o primeiro toque num ecrã a dormir acorda-o e não faz mais nada
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (!aDescansar) {
+          ultimoToque = Date.now();
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        acordar();
+      },
+      true,
+    );
+    ["keydown", "wheel", "touchstart"].forEach((ev) =>
+      document.addEventListener(ev, acordar, { capture: true, passive: true }),
+    );
+
+    if (Q.presenca) {
+      HA.subscribe((id) => {
+        if (id === Q.presenca && HA.isOn(id)) acordar();
+        else if (id === Q.presenca) avaliar();
+      });
+    }
+
+    setInterval(avaliar, 2000);
+    avaliar();
+    manterAcordado();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        manterAcordado();
+        acordar();
+      }
+    });
+  }
+
+  const emEcraCheio = () => !!document.fullscreenElement;
+  function trocarEcraCheio() {
+    if (emEcraCheio()) document.exitFullscreen();
+    else raiz.requestFullscreen && raiz.requestFullscreen().catch(() => {});
+  }
+
+  function descansarJa() {
+    if (ecraAtual() === "mao") return;
+    repousoPedido = true;
+    ultimoToque = 0; // como se ninguém lhe tocasse há horas
+    aDescansar = true;
+    marca("data-presenca", "longe");
+    marca("data-repouso", "sim");
+  }
+
   // ───────── Rotas ─────────
 
   const sectionOf = (id) => SECTIONS.find((s) => s.id === id);
@@ -193,6 +342,33 @@
     temas.appendChild(grelha);
     drawer.appendChild(temas);
 
+    // o que é do ecrã, não da casa
+    if (ecra !== "mao") {
+      const bloco = el('<div></div>');
+      bloco.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Ecrã</div>'));
+
+      const cheio = el(`<button class="mrow">${icon("chev")}<span style="flex:1">${emEcraCheio() ? "Sair do ecrã cheio" : "Ecrã cheio"}</span></button>`);
+      cheio.addEventListener("click", () => {
+        closeMenu();
+        trocarEcraCheio();
+      });
+      bloco.appendChild(cheio);
+
+      const dormir = el(`<button class="mrow">${icon("moon")}<span style="flex:1">Pôr a descansar</span></button>`);
+      dormir.addEventListener("click", () => {
+        closeMenu();
+        descansarJa();
+      });
+      bloco.appendChild(dormir);
+
+      bloco.appendChild(
+        el(`<div class="ft dim2" style="padding:var(--s2) var(--s3)">${
+          wakeLock ? "O ecrã fica ligado enquanto o painel estiver aberto." : `O ecrã pode apagar-se sozinho: ${wakePorque}.`
+        }</div>`),
+      );
+      drawer.appendChild(bloco);
+    }
+
     const fechar = el(`<button class="mrow" style="margin-top:auto">${icon("back")}<span>Fechar</span></button>`);
     fechar.addEventListener("click", closeMenu);
     drawer.appendChild(fechar);
@@ -231,7 +407,10 @@
     document.title = sec === "casa" ? window.CASA.title : `${titulo} · ${window.CASA.title}`;
   }
 
-  window.addEventListener("hashchange", render);
+  window.addEventListener("hashchange", () => {
+    ultimoToque = Date.now();
+    render();
+  });
 
   /** O aviso de que a casa não responde, por cima do que estiver à vista. */
   function watchConnection() {
@@ -261,6 +440,7 @@
     applyScreen();
     applyTheme(localStorage.getItem(THEME_KEY) || "grafite", false);
     document.documentElement.setAttribute("data-presenca", "longe");
+    document.documentElement.setAttribute("data-repouso", "nao");
 
     let timer = null;
     window.addEventListener("resize", () => {
@@ -274,6 +454,7 @@
     mountFoot();
     render();
     watchConnection();
+    arrancarQuiosque();
   }
 
   let arrancou = false;

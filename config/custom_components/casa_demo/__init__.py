@@ -112,6 +112,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: CasaDemoConfigEntry) -> 
             engine.washer.progress = 100.0
             engine.washer.status = "Concluído"
             engine.notify("washer")
+        elif situacao == "Movimento na entrada":
+            engine.motion["entrada"] = dt_util.utcnow()
+            engine.notify("motion_entrada")
         elif situacao == "Carro carregado":
             engine.ev_plugged = True
             engine.ev_soc = engine.ev_limit

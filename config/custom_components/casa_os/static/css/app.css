@@ -643,8 +643,8 @@ button.li:active {
   flex-direction: column;
   gap: calc(10px * var(--u));
 }
-/* o tamanho do veredicto é uma variável: na Fase 7 é ela que encolhe quando
-   alguém chega à frente do painel */
+/* o tamanho do veredicto é uma variável: é ela que encolhe quando alguém
+   chega à frente do painel (ver "Os dois regimes") */
 .vline {
   font-size: calc(var(--vsize, 76px) * var(--u));
   font-weight: var(--w-b);
@@ -1879,6 +1879,77 @@ select.pill {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ═════════ Os dois regimes ═════════
+   De longe: o veredicto ocupa o que puder e não há nada tocável a competir.
+   Com alguém à frente: encolhe e as teclas aparecem — sem trocar de ecrã,
+   porque trocar faz perder o que se estava a ler. */
+
+[data-presenca="longe"] .home {
+  --vsize: min(87px, 8.5vw);
+}
+[data-presenca="perto"] .home {
+  --vsize: 46px;
+}
+/* de longe a coluna do veredicto ganha o espaço que a letra grande precisa */
+[data-presenca="longe"] .hero .vcol {
+  flex: 1.9;
+}
+[data-presenca="longe"] .facts .sub {
+  font-size: var(--t-bd);
+}
+.hero .vcol,
+.facts .sub {
+  transition: flex var(--d3) var(--ease), font-size var(--d3) var(--ease);
+}
+
+.keys {
+  transition: max-height var(--d3) var(--ease), opacity var(--d2) var(--ease-soft);
+}
+[data-presenca="longe"] .keys {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+[data-presenca="perto"] .keys {
+  max-height: calc(160px * var(--u));
+  opacity: 1;
+}
+/* na mão as teclas são duas colunas e três linhas: o limite da animação da
+   parede cortava-as a meio */
+[data-screen="mao"] .keys {
+  max-height: none;
+}
+
+/* ═════════ Repouso ═════════
+   De noite e sem ninguém, fica só o essencial: a hora, o veredicto e o que
+   estiver mal. O primeiro toque acorda o painel e não faz mais nada. */
+
+.app,
+.side,
+.body {
+  transition: filter var(--d3) var(--ease-soft), width var(--d3) var(--ease), opacity var(--d3) var(--ease-soft);
+}
+[data-repouso="sim"] .body {
+  filter: brightness(0.5);
+}
+[data-repouso="sim"] .side {
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  border-right: 0;
+  overflow: hidden;
+}
+[data-repouso="sim"] .facts,
+[data-repouso="sim"] .strip,
+[data-repouso="sim"] .head-actions {
+  opacity: 0;
+}
+[data-repouso="sim"] .facts,
+[data-repouso="sim"] .strip {
+  transition: opacity var(--d3) var(--ease-soft);
 }
 
 /* ═════════ Estados ═════════ */

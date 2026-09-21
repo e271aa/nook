@@ -388,5 +388,12 @@
       "entidade": "calendar.emprego",
       "nome": "Emprego"
     }
-  ]
+  ],
+  "quiosque": {
+    "presenca": "binary_sensor.movimento_entrada",
+    "perto_segundos": 45,
+    "voltar_ao_inicio_segundos": 180,
+    "repouso_minutos": 10,
+    "repouso_so_de_noite": true
+  }
 }
