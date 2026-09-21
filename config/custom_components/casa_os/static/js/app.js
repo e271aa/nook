@@ -55,10 +55,19 @@
   function screenClass() {
     const forcado = new URLSearchParams(location.search).get("ecra");
     if (["mao", "braco", "sala"].includes(forcado)) return forcado;
+    // o que a pessoa escolheu nas Definições vale mais do que qualquer palpite
+    const escolha = DEFS.get("ecra");
+    if (["braco", "sala"].includes(escolha)) return escolha;
+
     const w = window.innerWidth;
     const h = window.innerHeight;
     if (w < 700 || h < 480) return "mao";
-    return w >= 1500 ? "sala" : "braco";
+    // Largura sozinha não faz uma televisão: um monitor de computador de 1920 px
+    // era classificado como TV, e na TV não há teclas nem se mexe com o rato.
+    // Uma TV não tem rato nem dedo; um monitor tem rato, um painel de parede tem dedo.
+    const rato = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const dedo = navigator.maxTouchPoints > 0;
+    return w >= 1500 && !rato && !dedo ? "sala" : "braco";
   }
 
   function applyScreen(aoMudar) {
@@ -260,6 +269,15 @@
     emEcraCheio, trocarEcraCheio, descansarJa,
     aDescansar: () => aDescansar,
     acordar, avaliar,
+    /** Volta a decidir o tipo de ecrã (depois de a pessoa o escolher) e redesenha. */
+    reclassificar: () => applyScreen(render),
+    ecraDetetado: () => {
+      const guardado = DEFS.get("ecra");
+      DEFS.set("ecra", undefined);
+      const auto = screenClass();
+      if (guardado !== undefined) DEFS.set("ecra", guardado);
+      return auto;
+    },
     wake: () => ({ ativo: !!wakeLock, porque: wakePorque === "por tentar" ? "ainda a tentar" : wakePorque }),
   };
 

@@ -100,7 +100,8 @@
     },
 
     set(chave, valor) {
-      guardado[chave] = valor;
+      if (valor === undefined) delete guardado[chave];
+      else guardado[chave] = valor;
       gravar();
     },
 

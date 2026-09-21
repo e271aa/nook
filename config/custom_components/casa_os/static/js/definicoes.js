@@ -103,6 +103,28 @@
     const A = window.APP;
     const { node, corpo } = grupo("Ecrã");
 
+    // O painel adapta-se ao aparelho, mas não adivinha sempre bem: esta escolha manda.
+    const tipos = [
+      { rotulo: "Automático", v: undefined },
+      { rotulo: "Tablet ou computador", v: "braco" },
+      { rotulo: "Televisão", v: "sala" },
+    ];
+    const tipo = el('<div class="def-bloco"></div>');
+    const detetado = A.ecraDetetado();
+    tipo.appendChild(
+      linha(
+        "Tipo de ecrã",
+        `Automático deteta: ${DEFS.ECRAS[detetado].toLowerCase()}. Uma televisão não tem teclas rápidas nem se toca; um computador com um monitor grande não é uma televisão.`,
+      ),
+    );
+    tipo.appendChild(
+      K.segmentado(tipos.map((t) => t.rotulo), Math.max(0, tipos.findIndex((t) => t.v === DEFS.get("ecra"))), (i) => {
+        DEFS.set("ecra", tipos[i].v);
+        A.reclassificar(); // se o tipo mudou, o painel redesenha-se (e estas Definições com ele)
+      }, { cheio: true }),
+    );
+    if (ecra() !== "mao") corpo.appendChild(tipo); // no telemóvel o tipo é o do tamanho: não há o que escolher
+
     const cheio = el(`<button class="pill">${A.emEcraCheio() ? "Sair" : "Ecrã cheio"}</button>`);
     cheio.addEventListener("click", () => {
       A.trocarEcraCheio();
