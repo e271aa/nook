@@ -228,17 +228,64 @@
 
   // ───────── Câmara ao vivo ─────────
 
-  function camara({ entidade, nome, grande = false }) {
+  function camara({ entidade, nome, grande = false, movimento = null }) {
     const node = el(`<button class="camtile${grande ? " big" : ""}" aria-label="${esc(nome)}">
       <img alt="" />
       <span class="live"><i></i>AO VIVO</span>
+      <span class="mov" hidden>${icon("motion", "ic-s")}Movimento</span>
       <span class="cl">${esc(nome)}</span>
     </button>`);
     const img = node.querySelector("img");
     intervalo(() => {
       img.src = HA.cameraUrl(entidade, Date.now());
     }, 2000);
+    if (movimento) {
+      bind(node, entre([movimento]), () => {
+        node.querySelector(".mov").hidden = !HA.isOn(movimento);
+      });
+    }
+    node.addEventListener("click", () => ampliar({ entidade, nome }));
     return node;
+  }
+
+  /** A câmara em ecrã cheio: imagem de segundo a segundo, e Esc ou toque para sair. */
+  function ampliar({ entidade, nome }) {
+    fechar();
+    const scrim = el('<div class="scrim"></div>');
+    const caixa = el(`<div class="lightbox" role="dialog" aria-label="${esc(nome)}">
+      <div class="lb-top"><span class="hd">${esc(nome)}</span>
+        <button class="iconbtn" aria-label="Fechar">${icon("plus", "ic-s")}</button></div>
+      <img alt="" />
+    </div>`);
+    const img = caixa.querySelector("img");
+    const pinta = () => (img.src = HA.cameraUrl(entidade, Date.now()));
+    pinta();
+    const t = setInterval(pinta, 1000);
+    const saiu = () => {
+      clearInterval(t);
+      scrim.remove();
+      caixa.remove();
+      document.removeEventListener("keydown", tecla);
+      window.removeEventListener("hashchange", saiu);
+      aberta = null;
+    };
+    const tecla = (e) => e.key === "Escape" && saiu();
+    scrim.addEventListener("click", saiu);
+    caixa.querySelector(".iconbtn").addEventListener("click", saiu);
+    document.addEventListener("keydown", tecla);
+    window.addEventListener("hashchange", saiu);
+    document.body.append(scrim, caixa);
+    aberta = saiu;
+  }
+  let aberta = null;
+  const fechar = () => aberta && aberta();
+
+  /** Uma linha de lista: ícone, nome e valor. */
+  function linha(ic, nome, valor, tom) {
+    return el(`<div class="li">
+      <span class="ig"${tom ? ` style="color:var(--${tom})"` : ""}>${icon(ico(ic), "ic-s")}</span>
+      <span class="nm">${esc(nome)}</span><span class="vl">${esc(valor || "")}</span>
+    </div>`);
   }
 
   window.KIT = {
@@ -246,6 +293,6 @@
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
-    slider, interruptor, segmentado, camara,
+    slider, interruptor, segmentado, camara, ampliar, linha,
   };
 })();

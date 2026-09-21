@@ -176,6 +176,15 @@
       return res.json();
     },
 
+    /** O diário da casa desde `start`: quem abriu, quem chegou, o que se mexeu. */
+    async logbook(start) {
+      const res = await fetch(`/api/logbook/${encodeURIComponent(start.toISOString())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+
     cameraUrl(entityId, bust) {
       return `/api/casa_os/camera/${entityId}?token=${encodeURIComponent(token)}&t=${bust}`;
     },

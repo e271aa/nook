@@ -265,6 +265,9 @@ svg {
 .scroll > * {
   flex-shrink: 0;
 }
+.scroll > .pill {
+  align-self: flex-start;
+}
 
 .row {
   display: flex;
@@ -1384,6 +1387,144 @@ button.li:active {
 .tiles.mao.clima .tile,
 .tiles.mao.estores .tile {
   min-height: 0;
+}
+
+/* ═════════ Vigilância ═════════ */
+
+.vig {
+  display: flex;
+  gap: var(--s4);
+  flex: 1;
+  min-height: 0;
+}
+.mosaico {
+  flex: 1.6;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: var(--s3);
+}
+.mosaico .camtile {
+  min-height: 0;
+  height: 100%;
+  background: var(--l1);
+}
+/* numa câmara de vigilância não se corta a imagem: a data e o nome que ela
+   traz escritos ficam sempre à vista */
+.mosaico .camtile img {
+  object-fit: contain;
+}
+.lado {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.lado > .card:first-child {
+  flex: 0 0 auto;
+}
+.diario {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.diario .lista {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  /* as linhas medem-se contra a lista, não contra o ecrã */
+  position: relative;
+}
+/* na TV o movimento já se vê nas câmaras e no diário; as linhas dão o lugar a mais acontecimentos */
+[data-screen="sala"] .mov-row {
+  display: none;
+}
+.empty-mini {
+  padding: var(--s5) var(--s4);
+  color: var(--label-3);
+  font-size: var(--t-sb);
+  text-align: center;
+}
+.card .grouped {
+  background: transparent;
+  border-radius: 0;
+}
+/* o cartão já é a superfície: a lista lá dentro só leva os riscos */
+.card .grouped .li {
+  padding-left: 0;
+  padding-right: 0;
+}
+.card .grouped .li + .li::before {
+  left: calc(42px * var(--u));
+}
+
+/* movimento agora, por cima da imagem */
+.camtile .mov {
+  position: absolute;
+  left: var(--s3);
+  top: var(--s3);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--u));
+  padding: calc(5px * var(--u)) var(--s3);
+  border-radius: var(--rp);
+  background: var(--tint);
+  color: var(--tint-ink);
+  font-size: var(--t-c1);
+  font-weight: var(--w-s);
+}
+.camtile .mov[hidden] {
+  display: none;
+}
+
+/* câmara em ecrã cheio */
+.lightbox {
+  position: fixed;
+  z-index: 41;
+  inset: var(--s6);
+  margin: auto;
+  max-width: min(1400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  background: var(--l1);
+  border-radius: var(--r5);
+  padding: var(--s4);
+  height: fit-content;
+  max-height: calc(100% - var(--s6) * 2);
+}
+.lightbox .lb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lightbox .iconbtn .ic {
+  transform: rotate(45deg);
+}
+.lightbox img {
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: var(--r3);
+  background: #000;
+}
+
+/* ── na mão ── */
+.mosaico.mao {
+  flex: 0 0 auto;
+}
+.mosaico.mao .camtile {
+  height: auto;
+  aspect-ratio: 16 / 10;
+}
+.mosaico.mao .camtile:first-child {
+  aspect-ratio: 16 / 9;
+}
+[data-screen="mao"] .diario {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /* ═════════ Estados ═════════ */

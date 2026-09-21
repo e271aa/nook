@@ -201,7 +201,8 @@
           "name": "Carregador VE",
           "icon": "ev"
         }
-      ]
+      ],
+      "motion": "binary_sensor.movimento_garagem"
     },
     {
       "id": "jardim",
