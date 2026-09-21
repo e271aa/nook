@@ -137,6 +137,25 @@
       "Para um tablet que fica sempre ligado. O repouso só apaga o que é acessório; os avisos ficam sempre à vista.",
     );
 
+    const teclas = el('<div class="def-bloco"></div>');
+    teclas.appendChild(
+      linha(
+        "Teclas rápidas",
+        "Ficam sempre à vista, ou só quando alguém se aproxima. Quando estão escondidas, uma faixa diz onde estão.",
+      ),
+    );
+    const modos = [
+      { rotulo: "Sempre visíveis", v: "sempre" },
+      { rotulo: "Quando alguém se aproxima", v: "presenca" },
+    ];
+    teclas.appendChild(
+      opcoes(modos, DEFS.teclas(ecra()), (v) => {
+        DEFS.set("teclas", v);
+        window.APP.avaliar();
+      }),
+    );
+    corpo.appendChild(teclas);
+
     const voltar = el('<div class="def-bloco"></div>');
     voltar.appendChild(linha("Voltar ao Início", "Quando ninguém lhe toca, o painel volta sozinho à Casa."));
     voltar.appendChild(opcoes(VOLTAR, DEFS.get("voltar"), (v) => DEFS.set("voltar", v)));

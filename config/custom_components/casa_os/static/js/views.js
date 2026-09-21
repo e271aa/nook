@@ -223,6 +223,18 @@
     return node;
   }
 
+  /**
+   * O que fica no lugar das teclas quando estão escondidas. Sem isto, num
+   * tablet nada dizia que elas existiam: quem não sabia não sabia. Um toque
+   * abre-as — é a mesma coisa que tocar em qualquer parte do painel.
+   */
+  function faixaDasTeclas() {
+    const b = el(`<button class="keys-faixa" aria-label="Mostrar as ações rápidas">
+      ${icon("up", "ic-s")}<span>Ações rápidas</span></button>`);
+    b.addEventListener("click", () => window.APP && window.APP.acordar());
+    return b;
+  }
+
   function piscar(b) {
     b.classList.add("feito");
     setTimeout(() => b.classList.remove("feito"), 900);
@@ -279,7 +291,7 @@
     const hero = el('<div class="hero"></div>');
     hero.appendChild(el('<div class="vcol"></div>')).appendChild(veredicto());
     hero.appendChild(colunaAvisos({ grande: true }));
-    node.append(hero, teclas(), faixaEnergia());
+    node.append(hero, faixaDasTeclas(), teclas(), faixaEnergia());
     return node;
   }
 

@@ -80,6 +80,19 @@
       return !!(guardado.tamanho && guardado.tamanho[ecra] !== undefined);
     },
 
+    /**
+     * Teclas rápidas: "sempre" à vista, ou "presenca" — só quando alguém se
+     * aproxima. Sem escolha, vale "sempre", exceto num tablet de parede com
+     * sensor de presença: aí quem passa a um metro ganha com o veredicto grande,
+     * e o resto aparece quando a pessoa chega.
+     */
+    teclas(ecra) {
+      const v = guardado.teclas;
+      if (v === "sempre" || v === "presenca") return v;
+      const toque = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      return ecra === "braco" && toque && Q.presenca ? "presenca" : "sempre";
+    },
+
     get(chave) {
       return guardado[chave] !== undefined ? guardado[chave] : origem[chave];
     },

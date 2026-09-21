@@ -1986,6 +1986,10 @@ select.pill {
 [data-presenca="perto"] .home {
   --vsize: 46px;
 }
+/* com as teclas sempre à vista o veredicto não pode ocupar o que elas precisam */
+[data-screen="braco"][data-teclas="sempre"][data-presenca="longe"] .home {
+  --vsize: 64px;
+}
 /* de longe a coluna do veredicto ganha o espaço que a letra grande precisa */
 [data-presenca="longe"] .hero .vcol {
   flex: 1.9;
@@ -2001,7 +2005,9 @@ select.pill {
 .keys {
   transition: max-height var(--d3) var(--ease), opacity var(--d2) var(--ease-soft);
 }
-[data-presenca="longe"] .keys {
+/* escondidas: sempre na TV; no tablet só se a pessoa escolheu "quando alguém se aproxima" */
+[data-screen="sala"] .keys,
+[data-teclas="presenca"][data-presenca="longe"] .keys {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
@@ -2015,6 +2021,31 @@ select.pill {
    parede cortava-as a meio */
 [data-screen="mao"] .keys {
   max-height: none;
+}
+
+/* a faixa que ocupa o lugar das teclas quando estão escondidas */
+.keys-faixa {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--tap);
+  border-radius: var(--r3);
+  background: var(--l1);
+  color: var(--label-2);
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  box-shadow: var(--sh-1);
+  animation: entra var(--d3) var(--ease);
+}
+[data-screen="braco"][data-teclas="presenca"][data-presenca="longe"] .keys-faixa {
+  display: flex;
+}
+@keyframes entra {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 /* ═════════ Repouso ═════════

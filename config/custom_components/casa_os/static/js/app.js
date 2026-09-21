@@ -134,6 +134,7 @@
 
   function avaliar() {
     const ecra = ecraAtual();
+    marca("data-teclas", DEFS.teclas(ecra));
     if (ecra === "mao") {
       marca("data-presenca", "perto"); // na mão está-se sempre à frente
       marca("data-repouso", "nao");
@@ -191,6 +192,7 @@
       (e) => {
         if (!aDescansar) {
           ultimoToque = Date.now();
+          avaliar(); // um toque em qualquer sítio mostra as teclas já, não daqui a dois segundos
           return;
         }
         e.preventDefault();
@@ -198,6 +200,19 @@
         acordar();
       },
       true,
+    );
+    // Mexer o rato é presença: num computador é a única maneira de dizer "estou aqui".
+    // Uma vez por segundo chega — o resto é ruído.
+    let ultimoRato = 0;
+    document.addEventListener(
+      "mousemove",
+      () => {
+        const t = Date.now();
+        if (t - ultimoRato < 1000) return;
+        ultimoRato = t;
+        acordar();
+      },
+      { passive: true },
     );
     ["keydown", "wheel", "touchstart"].forEach((ev) =>
       document.addEventListener(ev, acordar, { capture: true, passive: true }),
@@ -241,6 +256,7 @@
     THEMES, currentTheme, applyTheme,
     emEcraCheio, trocarEcraCheio, descansarJa,
     aDescansar: () => aDescansar,
+    acordar, avaliar,
     wake: () => ({ ativo: !!wakeLock, porque: wakePorque === "por tentar" ? "ainda a tentar" : wakePorque }),
   };
 
