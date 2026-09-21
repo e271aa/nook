@@ -31,12 +31,12 @@ async def async_setup_entry(
                                device=device_info(f"contacto_{c['id']}", c["name"], c["area"], "Sensor de abertura"),
                                get=lambda e, k=c["id"]: e.contacts.get(k, False)))
     ents += [
-        CasaBinary(e, key="fumo_cozinha", name=None, dc=D.SMOKE, signal=None,
+        CasaBinary(e, key="fumo_cozinha", name=None, dc=D.SMOKE, signal="smoke",
                    device=device_info("fumo_cozinha", "Detetor de fumo Cozinha", "cozinha", "Detetor de fumo"),
-                   get=lambda e: False),
-        CasaBinary(e, key="inundacao_lavandaria", name=None, dc=D.MOISTURE, signal=None,
+                   get=lambda e: e.smoke),
+        CasaBinary(e, key="inundacao_lavandaria", name=None, dc=D.MOISTURE, signal="leak",
                    device=device_info("inundacao_lavandaria", "Sensor de inundação", "lavandaria", "Sensor de água"),
-                   get=lambda e: False),
+                   get=lambda e: e.leak),
         CasaBinary(e, key="placa_bloqueio", name="Bloqueio crianças", dc=None, signal="cooktop",
                    device=device_info("placa", "Placa de indução", "cozinha", "Indução 4 zonas"),
                    get=lambda e: e.cooktop.extra["child_lock"]),

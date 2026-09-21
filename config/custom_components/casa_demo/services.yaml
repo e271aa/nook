@@ -11,3 +11,19 @@ definir_tempo:
             - "Céu limpo"
             - "Nublado"
             - "Chuva"
+simular:
+  fields:
+    situacao:
+      required: true
+      example: "Fumo na cozinha"
+      selector:
+        select:
+          options:
+            - "Fumo na cozinha"
+            - "Fuga de água"
+            - "Porta aberta há muito tempo"
+            - "Janela aberta com o ar ligado"
+            - "Máquina da roupa terminada"
+            - "Carro carregado"
+            - "Ninguém em casa"
+            - "Limpar tudo"

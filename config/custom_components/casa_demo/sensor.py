@@ -20,6 +20,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import CasaDemoConfigEntry
+from .avisos import AvisosSensor
 from .const import CIRCUITS, DRYER_PROGRAMS, PEOPLE, ROOM_SENSORS, WASHER_PROGRAMS
 from .engine import BATTERY_KWH, Engine
 from .entity import CasaEntity, device_info
@@ -223,7 +224,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: CasaDemoConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     engine = entry.runtime_data
-    async_add_entities(CasaSensor(engine, d) for d in _descriptions())
+    async_add_entities([*(CasaSensor(engine, d) for d in _descriptions()), AvisosSensor(engine, entry.entry_id)])
 
 
 class CasaSensor(CasaEntity, SensorEntity):

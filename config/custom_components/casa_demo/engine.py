@@ -38,6 +38,7 @@ from .const import (
     PLUGS,
     ROOM_SENSORS,
     SIGNAL_DEVICE,
+    SIGNAL_AVISOS,
     SIGNAL_TICK,
     SIM_SPEED,
     WASHER_PROGRAMS,
@@ -128,6 +129,11 @@ class Engine:
         self.plugs: dict[str, bool] = {}
         self.motion: dict[str, datetime | None] = {}
         self.contacts: dict[str, bool] = {}
+        # desde quando cada contacto está como está — é o que permite dizer
+        # "a porta está aberta há 6 minutos" em vez de só "está aberta"
+        self.contact_since: dict[str, datetime] = {}
+        self.smoke = False
+        self.leak = False
         self.lock_locked = True
         self.people_override: dict[str, bool | None] = {p["id"]: None for p in PEOPLE}
 
@@ -204,6 +210,7 @@ class Engine:
         for d in PLUGS:
             self.plugs[d["id"]] = d.get("on", False)
         self.contacts = {"porta_entrada": False, "janela_cozinha": True, "janela_suite": False}
+        self.contact_since = {k: dt_util.utcnow() for k in self.contacts}
 
     async def async_load(self) -> bool:
         """Carrega o estado guardado. Devolve False se é o primeiro arranque."""
@@ -258,7 +265,10 @@ class Engine:
 
     @callback
     def schedule_save(self) -> None:
+        # Guardar é o gesto comum a tudo o que muda por ordem de alguém — uma
+        # luz, um estore, o ar. É daqui que os avisos ficam a saber.
         self._store.async_delay_save(self._serialize, 30)
+        async_dispatcher_send(self.hass, SIGNAL_AVISOS)
 
     async def async_save_now(self) -> None:
         await self._store.async_save(self._serialize())
@@ -268,6 +278,8 @@ class Engine:
         energy, circuit, soc, ev = dict(self.energy), dict(self.circuit_energy), self.battery_soc, self.ev_soc
         self.weather_mode = WEATHER_OPTIONS[0]
         self.lock_locked = True
+        self.smoke = False
+        self.leak = False
         self.garage = CoverState(position=0, target=0, travel=GARAGE["travel"])
         for a in (self.washer, self.dryer, self.dishwasher):
             a.power = a.running = False
@@ -296,11 +308,15 @@ class Engine:
     @callback
     def notify(self, key: str) -> None:
         async_dispatcher_send(self.hass, SIGNAL_DEVICE.format(key))
+        # os avisos ouvem tudo: uma janela que abre tem de se ver já, não
+        # daqui a cinco segundos
+        async_dispatcher_send(self.hass, SIGNAL_AVISOS)
 
     @callback
     def notify_all(self) -> None:
         async_dispatcher_send(self.hass, SIGNAL_DEVICE.format("*"))
         async_dispatcher_send(self.hass, SIGNAL_TICK)
+        async_dispatcher_send(self.hass, SIGNAL_AVISOS)
 
     @callback
     def _async_tick(self, now: datetime) -> None:
@@ -355,6 +371,26 @@ class Engine:
         c.last_dir = 0
         self.notify("garage" if key == "__garage__" else f"cover_{key}")
         self.schedule_save()
+
+    def set_contact(self, cid: str, aberto: bool, *, desde: datetime | None = None) -> None:
+        """Abre ou fecha um contacto e guarda desde quando."""
+        if cid not in self.contacts:
+            return
+        mudou = self.contacts[cid] != aberto
+        self.contacts[cid] = aberto
+        if mudou or desde:
+            self.contact_since[cid] = desde or dt_util.utcnow()
+        self.notify(f"contact_{cid}")
+        self.schedule_save()
+
+    def set_hazard(self, qual: str, ativo: bool) -> None:
+        """Fumo ou água: o que a casa só sabe quando corre mal."""
+        if qual == "fumo":
+            self.smoke = ativo
+            self.notify("smoke")
+        elif qual == "agua":
+            self.leak = ativo
+            self.notify("leak")
 
     # ───────── Eletrodomésticos ─────────
 

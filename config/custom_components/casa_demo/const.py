@@ -7,6 +7,7 @@ MANUFACTURER = "Casa Demo"
 
 SIGNAL_TICK = f"{DOMAIN}_tick"
 SIGNAL_DEVICE = f"{DOMAIN}_device_{{}}"
+SIGNAL_AVISOS = f"{DOMAIN}_avisos"  # qualquer mudança: os avisos voltam a ser pesados
 
 # 1 minuto real = SIM_SPEED minutos simulados nos eletrodomésticos (para a demo
 # se ver a mexer sem esperar horas por uma lavagem).
@@ -117,9 +118,9 @@ MOTION = [
 ]
 
 CONTACTS = [
-    {"id": "porta_entrada", "name": "Porta Entrada", "area": "entrada", "class": "door"},
-    {"id": "janela_cozinha", "name": "Janela Cozinha", "area": "cozinha", "class": "window"},
-    {"id": "janela_suite", "name": "Janela Suite", "area": "suite", "class": "window"},
+    {"id": "porta_entrada", "name": "Porta de entrada", "area": "entrada", "class": "door"},
+    {"id": "janela_cozinha", "name": "Janela da Cozinha", "area": "cozinha", "class": "window"},
+    {"id": "janela_suite", "name": "Janela da Suite", "area": "suite", "class": "window"},
 ]
 
 CAMERAS = [
@@ -175,3 +176,10 @@ OVEN_PROGRAMS = {
     "Descongelar": {"temp": 40},
 }
 HOOD_SPEEDS = ["Desligado", "1", "2", "3", "Boost"]
+
+# Entidades que já existiram e deixaram de ser criadas. Ficam no registo do
+# Home Assistant como "sem resposta" para sempre, e o motor de avisos tem toda
+# a razão em reclamar delas — por isso apagam-se no arranque.
+ENTIDADES_ANTIGAS = {
+    "casa_demo_todo_compras",  # passou a chamar-se shopping_list
+}
