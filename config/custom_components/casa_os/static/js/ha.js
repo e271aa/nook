@@ -185,6 +185,26 @@
       return res.json();
     },
 
+    /** Os itens de uma lista (lembretes, compras). */
+    async todoItens(entityId) {
+      const res = await fetch("/api/services/todo/get_items?return_response", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ entity_id: entityId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const j = await res.json();
+      return ((j.service_response || {})[entityId] || {}).items || [];
+    },
+
+    /** Os acontecimentos de um calendário entre duas datas. */
+    async calendario(entityId, start, end) {
+      const q = new URLSearchParams({ start: start.toISOString(), end: end.toISOString() });
+      const res = await fetch(`/api/calendars/${entityId}?${q}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+
     cameraUrl(entityId, bust) {
       return `/api/casa_os/camera/${entityId}?token=${encodeURIComponent(token)}&t=${bust}`;
     },

@@ -280,6 +280,20 @@
   let aberta = null;
   const fechar = () => aberta && aberta();
 
+  /** Numa lista que não rola, esconde as linhas que não cabem — nunca corta uma a meio. */
+  function cabem(lista) {
+    const ajusta = () => {
+      [...lista.children].forEach((c) => (c.style.display = ""));
+      const limite = lista.clientHeight;
+      [...lista.children].forEach((c) => {
+        if (c.offsetTop + c.offsetHeight > limite + 1) c.style.display = "none";
+      });
+    };
+    lista.style.position = "relative"; // as linhas medem-se contra a lista
+    new ResizeObserver(ajusta).observe(lista);
+    return ajusta;
+  }
+
   /** Uma linha de lista: ícone, nome e valor. */
   function linha(ic, nome, valor, tom) {
     return el(`<div class="li">
@@ -293,6 +307,6 @@
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
-    slider, interruptor, segmentado, camara, ampliar, linha,
+    slider, interruptor, segmentado, camara, ampliar, linha, cabem,
   };
 })();

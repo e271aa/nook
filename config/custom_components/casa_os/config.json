@@ -369,5 +369,24 @@
     "tariff": 0.1494,
     "feed_in": 0.055,
     "currency": "€"
-  }
+  },
+  "tv": "media_player.tv_sala",
+  "robo": {
+    "entidade": "vacuum.robo",
+    "bateria": "sensor.robo_bateria"
+  },
+  "listas": {
+    "lembretes": "todo.lembretes",
+    "compras": "todo.shopping_list"
+  },
+  "calendarios": [
+    {
+      "entidade": "calendar.casa",
+      "nome": "Casa"
+    },
+    {
+      "entidade": "calendar.emprego",
+      "nome": "Emprego"
+    }
+  ]
 }
