@@ -395,5 +395,127 @@
     "voltar_ao_inicio_segundos": 180,
     "repouso_minutos": 10,
     "repouso_so_de_noite": true
+  },
+  "planta": {
+    "pisos": [
+      {
+        "id": "piso_0",
+        "largura": 100,
+        "altura": 70,
+        "zonas": [
+          {
+            "divisao": "garagem",
+            "x": 0,
+            "y": 0,
+            "w": 30,
+            "h": 30,
+            "fora": "oeste"
+          },
+          {
+            "divisao": "entrada",
+            "x": 30,
+            "y": 0,
+            "w": 25,
+            "h": 30,
+            "fora": "norte",
+            "porta": true
+          },
+          {
+            "divisao": "escritorio",
+            "x": 55,
+            "y": 0,
+            "w": 45,
+            "h": 30,
+            "fora": "norte"
+          },
+          {
+            "divisao": "sala",
+            "x": 0,
+            "y": 30,
+            "w": 55,
+            "h": 40,
+            "fora": "sul"
+          },
+          {
+            "divisao": "cozinha",
+            "x": 55,
+            "y": 30,
+            "w": 45,
+            "h": 40,
+            "fora": "este"
+          }
+        ]
+      },
+      {
+        "id": "piso_1",
+        "largura": 100,
+        "altura": 70,
+        "zonas": [
+          {
+            "divisao": "suite",
+            "x": 0,
+            "y": 0,
+            "w": 45,
+            "h": 40,
+            "fora": "oeste"
+          },
+          {
+            "divisao": "quarto",
+            "x": 45,
+            "y": 0,
+            "w": 30,
+            "h": 40,
+            "fora": "norte"
+          },
+          {
+            "divisao": "wc",
+            "x": 75,
+            "y": 0,
+            "w": 25,
+            "h": 40,
+            "fora": "este"
+          },
+          {
+            "divisao": "lavandaria",
+            "x": 0,
+            "y": 40,
+            "w": 35,
+            "h": 30,
+            "fora": "sul"
+          },
+          {
+            "nome": "Corredor",
+            "x": 35,
+            "y": 40,
+            "w": 65,
+            "h": 30,
+            "vazia": true
+          }
+        ]
+      },
+      {
+        "id": "exterior",
+        "largura": 100,
+        "altura": 70,
+        "zonas": [
+          {
+            "divisao": "jardim",
+            "x": 0,
+            "y": 0,
+            "w": 100,
+            "h": 70,
+            "fora": "sul"
+          },
+          {
+            "nome": "A casa",
+            "x": 26,
+            "y": 18,
+            "w": 48,
+            "h": 34,
+            "casa": true
+          }
+        ]
+      }
+    ]
   }
 }

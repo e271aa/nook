@@ -25,7 +25,10 @@
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
     { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
-  ];
+    // A planta só existe se a casa tiver uma desenhada. É trabalho por
+    // instalação, por isso não se promete onde não há.
+    { id: "planta", title: "A casa", icon: "planta", ecras: ["sala"], se: () => !!CFG.planta },
+  ].filter((s) => !s.se || s.se());
 
   const THEMES = [
     { id: "grafite", name: "Grafite", bg: "#000000", tint: "#4c9aff" },

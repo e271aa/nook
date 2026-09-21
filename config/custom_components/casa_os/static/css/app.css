@@ -1982,6 +1982,215 @@ select.pill {
   pointer-events: none;
 }
 
+/* ═════════ A planta ═════════
+   O estado deixa de se ler e passa a ver-se: a divisão acesa está acesa, o
+   estore aberto é uma falha na parede. */
+
+.planta-vista {
+  gap: var(--s3);
+}
+.palco {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+.planta-caixa {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+.planta {
+  width: 100%;
+  height: 100%;
+}
+.planta .contorno {
+  fill: none;
+  stroke: var(--sep-2);
+  stroke-width: 0.5;
+}
+.planta .chao {
+  fill: var(--l1);
+}
+/* a luz da divisão: o mesmo âmbar de uma lâmpada, não a cor de destaque */
+.planta .luz {
+  opacity: 0;
+  transition: opacity var(--d3) var(--ease-soft);
+}
+.planta .parede {
+  fill: none;
+  stroke: var(--sep-2);
+  stroke-width: 0.5;
+}
+.planta .zona.acesa .parede {
+  stroke: color-mix(in oklab, var(--solar) 55%, transparent);
+}
+.planta .zona.alerta .parede {
+  stroke: var(--warn);
+  stroke-width: 0.8;
+}
+.planta .zona.tocavel {
+  cursor: pointer;
+}
+.planta .zona.tocavel:hover .chao {
+  fill: var(--l2);
+}
+.planta .zona:focus-visible {
+  outline: none;
+}
+.planta .zona:focus-visible .parede {
+  stroke: var(--tint);
+  stroke-width: 1;
+}
+.planta .zona.vazia .chao {
+  fill: var(--bg);
+}
+.planta .zona.vazia .parede {
+  stroke-dasharray: 1 1.4;
+}
+.planta .zona.casa .chao {
+  fill: var(--l3);
+}
+/* por cima da luz o texto precisa de uma sombra, como a teria no vidro */
+.planta .zona.acesa .nome,
+.planta .zona.acesa .sub {
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+.planta .nome {
+  fill: var(--label);
+  font-size: 3.6px;
+  font-weight: var(--w-s);
+  letter-spacing: -0.02em;
+}
+.planta .zona.vazia .nome,
+.planta .zona.casa .nome {
+  fill: var(--label-3);
+  font-weight: var(--w-m);
+}
+.planta .sub {
+  fill: var(--label-2);
+  font-size: 2.8px;
+}
+/* as aberturas: o vão é o buraco na parede, o fecho é o estore corrido */
+.planta .vao {
+  stroke: var(--bg);
+  stroke-width: 1.6;
+  stroke-linecap: butt;
+}
+.planta .fecho {
+  stroke: var(--label-3);
+  stroke-width: 1.6;
+  stroke-linecap: butt;
+  transition: stroke var(--d2) var(--ease-soft);
+}
+.planta .fecho.janela {
+  stroke: var(--sep-2);
+}
+/* a porta, como se desenha numa planta: folha e arco */
+.planta .folha {
+  stroke: var(--label-2);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  transition: all var(--d3) var(--ease);
+}
+.planta .folha.trancada {
+  stroke: var(--good);
+}
+.planta .arco {
+  fill: none;
+  stroke: var(--sep-2);
+  stroke-width: 0.4;
+  stroke-dasharray: 1 1;
+}
+.planta .sinal circle {
+  fill: var(--fill-2);
+}
+.planta .sinal .mi {
+  font-size: 2.6px;
+  text-anchor: middle;
+  fill: var(--label-2);
+}
+.planta .sinal.frio circle {
+  fill: color-mix(in oklab, var(--tint) 30%, transparent);
+}
+.planta .sinal.quente circle {
+  fill: color-mix(in oklab, var(--warn) 30%, transparent);
+}
+.planta .sinal.movimento circle {
+  fill: var(--tint);
+  animation: pulsar 1.6s ease-in-out infinite;
+}
+@keyframes pulsar {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.planta-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+  min-width: 0;
+}
+.faixa-planta {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  border-top: var(--hair) solid var(--sep);
+  padding-top: var(--s3);
+  flex: 0 0 auto;
+}
+/* na TV a faixa põe-se de pé ao lado da planta, e a planta cresce */
+[data-screen="sala"] .planta-corpo {
+  flex-direction: row;
+  gap: var(--s5);
+}
+[data-screen="sala"] .faixa-planta {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  width: calc(300px * var(--u));
+  border-top: 0;
+  border-left: var(--hair) solid var(--sep);
+  padding: 0 0 0 var(--s5);
+  gap: var(--s5);
+}
+[data-screen="sala"] .faixa-planta .hora {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+[data-screen="sala"] .faixa-planta .grow {
+  display: none;
+}
+[data-screen="sala"] .faixa-planta .lado {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.faixa-planta .hora {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+.faixa-planta .h {
+  font-size: var(--t-t2);
+  font-weight: var(--w-s);
+  letter-spacing: var(--tr-tighter);
+}
+.faixa-planta .lado {
+  display: flex;
+  gap: var(--s2);
+}
+.faixa-planta .pill {
+  min-height: calc(38px * var(--u));
+  padding: 0 var(--s4);
+}
+
 /* ═════════ Estados ═════════ */
 
 /* Secção por construir: diz o que vai viver aqui, em vez de mentir com
