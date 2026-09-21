@@ -260,6 +260,11 @@ svg {
 .scroll::-webkit-scrollbar {
   display: none;
 }
+/* numa página que rola, cada bloco tem a altura que tem — nunca encolhe
+   contra o vizinho */
+.scroll > * {
+  flex-shrink: 0;
+}
 
 .row {
   display: flex;
@@ -840,6 +845,370 @@ button.li:active {
 [data-screen="mao"] .acol .alert,
 [data-screen="mao"] .acol .calm {
   flex: 0 0 auto;
+}
+
+/* ═════════ Divisões ═════════ */
+
+.rooms {
+  display: grid;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+.rooms.poucas {
+  flex: 0 0 auto;
+}
+.room {
+  background: var(--l1);
+  border-radius: var(--r4);
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  box-shadow: var(--sh-1);
+  min-width: 0;
+  overflow: hidden;
+  transition: background var(--d1) var(--ease-soft), transform var(--d1) var(--ease);
+}
+.room:hover {
+  background: var(--l2);
+}
+.room:active {
+  transform: scale(0.985);
+}
+.room.lit {
+  background: var(--l2);
+  box-shadow: var(--sh-1), inset 0 0 0 var(--hair) var(--tint-soft);
+}
+/* uma divisão com um aviso ganha o contorno da cor do aviso */
+.room.alerta {
+  box-shadow: var(--sh-1), inset 0 0 0 calc(1.5px * var(--u)) color-mix(in oklab, var(--warn) 60%, transparent);
+}
+.room .rn {
+  font-size: calc(19px * var(--u));
+  font-weight: var(--w-s);
+  letter-spacing: var(--tr-tight);
+  line-height: 1.15;
+}
+.room .rtemp {
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  color: var(--label-2);
+}
+.room .rs {
+  font-size: var(--t-ft);
+  color: var(--label-3);
+}
+.room .rc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6px * var(--u));
+  margin-top: auto;
+}
+/* com muitas divisões o cartão só guarda o nome, a temperatura e o que está mal */
+.room.denso {
+  padding: var(--s3);
+  gap: var(--s1);
+}
+.room.denso .rn {
+  font-size: var(--t-bd);
+}
+/* a temperatura passa para baixo do nome: lado a lado não cabia */
+.room.denso .sb {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.room.denso .rs {
+  display: none;
+}
+.room.denso .pill.warn .pt {
+  display: none;
+}
+.room.denso .pill.warn {
+  padding: calc(6px * var(--u));
+}
+.room.denso .rc .pill:not(.warn) {
+  display: none;
+}
+.rooms.mao {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 0 auto;
+}
+.rooms.mao .room {
+  min-height: calc(112px * var(--u));
+}
+.piso {
+  gap: var(--s2);
+}
+.zona {
+  gap: var(--s3);
+}
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--s2);
+}
+.dots button {
+  width: calc(8px * var(--u));
+  height: calc(8px * var(--u));
+  border-radius: var(--rp);
+  background: var(--fill-2);
+  padding: 0;
+  position: relative;
+}
+/* a bolinha é pequena, o toque não */
+.dots button::after {
+  content: "";
+  position: absolute;
+  inset: calc(-18px * var(--u)) calc(-8px * var(--u));
+}
+.dots button[aria-selected="true"] {
+  background: var(--label);
+}
+
+/* ═════════ Detalhe da divisão ═════════ */
+
+.cab {
+  align-items: center;
+  gap: var(--s3);
+}
+.voltar {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+}
+.acoes {
+  gap: var(--s2);
+}
+.acoes .pill,
+.btns .pill {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+  justify-content: center;
+}
+.pill:disabled {
+  opacity: 0.4;
+}
+.detail {
+  display: flex;
+  gap: var(--s4);
+  flex: 1;
+  min-height: 0;
+}
+.detail > .col {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.detail > .col:first-child {
+  flex: 1.1;
+}
+.detail > .col::-webkit-scrollbar {
+  display: none;
+}
+/* o último bloco de cada coluna ocupa o que sobra, para não haver buraco */
+.detail > .col > :last-child {
+  flex: 1 1 auto;
+}
+.detail .card,
+.detail .grouped {
+  flex: 0 0 auto;
+}
+.detail > .col > .card:last-child,
+.detail > .col > .grouped:last-child {
+  flex: 1 1 auto;
+}
+[data-screen="mao"] .detail {
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+[data-screen="mao"] .detail > .col {
+  overflow: visible;
+  flex: 0 0 auto;
+}
+[data-screen="mao"] .head {
+  align-items: flex-start;
+}
+[data-screen="mao"] .head .cab {
+  flex: 1;
+  min-width: 0;
+}
+
+.luz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.luz .linha {
+  min-height: var(--tap);
+}
+.luz .row {
+  align-items: center;
+  gap: var(--s3);
+}
+.luz .lic {
+  display: grid;
+  place-items: center;
+  transition: color var(--d2) var(--ease-soft);
+}
+
+/* interruptor */
+.sw {
+  width: calc(51px * var(--u));
+  height: calc(31px * var(--u));
+  border-radius: var(--rp);
+  background: var(--fill-2);
+  position: relative;
+  flex: 0 0 auto;
+  transition: background var(--d2) var(--ease);
+}
+.sw::after {
+  content: "";
+  position: absolute;
+  top: calc(2px * var(--u));
+  left: calc(2px * var(--u));
+  width: calc(27px * var(--u));
+  height: calc(27px * var(--u));
+  border-radius: var(--rp);
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  transition: transform var(--d2) var(--ease);
+}
+/* o desenho tem 31 px; a área de toque tem 44 */
+.sw::before {
+  content: "";
+  position: absolute;
+  inset: calc(-7px * var(--u)) calc(-4px * var(--u));
+}
+.sw[aria-checked="true"] {
+  background: var(--good);
+}
+.sw[aria-checked="true"]::after {
+  transform: translateX(calc(20px * var(--u)));
+}
+
+/* slider: o preenchimento é a posição, o texto lê-se por cima */
+.slide {
+  position: relative;
+  height: calc(56px * var(--u));
+  border-radius: var(--r3);
+  background: var(--fill);
+  overflow: hidden;
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+  flex: 0 0 auto;
+}
+.slide[hidden] {
+  display: none;
+}
+.slide .fl {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--tint);
+  opacity: 0.85;
+  transition: width var(--d2) var(--ease);
+}
+.slide.dragging .fl {
+  transition: none;
+}
+.slide.nt .fl {
+  background: var(--label-3);
+  opacity: 0.55;
+}
+.slide .tg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s4);
+  pointer-events: none;
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  background: var(--fill);
+  border-radius: var(--rp);
+  padding: calc(3px * var(--u));
+}
+.stepper button {
+  width: calc(44px * var(--u));
+  height: calc(44px * var(--u));
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  transition: background var(--d1) var(--ease-soft);
+}
+.stepper button:hover {
+  background: var(--fill-2);
+}
+.segc.full {
+  display: flex;
+}
+.segc.full button {
+  flex: 1;
+  justify-content: center;
+  padding: 0;
+}
+
+/* câmara ao vivo */
+.camtile {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: calc(150px * var(--u));
+  border-radius: var(--r4);
+  overflow: hidden;
+  background: var(--l2);
+  padding: 0;
+  flex: 1 1 auto;
+}
+.camtile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.camtile .cl {
+  position: absolute;
+  left: var(--s3);
+  bottom: var(--s3);
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.camtile .live {
+  position: absolute;
+  right: var(--s3);
+  /* em baixo: a imagem já traz a sua própria data e nome no topo */
+  bottom: var(--s3);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(5px * var(--u));
+  font-size: var(--t-c2);
+  letter-spacing: var(--tr-caps);
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.camtile .live i {
+  width: calc(6px * var(--u));
+  height: calc(6px * var(--u));
+  border-radius: var(--rp);
+  background: var(--danger);
+  animation: blink 1.8s ease-in-out infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 /* ═════════ Estados ═════════ */

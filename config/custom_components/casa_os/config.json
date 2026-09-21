@@ -143,6 +143,9 @@
           "name": "Máquina de café",
           "icon": "coffee"
         }
+      ],
+      "windows": [
+        "binary_sensor.janela_cozinha"
       ]
     },
     {
@@ -233,7 +236,10 @@
       ],
       "climate": "climate.ac_suite",
       "temperature": "sensor.temperatura_suite",
-      "humidity": "sensor.humidade_suite"
+      "humidity": "sensor.humidade_suite",
+      "windows": [
+        "binary_sensor.janela_suite"
+      ]
     },
     {
       "id": "quarto",

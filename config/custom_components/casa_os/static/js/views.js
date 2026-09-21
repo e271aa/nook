@@ -14,58 +14,8 @@
 
   const { el, esc, icon, fmt } = window.UI;
   const HA = window.HA;
-  const CFG = window.CASA.config || {};
-
-  const AVISOS = "sensor.avisos";
-
-  /* ───────── Ligar um pedaço de ecrã ao estado da casa ─────────
-   * Tudo o que se liga aqui desliga-se quando a secção sai do ecrã: sem isto,
-   * navegar dez vezes deixava dez cópias de cada coisa a ouvir a casa.
-   */
-  let ligacoes = [];
-  let relogios = [];
-
-  function bind(node, interessa, pinta) {
-    ligacoes.push(HA.subscribe((id) => {
-      if (id === "*" || interessa(id)) pinta();
-    }));
-    pinta();
-    return node;
-  }
-
-  function cadaSegundo(fn) {
-    fn();
-    relogios.push(setInterval(fn, 1000));
-  }
-
-  function limpar() {
-    ligacoes.forEach((u) => u());
-    ligacoes = [];
-    relogios.forEach((t) => clearInterval(t));
-    relogios = [];
-  }
-
-  // ───────── O que a casa tem ─────────
-
-  const divisoes = () => CFG.rooms || [];
-  const todasLuzes = () => divisoes().flatMap((r) => r.lights || []);
-  const todosEstores = () =>
-    divisoes().flatMap((r) => (r.covers || []).filter((c) => !/portao|garagem/i.test(c)));
-  const posicao = (id) => HA.attr(id, "current_position", HA.isOn(id) ? 100 : 0) || 0;
-  const acesas = () => todasLuzes().filter((l) => HA.isOn(l));
-  const abertos = () => todosEstores().filter((c) => posicao(c) > 0);
-
-  function avisos() {
-    const s = HA.get(AVISOS);
-    return (s && s.attributes && s.attributes.avisos) || [];
-  }
-
-  const calmaDesde = () => {
-    const s = HA.get(AVISOS);
-    return (s && s.attributes && s.attributes.calma_desde) || null;
-  };
-
-  const ecra = () => document.documentElement.getAttribute("data-screen");
+  const K = window.KIT;
+  const { CFG, bind, limpar, ecra, divisoes, todasLuzes, todosEstores, acesas, abertos, avisos, calmaDesde } = K;
 
   /** "Segunda-feira, 21 de setembro" */
   function diaPorExtenso(d) {
@@ -97,12 +47,12 @@
     const data = node.querySelector(".cap");
     const linha = node.querySelector(".vline");
 
-    cadaSegundo(() => {
+    K.intervalo(() => {
       const agora = new Date();
       data.textContent = `${diaPorExtenso(agora)} · ${String(agora.getHours()).padStart(2, "0")}:${String(agora.getMinutes()).padStart(2, "0")}`;
     });
 
-    bind(node, (id) => id === AVISOS, () => {
+    bind(node, (id) => id === K.AVISOS, () => {
       const n = avisos().length;
       linha.innerHTML = !n
         ? "Está tudo<br>em ordem"
@@ -203,7 +153,7 @@
   function colunaAvisos({ grande }) {
     const node = el('<div class="acol"></div>');
 
-    bind(node, (id) => id === AVISOS, () => {
+    bind(node, (id) => id === K.AVISOS, () => {
       const lista = avisos();
       node.innerHTML = "";
 
@@ -367,10 +317,6 @@
     </div>`);
   }
 
-  const divisoesView = () =>
-    page("Divisões", "Dez divisões em três pisos",
-      porConstruir("rooms", "As divisões numa grelha que enche o ecrã, por piso, e o detalhe de cada uma com as luzes, os estores, o clima, as tomadas e os sensores.", "3"));
-
   const controlos = () =>
     page("Controlos", "Tudo o que se liga, abre e aquece",
       porConstruir("sliders", "Luzes, estores, clima e tomadas, cada um no seu separador, com as ações de grupo em cima — desligar todas, fechar todos, a casa a 21 graus.", "4"));
@@ -387,5 +333,5 @@
     page("Rotina", "O que a casa tem para tratar",
       porConstruir("list", "Os lembretes com prazo, a lista de compras, os próximos dias da agenda, e o que está a dar na TV.", "6"));
 
-  window.VIEWS = { casa, divisoes: divisoesView, controlos, vigilancia, energia, rotina, limpar };
+  window.VIEWS = { casa, controlos, vigilancia, energia, rotina, limpar };
 })();
