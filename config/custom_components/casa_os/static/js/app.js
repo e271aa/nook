@@ -34,10 +34,13 @@
     return w >= 1500 ? "sala" : "braco";
   }
 
-  function applyScreenClass() {
+  function applyScreenClass(onChange) {
     const cls = screenClass();
     if (document.documentElement.getAttribute("data-screen") !== cls) {
       document.documentElement.setAttribute("data-screen", cls);
+      // a vista muda com o ecrã (quantas divisões cabem, colunas ou pilha),
+      // por isso volta a desenhar-se quando se passa de um para o outro
+      if (onChange) onChange();
     }
   }
 
@@ -229,7 +232,7 @@
     let resizeTimer = null;
     window.addEventListener("resize", () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(applyScreenClass, 120);
+      resizeTimer = setTimeout(() => applyScreenClass(render), 120);
     });
     applyTheme(localStorage.getItem(THEME_KEY) || "lilas", false);
     app.innerHTML = "";

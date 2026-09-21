@@ -779,6 +779,131 @@
     return list;
   }
 
+  /* ── Colunas que se arrastam (do painel anterior) ──────────────────────────────
+   * Três diferenças em relação ao original: pega-se com o dedo (pointer, não
+   * mouse), a pega tem a largura de um dedo, e a casa lembra-se de onde a
+   * deixaram — por ecrã, porque a parede e a TV não querem o mesmo.
+   */
+  const COLS_PADRAO = { braco: [32, 36, 32], sala: [28, 44, 28] };
+  const colsKey = (ecra) => `casa_os_cols_${ecra}`;
+
+  function lerColunas(ecra) {
+    try {
+      const v = JSON.parse(localStorage.getItem(colsKey(ecra)) || "null");
+      if (Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === "number" && n > 5)) return v;
+    } catch (e) {
+      /* modo privado ou lixo guardado */
+    }
+    return null;
+  }
+
+  function aplicarColunas(panel, v) {
+    ["esq", "centro", "dir"].forEach((n, i) => panel.style.setProperty(`--col-${n}`, `${v[i]}fr`));
+  }
+
+  function colunasArrastaveis(panel) {
+    const ecra = document.documentElement.getAttribute("data-screen");
+    const padrao = COLS_PADRAO[ecra];
+    if (!padrao) return; // no telemóvel as colunas empilham-se
+
+    let larguras = lerColunas(ecra) || padrao.slice();
+    aplicarColunas(panel, larguras);
+
+    const MIN_PX = 190; // abaixo disto a coluna deixa de caber o que tem dentro
+    const cols = () => [panel.querySelector(".col-esq"), panel.querySelector(".col-centro"), panel.querySelector(".col-dir")];
+    // o mínimo é em píxeis, não em por cento: 20 % de uma TV e 20 % de um
+    // tablet não são a mesma coluna
+    const minPct = () => {
+      const util = cols().reduce((t, n) => t + n.getBoundingClientRect().width, 0);
+      const soma = larguras[0] + larguras[1] + larguras[2];
+      return util > 0 ? (MIN_PX / util) * soma : 14;
+    };
+
+    const guardar = () => {
+      try {
+        localStorage.setItem(colsKey(ecra), JSON.stringify(larguras.map((n) => Math.round(n * 10) / 10)));
+      } catch (e) {
+        /* modo privado */
+      }
+    };
+
+    const mover = (i, delta) => {
+      // delta em por cento: o que uma coluna ganha, a vizinha perde
+      const min = minPct();
+      const a = larguras[i] + delta;
+      const b = larguras[i + 1] - delta;
+      if (a < min || b < min) return;
+      larguras[i] = a;
+      larguras[i + 1] = b;
+      aplicarColunas(panel, larguras);
+    };
+
+    [0, 1].forEach((i) => {
+      const grip = el(`<div class="colgrip" role="separator" tabindex="0" aria-orientation="vertical"
+        aria-label="Largura das colunas ${i === 0 ? "1 e 2" : "2 e 3"}"><span></span></div>`);
+
+      let arrastar = false;
+      let x0 = 0;
+      let base = null;
+      let larguraUtil = 1;
+
+      // O movimento segue-se na janela, não na pega: o dedo (ou o rato) sai
+      // facilmente dos 8 px da pega enquanto arrasta.
+      const seguir = (e) => {
+        if (!arrastar) return;
+        const pct = ((e.clientX - x0) / larguraUtil) * (base[0] + base[1] + base[2]);
+        larguras = base.slice();
+        mover(i, pct);
+      };
+      const largar = () => {
+        if (!arrastar) return;
+        arrastar = false;
+        window.removeEventListener("pointermove", seguir);
+        window.removeEventListener("pointerup", largar);
+        window.removeEventListener("pointercancel", largar);
+        grip.classList.remove("dragging");
+        document.body.style.userSelect = "";
+        guardar();
+      };
+      grip.addEventListener("pointerdown", (e) => {
+        arrastar = true;
+        x0 = e.clientX;
+        base = larguras.slice();
+        const [a, b, c] = cols().map((n) => n.getBoundingClientRect().width);
+        larguraUtil = a + b + c;
+        grip.classList.add("dragging");
+        document.body.style.userSelect = "none";
+        window.addEventListener("pointermove", seguir);
+        window.addEventListener("pointerup", largar);
+        window.addEventListener("pointercancel", largar);
+        e.preventDefault();
+      });
+
+      // teclado: setas afinam, Home volta ao princípio
+      grip.addEventListener("keydown", (e) => {
+        const passo = e.shiftKey ? 5 : 2;
+        if (e.key === "ArrowLeft") mover(i, -passo);
+        else if (e.key === "ArrowRight") mover(i, passo);
+        else if (e.key === "Home") larguras = padrao.slice();
+        else return;
+        e.preventDefault();
+        if (e.key === "Home") aplicarColunas(panel, larguras);
+        guardar();
+      });
+
+      // dois toques na pega põem tudo como estava
+      grip.addEventListener("dblclick", () => {
+        larguras = padrao.slice();
+        aplicarColunas(panel, larguras);
+        guardar();
+        window.UI.toast("Colunas como estavam");
+      });
+
+      panel.appendChild(grip);
+      grip.style.gridColumn = String(i * 2 + 2);
+    });
+  }
+
   function homeView() {
     const node = el('<div class="view home bleed"></div>');
     node.appendChild(windowStrip());
@@ -805,7 +930,7 @@
     // No telemóvel a página rola, por isso mostram-se todas.
     const ecra = document.documentElement.getAttribute("data-screen");
     const naMao = ecra === "mao";
-    const cabem = { mao: controlaveis.length, braco: 6, sala: 9 }[ecra] || 6;
+    const cabem = { mao: controlaveis.length, braco: 6, sala: 8 }[ecra] || 6;
     const mostra = controlaveis.slice(0, cabem);
     const resto = controlaveis.length - mostra.length;
     const roomsSect = el(
@@ -839,6 +964,7 @@
     }
 
     cols.append(esq, centro, dir);
+    colunasArrastaveis(cols);
     node.appendChild(cols);
     return node;
   }

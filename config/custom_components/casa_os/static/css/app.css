@@ -1583,11 +1583,63 @@ html[data-screen="sala"] body {
 [data-screen="braco"] .panel3,
 [data-screen="sala"] .panel3 {
   display: grid;
-  grid-template-columns: var(--col-esq, 30%) var(--col-centro, 40%) var(--col-dir, 30%);
-  gap: var(--s-5);
+  grid-template-columns:
+    var(--col-esq, 30fr) 8px
+    var(--col-centro, 40fr) 8px
+    var(--col-dir, 30fr);
+  gap: var(--s-3);
   min-height: 0;
   padding: 0 var(--gutter) var(--s-4);
   margin-top: var(--s-4);
+}
+[data-screen="braco"] .col-esq,
+[data-screen="sala"] .col-esq {
+  grid-column: 1;
+}
+[data-screen="braco"] .col-centro,
+[data-screen="sala"] .col-centro {
+  grid-column: 3;
+}
+[data-screen="braco"] .col-dir,
+[data-screen="sala"] .col-dir {
+  grid-column: 5;
+}
+
+/* ── pega das colunas ──
+   O traço é fino, a área de toque é larga: quem arrasta usa o dedo. */
+.colgrip {
+  display: none;
+}
+[data-screen="braco"] .colgrip,
+[data-screen="sala"] .colgrip {
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+  grid-row: 1;
+  align-self: stretch;
+}
+.colgrip::before {
+  content: "";
+  position: absolute;
+  inset: 0 -14px;
+}
+.colgrip span {
+  width: 2px;
+  height: 46px;
+  border-radius: 2px;
+  background: var(--c-line);
+  transition: background var(--dur-1) var(--ease), height var(--dur-1) var(--ease);
+}
+.colgrip:hover span,
+.colgrip:focus-visible span,
+.colgrip.dragging span {
+  background: var(--c-accent);
+  height: 72px;
+}
+.colgrip:focus-visible {
+  outline: none;
 }
 [data-screen="braco"] .col,
 [data-screen="sala"] .col {
@@ -1615,7 +1667,7 @@ html[data-screen="sala"] body {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
   grid-auto-rows: minmax(0, 1fr);
   align-content: stretch;
 }
@@ -1678,9 +1730,11 @@ html[data-screen="sala"] {
   font-size: var(--t-xs);
 }
 /* na parede as cenas ficam deitadas: ocupam menos altura e leem-se igual */
-[data-screen="braco"] .panel3 .scenebtns {
+[data-screen="braco"] .panel3 .scenebtns,
+[data-screen="sala"] .panel3 .scenebtns {
   padding: var(--s-2);
 }
+[data-screen="sala"] .panel3 .scenebtn,
 [data-screen="braco"] .panel3 .scenebtn {
   flex-direction: row;
   justify-content: flex-start;
