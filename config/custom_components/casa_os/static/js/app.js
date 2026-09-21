@@ -1,53 +1,71 @@
 /* ─────────────────────────────────────────────────────────────────────────
- *  Casa OS — esqueleto, navegação e paletas.
+ *  Casa OS — a casca: navegação, menu, paletas e o ecrã que se escolhe.
+ *
+ *  Seis secções, e nem todas em todo o lado. Na parede e na TV a barra
+ *  lateral está sempre à vista; no telemóvel há separadores em baixo com as
+ *  cinco principais e o resto vive no menu. O menu é o mesmo conteúdo da
+ *  barra lateral, mais o que não cabe nela.
  * ───────────────────────────────────────────────────────────────────────── */
 (function () {
   "use strict";
 
-  const { el, esc, icon, fmt, greeting } = window.UI;
+  const { el, esc, icon } = window.UI;
   const HA = window.HA;
   const V = window.VIEWS;
-  const CFG = window.CASA.config;
+  const CFG = window.CASA.config || {};
+
+  /* ───────── Secções ─────────
+   * ecras: onde esta secção aparece na navegação principal.
+   * A Rotina não vai à TV — não se mostram as compras a visitas.
+   */
+  const SECTIONS = [
+    { id: "casa", title: "Casa", icon: "home", ecras: ["braco", "sala", "mao"] },
+    { id: "divisoes", title: "Divisões", icon: "rooms", ecras: ["braco", "sala", "mao"] },
+    { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "mao"] },
+    { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
+    { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
+    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
+  ];
 
   const THEMES = [
-    { id: "lilas", name: "Lilás", desc: "A cor da casa", c: ["#100d17", "#b79cff"] },
-    { id: "dourado", name: "Dourado", desc: "Quente e sóbrio", c: ["#100d08", "#e3b567"] },
-    { id: "azul", name: "Azul", desc: "Frio e calmo", c: ["#07101a", "#5cc0f5"] },
-    { id: "verde", name: "Verde", desc: "Natural", c: ["#07120d", "#5fd39a"] },
-    { id: "oled", name: "Preto", desc: "Para tablets de parede", c: ["#000000", "#ffb066"] },
-    { id: "claro", name: "Claro", desc: "Para o dia", c: ["#f2f1ee", "#6b4de0"] },
+    { id: "grafite", name: "Grafite", bg: "#000000", tint: "#4c9aff" },
+    { id: "lilas", name: "Lilás", bg: "#08060d", tint: "#a98bff" },
+    { id: "dourado", name: "Dourado", bg: "#0a0805", tint: "#e0a94f" },
+    { id: "verde", name: "Verde", bg: "#030805", tint: "#4bd6a0" },
+    { id: "oled", name: "Preto", bg: "#000000", tint: "#ffffff" },
+    { id: "claro", name: "Claro", bg: "#f2f2f7", tint: "#0a66d6" },
   ];
   const THEME_KEY = "casa_os_theme";
 
-  /* ───────── Classe de ecrã ─────────
-   * mão   — telemóvel: a página rola, como é hábito no telemóvel
-   * braço — tablet de parede: cabe tudo no ecrã, sem rolar
-   * sala  — TV: cabe tudo, e tudo maior, para se ler de longe
-   * Pode ser forçada para demonstrações: /casa?ecra=sala
+  /* ───────── Ecrã ─────────
+   * mao   — telemóvel: rola
+   * braco — tablet de parede: não rola
+   * sala  — TV: não rola, e cresce
+   * Força-se para demonstrações: /casa?ecra=sala
    */
   function screenClass() {
-    const forced = new URLSearchParams(location.search).get("ecra");
-    if (["mao", "braco", "sala"].includes(forced)) return forced;
+    const forcado = new URLSearchParams(location.search).get("ecra");
+    if (["mao", "braco", "sala"].includes(forcado)) return forcado;
     const w = window.innerWidth;
     const h = window.innerHeight;
     if (w < 700 || h < 480) return "mao";
     return w >= 1500 ? "sala" : "braco";
   }
 
-  function applyScreenClass(onChange) {
+  function applyScreen(aoMudar) {
     const cls = screenClass();
-    if (document.documentElement.getAttribute("data-screen") !== cls) {
-      document.documentElement.setAttribute("data-screen", cls);
-      // a vista muda com o ecrã (quantas divisões cabem, colunas ou pilha),
-      // por isso volta a desenhar-se quando se passa de um para o outro
-      if (onChange) onChange();
-    }
+    const raiz = document.documentElement;
+    if (raiz.getAttribute("data-screen") === cls) return;
+    raiz.setAttribute("data-screen", cls);
+    if (aoMudar) aoMudar();
   }
 
-  function applyTheme(id, persist = true) {
+  const currentTheme = () => document.documentElement.getAttribute("data-theme") || "grafite";
+
+  function applyTheme(id, guardar = true) {
     if (!THEMES.some((t) => t.id === id)) return;
     document.documentElement.setAttribute("data-theme", id);
-    if (persist) {
+    if (guardar) {
       try {
         localStorage.setItem(THEME_KEY, id);
       } catch (e) {
@@ -55,199 +73,212 @@
       }
     }
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--c-bg").trim());
-  }
-
-  const currentTheme = () => document.documentElement.getAttribute("data-theme") || "lilas";
-
-  function openThemes() {
-    const body = el('<div class="themes"></div>');
-    const paint = () =>
-      body.querySelectorAll("[data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === currentTheme())));
-    THEMES.forEach((t) => {
-      const b = el(`<button class="themebtn" data-t="${t.id}">
-        <span class="sq" style="background:${t.c[0]}"><i style="background:${t.c[1]}"></i></span>
-        <span><span class="tn">${esc(t.name)}</span><span class="td">${esc(t.desc)}</span></span>
-      </button>`);
-      b.addEventListener("click", () => {
-        applyTheme(t.id);
-        paint();
-      });
-      body.appendChild(b);
-    });
-    paint();
-    window.UI.sheet("Aparência", body, { subtitle: "A mesma casa, na cor da instalação" });
+    if (meta) {
+      meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+    }
   }
 
   // ───────── Rotas ─────────
 
-  const ROUTES = [
-    { id: "inicio", path: "/", title: "Início", icon: "home", view: () => V.homeView() },
-    { id: "divisoes", path: "/divisoes", title: "Divisões", icon: "rooms", view: () => V.roomsView() },
-    { id: "controlos", path: "/controlos", title: "Controlos", icon: "sliders", view: (p) => V.controlsView(p[1] || "luzes") },
-    { id: "energia", path: "/energia", title: "Energia", icon: "bolt", view: (p) => V.energyView(p[1] || "hoje") },
-    { id: "cameras", path: "/cameras", title: "Câmaras", icon: "camera", view: () => V.camerasView() },
-  ];
+  const sectionOf = (id) => SECTIONS.find((s) => s.id === id);
+  const parseHash = () => {
+    const partes = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
+    return { sec: sectionOf(partes[0]) ? partes[0] : "casa", partes };
+  };
+  const go = (id) => {
+    location.hash = `#/${id === "casa" ? "" : id}`;
+  };
 
-  function parseHash() {
-    const parts = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
-    const route = ROUTES.find((r) => r.path === `/${parts[0] || ""}`) || ROUTES[0];
-    return { route, parts };
+  // ───────── Peças da casca ─────────
+
+  const app = el('<div class="app"></div>');
+  const side = el('<aside class="side"><div class="nav"></div><div class="foot"></div></aside>');
+  const body = el('<div class="body"></div>');
+  const tabbar = el('<nav class="tabbar" aria-label="Secções"></nav>');
+
+  function navButton(s, atual, cls) {
+    const b = el(
+      `<button class="${cls}" data-sec="${s.id}"${s.id === atual ? ' aria-current="page"' : ""}>
+        ${icon(s.icon)}<span>${esc(s.title)}</span></button>`,
+    );
+    b.addEventListener("click", () => go(s.id));
+    return b;
   }
 
-  // ───────── Esqueleto ─────────
+  function paintNav(atual) {
+    const ecra = document.documentElement.getAttribute("data-screen");
+    const visiveis = SECTIONS.filter((s) => s.ecras.includes(ecra));
 
-  const app = document.getElementById("app");
-  const title = window.CASA.title || "Casa";
+    const nav = side.querySelector(".nav");
+    nav.innerHTML = "";
+    visiveis.forEach((s) => nav.appendChild(navButton(s, atual, "nb")));
 
-  const side = el(`<aside class="side">
-    <div class="brand">
-      <span class="mark">${esc(title[0])}</span>
-      <span><span class="bn">${esc(title)}</span><span class="bs" id="side-sub">—</span></span>
-    </div>
-    <nav>${ROUTES.map(
-      (r) => `<a href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
-    ).join("")}</nav>
-    <div class="foot">
-      <div id="people"></div>
-      <button class="li" id="side-theme" style="border:0;padding:var(--s-2) var(--s-3);border-radius:var(--r-sm)">
-        ${icon("palette")}<span class="lname">Aparência</span>
-      </button>
-    </div>
-  </aside>`);
+    tabbar.innerHTML = "";
+    visiveis.forEach((s) => tabbar.appendChild(navButton(s, atual, "")));
+  }
 
-  const main = el('<div class="main"><div id="outlet"></div></div>');
-
-  const tabbar = el(`<nav class="tabbar" aria-label="Navegação">
-    ${ROUTES.map(
-      (r) => `<a href="#${r.path}" data-route="${r.id}">${icon(r.icon)}<span>${esc(r.title)}</span></a>`,
-    ).join("")}
-  </nav>`);
-
-  side.querySelector("#side-theme").addEventListener("click", openThemes);
-
-  /** Quem está em casa, no rodapé da barra lateral. */
-  function mountPeople() {
-    const host = side.querySelector("#people");
+  /** Quem está em casa, no fundo da barra lateral. */
+  function mountFoot() {
+    const foot = side.querySelector(".foot");
+    foot.innerHTML = "";
+    const avatars = el('<div class="avatars"></div>');
     (CFG.people || []).forEach((p) => {
-      const row = el(`<div class="person"><span class="av">${esc(p.name[0])}</span><span class="pn">${esc(p.name)}</span><span class="pb"></span></div>`);
-      const update = () => {
-        const home = (HA.get(p.entity) || {}).state === "home";
-        row.querySelector(".pn").textContent = `${p.name} · ${home ? "em casa" : "fora"}`;
-        const bat = p.battery ? HA.num(p.battery) : null;
-        row.querySelector(".pb").textContent = bat !== null ? `${fmt.n(bat)} %` : "";
-        row.querySelector(".av").style.borderColor = home ? "var(--c-accent)" : "var(--c-line)";
-      };
+      const av = el(`<span class="av" title="${esc(p.name)}">${esc(p.name[0])}</span>`);
+      const pinta = () => av.classList.toggle("home", (HA.get(p.entity) || {}).state === "home");
       HA.subscribe((id) => {
-        if (id === "*" || id === p.entity || id === p.battery) update();
+        if (id === "*" || id === p.entity) pinta();
       });
-      update();
-      host.appendChild(row);
+      pinta();
+      foot.appendChild(avatars);
+      avatars.appendChild(av);
     });
+    const menu = el(`<button class="nb" aria-label="Menu">${icon("menu")}<span>Menu</span></button>`);
+    menu.addEventListener("click", openMenu);
+    foot.appendChild(menu);
   }
 
-  /** Resumo da casa por baixo do nome, na barra lateral. */
-  function mountSideSub() {
-    const sub = side.querySelector("#side-sub");
-    const update = () => {
-      const lights = (CFG.rooms || []).flatMap((r) => r.lights || []);
-      const on = lights.filter((l) => HA.isOn(l)).length;
-      sub.textContent = on ? `${on} ${on === 1 ? "luz ligada" : "luzes ligadas"}` : "tudo apagado";
-    };
-    HA.subscribe((id) => {
-      if (id === "*" || id.startsWith("light.")) update();
-    });
-    update();
+  // ───────── Menu ─────────
+
+  let aberto = null;
+
+  function closeMenu() {
+    if (!aberto) return;
+    aberto.forEach((n) => n.remove());
+    aberto = null;
   }
+
+  function openMenu() {
+    closeMenu();
+    const ecra = document.documentElement.getAttribute("data-screen");
+    const atual = parseHash().sec;
+
+    const scrim = el('<div class="scrim"></div>');
+    const drawer = el(`<div class="drawer" role="dialog" aria-label="Menu"></div>`);
+
+    const secs = el('<div></div>');
+    secs.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Secções</div>'));
+    SECTIONS.forEach((s) => {
+      const fora = !s.ecras.includes(ecra);
+      const r = el(
+        `<button class="mrow"${s.id === atual ? ' aria-current="page"' : ""}>${icon(s.icon)}
+          <span style="flex:1">${esc(s.title)}</span>
+          ${fora ? '<span class="ft">no menu</span>' : ""}</button>`,
+      );
+      r.addEventListener("click", () => {
+        closeMenu();
+        go(s.id);
+      });
+      secs.appendChild(r);
+    });
+    drawer.appendChild(secs);
+
+    const temas = el('<div></div>');
+    temas.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Aparência</div>'));
+    const grelha = el('<div class="themes"></div>');
+    const pinta = () =>
+      grelha.querySelectorAll("[data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === currentTheme())));
+    THEMES.forEach((t) => {
+      const b = el(
+        `<button class="themebtn" data-t="${t.id}">
+          <span class="sq" style="background:${t.bg}"><i style="background:${t.tint}"></i></span>
+          <span class="tn">${esc(t.name)}</span></button>`,
+      );
+      b.addEventListener("click", () => {
+        applyTheme(t.id);
+        pinta();
+      });
+      grelha.appendChild(b);
+    });
+    pinta();
+    temas.appendChild(grelha);
+    drawer.appendChild(temas);
+
+    const fechar = el(`<button class="mrow" style="margin-top:auto">${icon("back")}<span>Fechar</span></button>`);
+    fechar.addEventListener("click", closeMenu);
+    drawer.appendChild(fechar);
+
+    scrim.addEventListener("click", closeMenu);
+    document.body.append(scrim, drawer);
+    aberto = [scrim, drawer];
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  // ───────── Desenhar ─────────
 
   function render() {
-    window.UI.closeSheets();
-    const { route, parts } = parseHash();
-    const outlet = main.querySelector("#outlet");
-    outlet.innerHTML = "";
-    const view = route.view(parts);
+    closeMenu();
+    const { sec, partes } = parseHash();
+    paintNav(sec);
+    body.innerHTML = "";
+    const vista = V[sec](partes.slice(1));
 
-    // No Início, os botões flutuam sobre a janela; nas outras vistas vão no cabeçalho.
-    if (route.id === "inicio") {
-      const strip = view.querySelector(".windowstrip");
-      if (strip) {
-        const top = el(`<div class="wtop">
-          <span class="whello">${esc(greeting())}${window.CASA.user ? `, ${esc(window.CASA.user)}` : ""}</span>
-          <button class="iconbtn ghost" id="theme-btn" aria-label="Aparência">${icon("palette")}</button>
-        </div>`);
-        top.querySelector("#theme-btn").addEventListener("click", openThemes);
-        strip.appendChild(top);
-      }
-    } else {
-      const head = view.querySelector(".head");
+    // No telemóvel não há barra lateral: o menu entra no cabeçalho da secção,
+    // que é o único sítio fixo que lá existe.
+    if (document.documentElement.getAttribute("data-screen") === "mao") {
+      const head = vista.querySelector(".head");
       if (head) {
-        const actions = el('<div class="head-actions"></div>');
-        const b = el(`<button class="iconbtn" aria-label="Aparência">${icon("palette")}</button>`);
-        b.addEventListener("click", openThemes);
-        actions.appendChild(b);
-        head.appendChild(actions);
+        const b = el(`<button class="iconbtn" aria-label="Menu">${icon("menu")}</button>`);
+        b.addEventListener("click", openMenu);
+        head.appendChild(b);
       }
     }
-
-    outlet.appendChild(view);
-    [...side.querySelectorAll("[data-route]"), ...tabbar.querySelectorAll("[data-route]")].forEach((a) => {
-      if (a.dataset.route === route.id) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
-    });
-    document.title = route.id === "inicio" ? title : `${route.title} · ${title}`;
-    window.scrollTo(0, 0);
+    body.appendChild(vista);
+    const titulo = sectionOf(sec).title;
+    document.title = sec === "casa" ? window.CASA.title : `${titulo} · ${window.CASA.title}`;
   }
 
   window.addEventListener("hashchange", render);
 
-  // ───────── Ligação ─────────
-
+  /** O aviso de que a casa não responde, por cima do que estiver à vista. */
   function watchConnection() {
     let banner = null;
-    HA.onStatus((status) => {
-      if (status === "online") {
-        if (banner) {
-          banner.remove();
-          banner = null;
-        }
+    HA.onStatus((estado) => {
+      if (estado === "online") {
+        if (banner) banner.remove();
+        banner = null;
         return;
       }
       if (!banner) {
-        banner = el(`<div class="offline">${icon("wifioff")}
-          <div><div class="ot">Sem ligação à casa</div><div class="os">A tentar outra vez…</div></div></div>`);
+        banner = el(`<div class="offline"><span class="spin"></span>
+          <div><div class="bd">Sem ligação à casa</div>
+          <div class="ft">A tentar outra vez…</div></div></div>`);
       }
-      const view = main.querySelector(".view");
-      if (view && !banner.isConnected) view.prepend(banner);
-      if (status === "unauthorized" && banner) {
-        banner.querySelector(".ot").textContent = "Sessão sem permissão";
-        banner.querySelector(".os").textContent = "Volta a entrar no Home Assistant.";
+      if (estado === "unauthorized") {
+        banner.querySelector(".bd").textContent = "Sessão sem permissão";
+        banner.querySelector(".ft").textContent = "Volta a entrar no Home Assistant.";
       }
+      if (!banner.isConnected) body.prepend(banner);
     });
   }
 
   // ───────── Arranque ─────────
 
   function boot() {
-    applyScreenClass();
-    let resizeTimer = null;
+    applyScreen();
+    applyTheme(localStorage.getItem(THEME_KEY) || "grafite", false);
+    document.documentElement.setAttribute("data-presenca", "longe");
+
+    let timer = null;
     window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => applyScreenClass(render), 120);
+      clearTimeout(timer);
+      timer = setTimeout(() => applyScreen(render), 120);
     });
-    applyTheme(localStorage.getItem(THEME_KEY) || "lilas", false);
-    app.innerHTML = "";
-    app.append(side, main, tabbar);
-    app.setAttribute("aria-busy", "false");
-    mountPeople();
-    mountSideSub();
+
+    const raiz = document.getElementById("app");
+    raiz.replaceWith(app);
+    app.append(side, body, tabbar);
+    mountFoot();
     render();
     watchConnection();
   }
 
-  let started = false;
+  let arrancou = false;
   const start = () => {
-    if (started) return;
-    started = true;
+    if (arrancou) return;
+    arrancou = true;
     boot();
   };
   const unsub = HA.subscribe((id) => {
@@ -256,5 +287,6 @@
       start();
     }
   });
+  // se a casa não responder, a casca aparece na mesma e diz porquê
   setTimeout(start, 4000);
 })();

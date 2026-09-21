@@ -144,6 +144,11 @@
       });
     },
 
+    /** Quantos aparelhos a casa já nos contou. */
+    count() {
+      return Object.keys(states).length;
+    },
+
     /** Avisado sempre que muda uma entidade ("*" no arranque). */
     subscribe(fn) {
       listeners.add(fn);

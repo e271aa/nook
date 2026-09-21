@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-PT" data-theme="lilas">
+<html lang="pt-PT">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{{ title }}</title>
-    <meta name="theme-color" content="#100d17" />
+    <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="/casa_os_static/css/tokens.css?v={{ version }}" />
@@ -22,9 +22,9 @@
   <body>
     {{ sprite | safe }}
 
-    <div id="app" class="app" aria-busy="true">
-      <div class="boot" id="boot">
-        <div class="boot-mark"></div>
+    <div id="app">
+      <div class="boot">
+        <div class="dot"></div>
         <p>A ligar à casa…</p>
       </div>
     </div>
