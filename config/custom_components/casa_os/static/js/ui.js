@@ -33,6 +33,9 @@
     return parts.join(",");
   }
 
+  const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
   const fmt = {
     n: nf,
     power(v) {
@@ -50,6 +53,21 @@
     },
     money(v, cur = "€") {
       return `${nf(v, 2)} ${cur}`;
+    },
+    /**
+     * "8 set" — escrito à mão porque o pt-PT de alguns browsers devolve "8/09"
+     * quando se pede o mês abreviado.
+     */
+    diaMes(d) {
+      return `${d.getDate()} ${MESES[d.getMonth()]}`;
+    },
+    /** "seg, 8 set" */
+    diaSemana(d) {
+      return `${SEMANA[d.getDay()]}, ${d.getDate()} ${MESES[d.getMonth()]}`;
+    },
+    /** "set 26" */
+    mesAno(d) {
+      return `${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
     },
     /** "07:21" a partir de minutos desde a meia-noite */
     hm(min) {

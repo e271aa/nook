@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from astral import Observer
 from astral.sun import elevation as sun_elevation
 
+from homeassistant.components.recorder import get_instance
+from homeassistant.components.recorder.db_schema import StatisticsShortTerm
 from homeassistant.components.recorder.models import StatisticMeanType
 from homeassistant.components.recorder.statistics import async_import_statistics
 from homeassistant.core import HomeAssistant
@@ -213,6 +215,13 @@ async def async_backfill(hass: HomeAssistant, engine: Engine) -> None:
         else:
             meta = _mean_meta(eid, None, "%")
         async_import_statistics(hass, meta, rows)
+        # O recorder continua a soma a partir das estatísticas de 5 minutos, não das
+        # horárias: sem uma linha curta no fim, a primeira hora ao vivo recomeçava a
+        # soma do zero e esse dia aparecia com milhares de kWh negativos.
+        if meta["has_sum"]:
+            ultimo = rows[-1]
+            curta = {**ultimo, "start": dt_util.as_utc(end) - timedelta(minutes=5)}
+            get_instance(hass).async_import_statistics(meta, [curta], StatisticsShortTerm)
 
     engine.energy.update(counters)
     engine.circuit_energy.update(circuit_totals)

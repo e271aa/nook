@@ -22,7 +22,7 @@
 
   const inicioDoDia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diasAte = (d) => Math.round((inicioDoDia(d) - inicioDoDia(new Date())) / 86400000);
-  const mes = (d) => d.toLocaleDateString("pt-PT", { day: "numeric", month: "short" }).replace(".", "");
+  const mes = (d) => fmt.diaMes(d);
 
   function quando(d) {
     const n = diasAte(d);

@@ -88,12 +88,16 @@
         },
       },
     ];
-    // a planta só entra onde existe (e onde faz sentido: é uma vista de TV)
-    if (CFG.planta && ecra() === "sala") {
+    // a planta só entra onde existe
+    if (CFG.planta) {
       lista.push({
-        id: "planta", nome: "A casa", ic: "planta",
-        vigia: () => false,
-        diz: () => ["A casa vista de cima", `${fmt.n((CFG.planta.pisos || []).length)} pisos`],
+        id: "planta", nome: "Planta", ic: "planta",
+        vigia: (id) => id.startsWith("light.") || id.startsWith("vacuum."),
+        diz: () => {
+          const pisos = (CFG.planta.pisos || []).length;
+          const robo = CFG.robo && HA.get(CFG.robo.entidade);
+          return [robo && robo.state === "cleaning" ? "O robô está a limpar" : "A casa vista de cima", `${fmt.n(pisos)} pisos`];
+        },
       });
     }
     return lista;

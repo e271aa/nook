@@ -21,6 +21,11 @@ async def async_setup_entry(
     async_add_entities([CasaVacuum(entry.runtime_data)])
 
 
+
+# O percurso do robô (m² de cada divisão). Soma 86 m², o mesmo que o motor
+# conta até voltar à base.
+PERCURSO = (("sala", 30.0), ("cozinha", 22.0), ("escritorio", 18.0), ("entrada", 16.0))
+
 class CasaVacuum(CasaEntity, StateVacuumEntity):
     _attr_fan_speed_list = FAN_SPEEDS
     _attr_supported_features = (
@@ -52,7 +57,16 @@ class CasaVacuum(CasaEntity, StateVacuumEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"bateria": round(self._v["battery"]), "area_limpa": round(self._v["area"], 1)}
+        atributos = {"bateria": round(self._v["battery"]), "area_limpa": round(self._v["area"], 1)}
+        # por onde anda: as divisões do rés-do-chão, pela ordem em que as limpa
+        if self._v["activity"] in ("cleaning", "paused"):
+            feito = self._v["area"]
+            for divisao, m2 in PERCURSO:
+                if feito < m2:
+                    break
+                feito -= m2
+            atributos["divisao"] = divisao
+        return atributos
 
     def _set(self, activity: str) -> None:
         self._v["activity"] = activity

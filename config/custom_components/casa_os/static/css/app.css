@@ -1616,6 +1616,10 @@ button.li:active {
   height: calc(240px * var(--u));
   flex: 0 0 auto !important;
 }
+/* o fluxo tem sete destinos: precisa de altura para os nomes não se pisarem */
+[data-screen="mao"] .energia .chart.fluxo {
+  height: calc(400px * var(--u));
+}
 [data-screen="mao"] .energia .circuitos {
   flex: 0 0 auto !important;
 }
@@ -2058,212 +2062,595 @@ select.pill {
 }
 
 /* ═════════ A planta ═════════
-   O estado deixa de se ler e passa a ver-se: a divisão acesa está acesa, o
-   estore aberto é uma falha na parede. */
+   Desenho de arquiteto: paredes que se leem, móveis em traço fino, e por
+   cima o que está vivo — a luz de cada candeeiro, o sol que entra pelos
+   estores, o robô. O quadro tem a proporção da casa; o painel ao lado (TV)
+   ou por baixo (tablet, telemóvel) abre a divisão que se tocar. */
 
 .planta-vista {
   gap: var(--s3);
 }
-.palco {
+.planta-corpo {
   display: flex;
+  flex-direction: row;
   min-height: 0;
   min-width: 0;
 }
-.planta-caixa {
-  width: 100%;
-  height: 100%;
+.pl-palco {
+  flex: 1;
   min-height: 0;
+  min-width: 0;
   display: grid;
   place-items: center;
 }
+.pl-quadro {
+  position: relative;
+}
 .planta {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
-.planta .contorno {
-  fill: none;
-  stroke: var(--sep-2);
-  stroke-width: 0.5;
-}
+
+/* ── o desenho ── */
 .planta .chao {
   fill: var(--l1);
 }
-/* a luz da divisão: o mesmo âmbar de uma lâmpada, não a cor de destaque */
-.planta .luz {
-  opacity: 0;
-  transition: opacity var(--d3) var(--ease-soft);
+.planta .zona.vazia .chao {
+  fill: color-mix(in oklab, var(--l1) 60%, var(--bg));
+}
+.planta .zona.jardim .chao {
+  fill: color-mix(in oklab, var(--good) 9%, var(--l1));
+}
+.planta .zona.casa .chao {
+  fill: var(--l2);
 }
 .planta .parede {
   fill: none;
-  stroke: var(--sep-2);
+  stroke: var(--label-3);
   stroke-width: 0.5;
 }
-.planta .zona.acesa .parede {
-  stroke: color-mix(in oklab, var(--solar) 55%, transparent);
+.planta .parede.fora {
+  stroke: var(--label-2);
+  stroke-width: 1.3;
+  stroke-linejoin: miter;
 }
-.planta .zona.alerta .parede {
+.planta .vedacao {
+  fill: none;
+  stroke: var(--label-4);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.2 1;
+}
+.planta .zona.alerta .chao {
+  fill: color-mix(in oklab, var(--warn) 12%, var(--l1));
+}
+/* a luz soma-se ao chão como a luz a sério; no tema claro escurece-o um pouco */
+.planta .luzes {
+  mix-blend-mode: screen;
+}
+[data-theme="claro"] .planta .luzes {
+  mix-blend-mode: multiply;
+}
+.planta .poca {
+  transition: opacity var(--d3) var(--ease-soft);
+}
+.planta .raio {
+  mix-blend-mode: screen;
+}
+[data-theme="claro"] .planta .raio {
+  mix-blend-mode: multiply;
+}
+
+/* os móveis: estão lá para se reconhecer a divisão, não para competir */
+.planta .movel {
+  fill: none;
+  stroke: var(--label-4);
+  stroke-width: 0.28;
+  stroke-linejoin: round;
+}
+.planta .movel .m-corpo {
+  fill: color-mix(in oklab, var(--label) 4%, var(--l1));
+}
+.planta .zona.acesa .movel .m-corpo {
+  fill: color-mix(in oklab, var(--label) 7%, var(--l1));
+}
+.planta .movel .m-cheio,
+.planta .movel .m-tv {
+  fill: var(--label-3);
+  stroke: none;
+}
+.planta .movel .m-ecra {
+  stroke: var(--label-3);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+}
+.planta .movel .m-tapete {
+  fill: color-mix(in oklab, var(--label) 3%, transparent);
+  stroke-dasharray: 0.6 0.6;
+}
+.planta .movel .m-caminho {
+  fill: color-mix(in oklab, var(--label) 9%, var(--l1));
+  stroke: var(--label-4);
+  stroke-dasharray: 0.5 0.5;
+}
+.planta .movel .m-deck {
+  fill: color-mix(in oklab, var(--solar) 7%, var(--l1));
+}
+.planta .movel .m-tabua {
+  stroke: var(--label-4);
+  stroke-width: 0.15;
+}
+.planta .movel .m-arvore {
+  fill: color-mix(in oklab, var(--good) 16%, transparent);
+  stroke: color-mix(in oklab, var(--good) 40%, transparent);
+}
+.planta .movel .m-vidro {
+  fill: color-mix(in oklab, var(--label) 10%, transparent);
+  stroke: var(--label-4);
+}
+.planta .movel .m-seta {
+  stroke: var(--label-3);
+  stroke-width: 0.3;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* aberturas: o vão apaga a parede; o vidro é um traço fino; o estore é o
+   traço grosso que cobre o vidro até onde está corrido */
+.planta .vao {
+  stroke: var(--l1);
+  stroke-width: 1.9;
+  stroke-linecap: butt;
+}
+.planta .vidro {
+  stroke: var(--label-3);
+  stroke-width: 0.3;
+}
+.planta .vidro.aberta,
+.planta .folha.aberta {
+  stroke: var(--warn);
+  stroke-width: 0.45;
+}
+.planta .estore {
+  stroke: var(--label-2);
+  stroke-width: 1.1;
+  stroke-linecap: butt;
+}
+.planta .portao {
+  stroke: var(--label-2);
+  stroke-width: 1;
+}
+.planta .portao.aberto {
+  stroke: var(--warn);
+}
+.planta .folha {
+  stroke: var(--label-2);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+.planta .folha.destrancada {
   stroke: var(--warn);
   stroke-width: 0.8;
 }
-.planta .zona.tocavel {
-  cursor: pointer;
-}
-.planta .zona.tocavel:hover .chao {
-  fill: var(--l2);
-}
-.planta .zona:focus-visible {
-  outline: none;
-}
-.planta .zona:focus-visible .parede {
-  stroke: var(--tint);
-  stroke-width: 1;
-}
-.planta .zona.vazia .chao {
-  fill: var(--bg);
-}
-.planta .zona.vazia .parede {
-  stroke-dasharray: 1 1.4;
-}
-.planta .zona.casa .chao {
-  fill: var(--l3);
-}
-/* por cima da luz o texto precisa de uma sombra, como a teria no vidro */
-.planta .zona.acesa .nome,
-.planta .zona.acesa .sub {
-  paint-order: stroke;
-  stroke: var(--bg);
-  stroke-width: 0.9;
-  stroke-linejoin: round;
-}
-.planta .nome {
-  fill: var(--label);
-  font-size: 3.6px;
-  font-weight: var(--w-s);
-  letter-spacing: -0.02em;
-}
-.planta .zona.vazia .nome,
-.planta .zona.casa .nome {
-  fill: var(--label-3);
-  font-weight: var(--w-m);
-}
-.planta .sub {
-  fill: var(--label-2);
-  font-size: 2.8px;
-}
-/* as aberturas: o vão é o buraco na parede, o fecho é o estore corrido */
-.planta .vao {
-  stroke: var(--bg);
-  stroke-width: 1.6;
-  stroke-linecap: butt;
-}
-.planta .fecho {
-  stroke: var(--label-3);
-  stroke-width: 1.6;
-  stroke-linecap: butt;
-  transition: stroke var(--d2) var(--ease-soft);
-}
-.planta .fecho.janela {
-  stroke: var(--sep-2);
-}
-/* a porta, como se desenha numa planta: folha e arco */
-.planta .folha {
-  stroke: var(--label-2);
-  stroke-width: 0.9;
-  stroke-linecap: round;
-  transition: all var(--d3) var(--ease);
-}
 .planta .folha.trancada {
   stroke: var(--good);
+  stroke-width: 0.8;
 }
 .planta .arco {
   fill: none;
-  stroke: var(--sep-2);
-  stroke-width: 0.4;
-  stroke-dasharray: 1 1;
-}
-.planta .sinal circle {
-  fill: var(--fill-2);
-}
-.planta .sinal .mi {
-  font-size: 2.6px;
-  text-anchor: middle;
-  fill: var(--label-2);
-}
-.planta .sinal.frio circle {
-  fill: color-mix(in oklab, var(--tint) 30%, transparent);
-}
-.planta .sinal.quente circle {
-  fill: color-mix(in oklab, var(--warn) 30%, transparent);
-}
-.planta .sinal.movimento circle {
-  fill: var(--tint);
-  animation: pulsar 1.6s ease-in-out infinite;
-}
-@keyframes pulsar {
-  50% {
-    opacity: 0.35;
-  }
+  stroke: var(--label-4);
+  stroke-width: 0.25;
+  stroke-dasharray: 0.8 0.7;
 }
 
-.planta-corpo {
+/* o que mexe */
+.planta .onda,
+.planta .rega {
+  fill: none;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.planta .onda {
+  stroke: var(--tint);
+  stroke-width: 0.35;
+  animation: onda 2.4s var(--ease-soft) infinite;
+}
+.planta .rega {
+  stroke: var(--grid);
+  stroke-width: 0.3;
+  stroke-dasharray: 0.4 0.9;
+  animation: onda 1.8s linear infinite;
+}
+.planta .tarde {
+  animation-delay: -1.2s;
+}
+@keyframes onda {
+  from {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.planta .robo-corpo {
+  fill: var(--label);
+  stroke: var(--l1);
+  stroke-width: 0.4;
+}
+.planta .robo-olho {
+  fill: var(--tint);
+}
+.planta .robo.docked .robo-olho,
+.planta .robo.idle .robo-olho {
+  fill: var(--good);
+}
+.planta .robo-base {
+  fill: var(--label-3);
+}
+.planta .robo-rasto {
+  fill: none;
+  stroke: var(--tint);
+  stroke-width: 0.3;
+  stroke-dasharray: 0.4 0.8;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+
+/* ── por cima: nomes, bolinhas, câmaras ── */
+.pl-cima {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pl-cima > * {
+  pointer-events: auto;
+}
+.pl-zona {
+  position: absolute;
+  pointer-events: none;
+}
+.pl-toque {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background var(--d2) var(--ease-soft);
+}
+.pl-toque:hover {
+  background: color-mix(in oklab, var(--label) 4%, transparent);
+}
+.pl-zona.escolhida .pl-toque {
+  background: color-mix(in oklab, var(--tint) 8%, transparent);
+  box-shadow: inset 0 0 0 calc(2px * var(--u)) var(--tint);
+}
+.pl-zona.casa .pl-toque {
+  display: grid;
+  place-items: center;
+}
+.pl-zona.casa .pl-nome,
+.pl-zona.vazia .pl-nome {
+  color: var(--label-3);
+  font-weight: var(--w-m);
+}
+.pl-rotulo {
+  position: absolute;
+  top: calc(8px * var(--u));
+  left: calc(10px * var(--u));
+  right: calc(8px * var(--u));
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
-  min-height: 0;
-  min-width: 0;
+  gap: calc(1px * var(--u));
+  pointer-events: none;
+  text-shadow: 0 0 calc(6px * var(--u)) var(--l1), 0 0 calc(2px * var(--u)) var(--l1);
 }
-.faixa-planta {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-  border-top: var(--hair) solid var(--sep);
-  padding-top: var(--s3);
-  flex: 0 0 auto;
+.pl-nome {
+  font-size: var(--t-bd);
+  font-weight: var(--w-s);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--label);
 }
-/* na TV a faixa põe-se de pé ao lado da planta, e a planta cresce */
-[data-screen="sala"] .planta-corpo {
-  flex-direction: row;
-  gap: var(--s5);
+.pl-info {
+  font-size: var(--t-ft);
+  color: var(--label-2);
 }
-[data-screen="sala"] .faixa-planta {
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  width: calc(300px * var(--u));
-  border-top: 0;
-  border-left: var(--hair) solid var(--sep);
-  padding: 0 0 0 var(--s5);
-  gap: var(--s5);
+.pl-aviso {
+  font-size: var(--t-ft);
+  font-weight: var(--w-s);
+  color: var(--warn);
 }
-[data-screen="sala"] .faixa-planta .hora {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-}
-[data-screen="sala"] .faixa-planta .grow {
+.pl-aviso:empty {
   display: none;
 }
-[data-screen="sala"] .faixa-planta .lado {
-  flex-direction: column;
-  align-items: flex-start;
-}
-.faixa-planta .hora {
+.pl-chips {
+  position: absolute;
+  left: calc(8px * var(--u));
+  bottom: calc(8px * var(--u));
+  right: calc(8px * var(--u));
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap-reverse;
+  gap: calc(6px * var(--u));
+  pointer-events: none;
+}
+.pl-chip,
+.pl-cam {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(4px * var(--u));
+  height: max(var(--tap), calc(36px * var(--u)));
+  min-width: max(var(--tap), calc(36px * var(--u)));
+  padding: 0 calc(10px * var(--u));
+  border-radius: var(--rp);
+  background: color-mix(in oklab, var(--l3) 88%, transparent);
+  border: var(--hair) solid var(--sep-2);
+  color: var(--label-2);
+  font-size: var(--t-ft);
+  font-weight: var(--w-s);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.pl-chip span:empty {
+  display: none;
+}
+.pl-chip.luz[aria-pressed="true"] {
+  background: var(--solar);
+  border-color: transparent;
+  color: #241a05;
+}
+.pl-chip.estore[aria-pressed="true"],
+.pl-chip.rega[aria-pressed="true"] {
+  color: var(--label);
+  border-color: var(--label-3);
+}
+.pl-chip.rega[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--grid) 40%, var(--l3));
+}
+.pl-quadro.apertado .pl-chips,
+.pl-quadro.apertado .pl-cam {
+  display: none;
+}
+.pl-cam {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0;
+}
+.pl-norte {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(40%, -40%);
+  width: calc(26px * var(--u));
+  height: calc(26px * var(--u));
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  background: var(--l2);
+  border: var(--hair) solid var(--sep-2);
+  font-size: var(--t-c1);
+  font-weight: var(--w-s);
+  color: var(--label-2);
+  pointer-events: none;
+}
+
+/* ── o painel ──
+   Na parede e na TV entra pela direita quando se escolhe uma divisão; a
+   planta encolhe para lhe dar lugar e volta a crescer quando se fecha. */
+.pl-painel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--l1);
+  border-radius: var(--r4);
+  box-shadow: var(--sh-1);
+  overflow: hidden auto;
+  scrollbar-width: none;
+  flex: 0 0 auto;
+  width: 0;
+  padding: var(--s4) 0;
+  opacity: 0;
+  transition: width var(--d2) var(--ease), margin var(--d2) var(--ease), opacity var(--d2) var(--ease-soft);
+}
+.pl-painel::-webkit-scrollbar {
+  display: none;
+}
+.planta-corpo.com-painel .pl-painel {
+  width: calc(340px * var(--u));
+  margin-left: var(--s4);
+  opacity: 1;
+}
+.pl-painel > .pp-conteudo {
+  width: calc(340px * var(--u));
+  padding: 0 var(--s4);
+  flex: 0 0 auto;
+}
+.pl-cab {
+  gap: var(--s2);
+  align-items: center;
+  justify-content: flex-end;
+}
+.pl-cab .pp-acoes {
+  flex-wrap: nowrap;
+}
+.pp-acoes [hidden] {
+  display: none;
+}
+[data-screen="mao"] .pp-acoes .pill {
+  min-height: var(--tap);
+}
+.pp-conteudo {
+  display: flex;
+  flex-direction: column;
   gap: var(--s3);
 }
-.faixa-planta .h {
-  font-size: var(--t-t2);
-  font-weight: var(--w-s);
-  letter-spacing: var(--tr-tighter);
-}
-.faixa-planta .lado {
+.pp-cab {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.pp-cab .row {
+  gap: var(--s2);
+  flex: 0 0 auto;
+}
+.pp-secoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.pp-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+.pp-sec .grouped {
+  background: var(--l2);
+}
+.pp-div {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.pp-div > .ic {
+  color: var(--label-3);
+  flex: 0 0 auto;
+}
+.pp-acoes {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--s2);
 }
-.faixa-planta .pill {
-  min-height: calc(38px * var(--u));
-  padding: 0 var(--s4);
+.pp-luzes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(92px * var(--u)), 1fr));
+  gap: var(--s2);
+}
+.pp-luz {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(2px * var(--u));
+  min-height: var(--tap);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r3);
+  background: var(--l2);
+  color: var(--label-2);
+  text-align: left;
+  min-width: 0;
+}
+.pp-luz .nm {
+  color: var(--label);
+  font-size: var(--t-ft);
+  font-weight: var(--w-s);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.pp-luz .vl {
+  color: var(--label-2);
+}
+.pp-luz[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--solar) 22%, var(--l2));
+}
+.pp-luz[aria-pressed="true"] .ic {
+  color: var(--solar);
+}
+.pp-clima {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  background: var(--l2);
+  border-radius: var(--r3);
+  padding: var(--s2) var(--s3) var(--s2) var(--s4);
+}
+.pp-clima > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.pp-clima.ligado .modo {
+  color: var(--tint);
+}
+.pp-clima.quente .modo {
+  color: var(--warn);
+}
+.pp-topo {
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--u));
+}
+.pp-topo .pp-cab {
+  align-items: center;
+}
+
+/* no telemóvel o quadro ocupa a largura e o painel segue por baixo */
+[data-screen="mao"] .planta-corpo {
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--s4);
+}
+[data-screen="mao"] .pl-painel,
+[data-screen="mao"] .planta-corpo.com-painel .pl-painel {
+  width: auto;
+  margin: 0;
+  opacity: 1;
+  padding: 0;
+  background: none;
+  transition: none;
+  overflow: visible;
+}
+[data-screen="mao"] .pl-painel > .pp-conteudo {
+  width: auto;
+  padding: 0;
+}
+[data-screen="mao"] .pl-palco {
+  flex: 0 0 auto;
+}
+[data-screen="mao"] .pl-rotulo {
+  top: calc(4px * var(--u));
+  left: calc(5px * var(--u));
+}
+[data-screen="mao"] .pl-nome {
+  font-size: var(--t-ft);
+}
+[data-screen="mao"] .pl-info,
+[data-screen="mao"] .pl-aviso {
+  font-size: var(--t-c1);
+}
+.pl-aviso,
+.pl-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-robo {
+  width: max(var(--tap), calc(34px * var(--u)));
+  min-width: 0;
+}
+.pl-robo.ativo {
+  color: var(--tint);
+  border-color: var(--tint);
+}
+.pl-robo.escolhida,
+.pl-cam:focus-visible {
+  box-shadow: 0 0 0 calc(2px * var(--u)) var(--tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planta .onda,
+  .planta .rega {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 
 /* ═════════ Definições ═════════

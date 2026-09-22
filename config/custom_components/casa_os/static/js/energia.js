@@ -56,7 +56,7 @@
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(chave || "");
     return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
   };
-  const curto = (d) => d.toLocaleDateString("pt-PT", { day: "numeric", month: "short" }).replace(".", "");
+  const curto = (d) => fmt.diaMes(d);
 
   /** Um intervalo escolhido à mão: de um dia a outro, inclusive. */
   function periodoEscolhido(a, b) {
@@ -67,6 +67,10 @@
     return {
       id: "de", inicio, fim,
       nome: mesmo ? curto(inicio) : `${curto(inicio)} – ${curto(fim)}`,
+      // no telemóvel o segmentado tem pouco espaço: "8–15 set"
+      nomeCurto: mesmo
+        ? curto(inicio)
+        : inicio.getMonth() === fim.getMonth() ? `${inicio.getDate()}–${curto(fim)}` : `${curto(inicio)}–${curto(fim)}`,
       titulo: mesmo ? `${curto(inicio)}, hora a hora` : `De ${curto(inicio)} a ${curto(fim)}`,
       // até dois dias vê-se hora a hora; depois dia a dia; muito longo, mês a mês
       passo: dias <= 2 ? "hour" : dias <= 120 ? "day" : "month",
@@ -194,7 +198,13 @@
 
   // ───────── O relatório ─────────
 
-  const soma = (linhas) => (linhas || []).reduce((t, r) => t + Math.max(0, r.change || 0), 0);
+  /**
+   * O que se gastou num intervalo. Se o contador recomeçou do zero a meio (o
+   * recorder perdeu a soma), a diferença sai negativa: o gasto desse intervalo
+   * é então o que a soma nova já leva, não zero nem milhares negativos.
+   */
+  const valor = (r) => ((r.change || 0) >= 0 ? r.change || 0 : Math.max(0, r.sum || 0));
+  const soma = (linhas) => (linhas || []).reduce((t, r) => t + valor(r), 0);
 
   async function ler(periodo) {
     const ids = [T.home, T.solar, T.import, T.export, T.charge, T.discharge, ...(E.circuits || []).map((c) => c.entity)].filter(Boolean);
@@ -213,7 +223,7 @@
 
   /** Um valor por instante, alinhado pelo tempo — as séries nem sempre têm os mesmos furos. */
   function alinhar(stats) {
-    const mapa = (id) => new Map((stats[id] || []).map((r) => [new Date(r.start).getTime(), Math.max(0, r.change || 0)]));
+    const mapa = (id) => new Map((stats[id] || []).map((r) => [new Date(r.start).getTime(), valor(r)]));
     const ms = { casa: mapa(T.home), sol: mapa(T.solar), imp: mapa(T.import), exp: mapa(T.export), car: mapa(T.charge), des: mapa(T.discharge) };
     const tempos = [...new Set([...ms.casa.keys(), ...ms.sol.keys(), ...ms.imp.keys()])].sort((x, y) => x - y);
     const v = (m) => tempos.map((t) => m.get(t) || 0);
@@ -222,13 +232,13 @@
 
   const rotuloX = (periodo) => (ms) => {
     const d = new Date(ms);
-    return periodo.passo === "hour" ? `${pad(d.getHours())}h` : periodo.passo === "month" ? d.toLocaleDateString("pt-PT", { month: "short", year: "2-digit" }).replace(".", "") : `${d.getDate()}/${d.getMonth() + 1}`;
+    return periodo.passo === "hour" ? `${pad(d.getHours())}h` : periodo.passo === "month" ? fmt.mesAno(d) : `${d.getDate()}/${d.getMonth() + 1}`;
   };
   const rotuloTip = (periodo) => (ms) => {
     const d = new Date(ms);
     return periodo.passo === "hour"
       ? `${curto(d)}, ${pad(d.getHours())}:00`
-      : periodo.passo === "month" ? d.toLocaleDateString("pt-PT", { month: "long", year: "numeric" }) : d.toLocaleDateString("pt-PT", { weekday: "short", day: "numeric", month: "short" });
+      : periodo.passo === "month" ? d.toLocaleDateString("pt-PT", { month: "long", year: "numeric" }) : fmt.diaSemana(d);
   };
 
   const cartaoGrafico = (titulo, legenda) => {
@@ -327,7 +337,7 @@
     bind(sub, entre([P.home, P.solar, P.grid, P.battery]), () => (sub.textContent = frase()));
 
     const escolhido = ativo && ativo.id === "de" ? ativo : null;
-    const nomes = [...MODOS_FIXOS.map((m) => m.nome), escolhido ? escolhido.nome : "Escolher…"];
+    const nomes = [...MODOS_FIXOS.map((m) => m.nome), escolhido ? (naMao ? escolhido.nomeCurto : escolhido.nome) : naMao ? "Datas…" : "Escolher…"];
     const indice = ativo ? (escolhido ? nomes.length - 1 : MODOS_FIXOS.findIndex((m) => m.id === ativo.id)) : 0;
     let seg;
     seg = K.segmentado(nomes, indice, (i) => {
@@ -379,6 +389,7 @@
 
     // ── página 2: o fluxo, o sol e a bateria ──
     const fluxo = cartaoGrafico("Fluxo de energia", [["grid", "Rede"], ["solar", "Solar"], ["batt", "Bateria"]]);
+    fluxo.classList.add("fluxo");
     fluxo.style.flex = "1.7";
     const solar = cartaoGrafico("Produção solar", [["solar", "Solar"]]);
     const bateria = cartaoGrafico("Fluxo da bateria", [["batt", "Carga"], ["tint", "Descarga"]]);

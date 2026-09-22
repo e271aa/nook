@@ -32,8 +32,8 @@
     // barra e a sua linha no menu, e não entram na navegação principal.
     { id: "definicoes", title: "Definições", icon: "definicoes", ecras: [], oculta: true },
     // A planta só existe se a casa tiver uma desenhada. É trabalho por
-    // instalação, por isso não se promete onde não há.
-    { id: "planta", title: "A casa", icon: "planta", ecras: ["sala"], se: () => !!CFG.planta },
+    // instalação, por isso não se promete onde não há. No telemóvel vive no menu.
+    { id: "planta", title: "Planta", icon: "planta", ecras: ["braco", "sala"], se: () => !!CFG.planta },
   ].filter((s) => !s.se || s.se());
 
   const THEMES = [
@@ -497,6 +497,12 @@
       start();
     }
   });
+  // Em rede local a casa responde antes de este ficheiro correr: o "*" já
+  // passou e ninguém o ouviu. Se os estados já cá estão, arranca-se já.
+  if (HA.count() > 0) {
+    unsub();
+    start();
+  }
   // se a casa não responder, a casca aparece na mesma e diz porquê
   setTimeout(start, 4000);
 })();

@@ -345,7 +345,7 @@
   }
 
   /** As tomadas, o portão, os sensores e a fechadura — tudo o que é uma linha. */
-  function listaDaDivisao(r) {
+  function listaDaDivisao(r, { movimento = true } = {}) {
     const g = el('<div class="grouped"></div>');
     const linhas = [];
 
@@ -377,7 +377,7 @@
       linhas.push(li);
     }
 
-    if (r.motion) {
+    if (r.motion && movimento) {
       const li = linha("motion", "Movimento", "");
       bind(li, entre([r.motion]), () => {
         const on = HA.isOn(r.motion);
@@ -502,4 +502,6 @@
   // os Controlos reutilizam estas duas peças
   K.climaCard = climaCard;
   K.rotuloEstore = rotuloEstore;
+  // e a planta, no painel da divisão
+  K.listaDaDivisao = listaDaDivisao;
 })();
