@@ -7,7 +7,9 @@
  *  Mede três coisas que não se veem a olho:
  *    · transbordo — conteúdo que não cabe, na página ou dentro de uma caixa
  *    · contraste  — texto abaixo do mínimo legível (4,5, ou 3 se for grande)
- *    · alvos      — no telemóvel, o que se toca com menos de 44 px
+ *    · alvos      — no telemóvel, o que se toca com menos de 44 px (no tablet
+ *                   de parede também: window.AFERIR_TOQUE = true, com o --tap
+ *                   do dedo forçado, porque o browser do computador não é tátil)
  *
  *  O contraste é calculado como manda a norma: a cor do texto composta sobre
  *  o primeiro fundo opaco que estiver por cima na árvore, porque quase todas
@@ -81,9 +83,20 @@ window.AFERIR = (function () {
           }
         }
       }
-      if (doc.dataset.screen === "mao" && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.getAttribute("role") === "slider")) {
-        // o segmentado é a exceção: com rato fica nos 34 px do desenho
-        if (cx.height < 43.5 && !el.closest(".segc") && !el.matches(".sw")) /* o .sw alarga a área de toque com ::before */ r.alvos.push(`${el.className || el.tagName}:${Math.round(cx.height)}`);
+      if ((doc.dataset.screen === "mao" || window.AFERIR_TOQUE) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.getAttribute("role") === "slider")) {
+        // o alvo é o que o dedo apanha: a caixa mais a margem invisível que
+        // alguns controlos põem à volta (::before no interruptor, ::after nos
+        // segmentados, comprimidos e botões de + e −)
+        let h = cx.height;
+        let w = cx.width;
+        ["::before", "::after"].forEach((p) => {
+          const ps = getComputedStyle(el, p);
+          if (ps.content === "none" || ps.position !== "absolute") return;
+          const n = (v) => (parseFloat(v) < 0 ? -parseFloat(v) : 0);
+          h = Math.max(h, cx.height + n(ps.top) + n(ps.bottom));
+          w = Math.max(w, cx.width + n(ps.left) + n(ps.right));
+        });
+        if (h < 43.5 || (w < 43.5 && !el.closest(".dots"))) r.alvos.push(`${el.className || el.tagName}:${Math.round(w)}×${Math.round(h)}`);
       }
     });
     r.contraste.sort((a, b) => a.r - b.r);

@@ -173,7 +173,7 @@ svg {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: calc(10px * var(--u));
   padding-bottom: var(--s1);
 }
@@ -984,7 +984,7 @@ button.li:active {
 .dots button::after {
   content: "";
   position: absolute;
-  inset: calc(-18px * var(--u)) calc(-8px * var(--u));
+  inset: min(calc(-18px * var(--u)), calc((100% - var(--tap)) / 2)) calc(-8px * var(--u));
 }
 .dots button[aria-selected="true"] {
   background: var(--label);
@@ -1102,7 +1102,7 @@ button.li:active {
 .sw::before {
   content: "";
   position: absolute;
-  inset: calc(-7px * var(--u)) calc(-4px * var(--u));
+  inset: min(calc(-7px * var(--u)), calc((100% - var(--tap)) / 2)) calc(-4px * var(--u));
 }
 .sw[aria-checked="true"] {
   background: var(--good);
@@ -1184,6 +1184,7 @@ button.li:active {
 .camtile {
   position: relative;
   display: block;
+  cursor: pointer;
   width: 100%;
   min-height: calc(150px * var(--u));
   border-radius: var(--r4);
@@ -3311,3 +3312,48 @@ select.pill {
 .pag-nav .iconbtn:disabled {
   opacity: 0.3;
 }
+
+/* ═════════ Toque ═════════
+   Revisão de UX (22/09): no tablet de parede tudo o que se toca tem de ter
+   44 px de alvo, e tudo o que se carrega tem de responder logo.
+
+   Os segmentados, os comprimidos e os botões de + e − mantêm o desenho do
+   iOS (32–40 px); o alvo é que cresce, por uma margem invisível à volta. */
+.segc button::after,
+.pill::after,
+.stepper button::after,
+.caixa::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, calc((100% - var(--tap)) / 2)) 0;
+}
+.pill,
+.stepper button,
+.caixa {
+  position: relative;
+}
+/* um comprimido só com ícone (volume, abrir/fechar) não fica mais estreito que o dedo */
+.pill {
+  min-width: var(--tap);
+  justify-content: center;
+}
+.stepper button::after {
+  inset: min(0px, calc((100% - var(--tap)) / 2));
+}
+/* o dedo não faz zoom com dois toques num botão */
+button,
+[role="button"],
+[role="slider"] {
+  touch-action: manipulation;
+}
+/* carregar responde já: o que ainda não tinha reação ao toque passa a ter */
+:is(.pill, .segc button, .sw, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .camtile):active:not(:disabled) {
+  opacity: 0.7;
+  transition: opacity 60ms linear;
+}
+/* o clima nos Controlos: nome em cima, temperatura ao meio, modo em baixo,
+   como os estores ao lado — em vez de tudo encostado ao topo */
+.tiles.clima .tile {
+  justify-content: space-between;
+}
+

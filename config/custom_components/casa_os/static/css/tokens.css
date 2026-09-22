@@ -25,8 +25,8 @@
   --u: calc(var(--base) * var(--zoom));
 
   /* Letra — oito passos, rácio apertado, como a da Apple */
-  --t-c2: calc(11px * var(--u));
-  --t-c1: calc(12px * var(--u));
+  --t-c2: max(11px, calc(11px * var(--u)));
+  --t-c1: max(11.5px, calc(12px * var(--u)));
   --t-ft: calc(13px * var(--u));
   --t-sb: calc(15px * var(--u));
   --t-bd: calc(17px * var(--u));
