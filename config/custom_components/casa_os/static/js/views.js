@@ -44,8 +44,8 @@
   /** A resposta à primeira pergunta, no tamanho que se lê da porta da rua. */
   function veredicto() {
     // o veredicto muda quando a casa muda: quem não vê o ecrã ouve-o
-    const node = el('<div class="verdict"><div class="cap"></div><div class="vline" aria-live="polite"></div></div>');
-    const data = node.querySelector(".cap");
+    const node = el('<div class="verdict"><div class="vdata"></div><div class="vline" aria-live="polite"></div></div>');
+    const data = node.querySelector(".vdata");
     const linha = node.querySelector(".vline");
 
     K.intervalo(() => {
@@ -72,60 +72,64 @@
 
   /** A segunda e a quarta perguntas, em quatro linhas que se leem de relance. */
   function factos() {
+    // Quatro factos, um assunto cada: o ícone diz de que se trata, a linha de
+    // cima o que importa, a de baixo o pormenor. Antes eram quatro frases
+    // corridas com até três separadores cada, e liam-se como um parágrafo.
     const node = el('<div class="facts"></div>');
-    const linha = () => {
-      const n = el('<div class="sub"></div>');
+    const facto = (ic) => {
+      const n = el(`<div class="fact"><span class="fi">${icon(ic, "ic-s")}</span>
+        <div class="ft-tx"><div class="fv"></div><div class="fs"></div></div></div>`);
       node.appendChild(n);
-      return n;
+      return { n, v: n.querySelector(".fv"), s: n.querySelector(".fs"), i: n.querySelector(".fi") };
     };
-    const tempo = linha();
-    const luzes = linha();
-    const estores = linha();
-    const gente = linha();
+    const tempo = facto("thermo");
+    const luzes = facto("bulb");
+    const estores = facto("blinds");
+    const gente = facto("person");
 
-    bind(node, (id) => id.startsWith("sensor.") || id === CFG.weather || id === "sun.sun", () => {
+    bind(node, (id) => id.startsWith("sensor.") || id === CFG.weather, () => {
       const dentro = CFG.indoor_temperature ? HA.num(CFG.indoor_temperature) : null;
       const fora = CFG.outdoor && CFG.outdoor.temperature ? HA.num(CFG.outdoor.temperature) : null;
       const ceu = CEU[(HA.get(CFG.weather) || {}).state] || "";
-      const sol = HA.get("sun.sun") || { state: "", attributes: {} };
-      const noite = sol.state === "below_horizon";
-      const quando = noite
-        ? `o sol nasce às ${horas(sol.attributes.next_rising)}`
-        : `o sol põe-se às ${horas(sol.attributes.next_setting)}`;
-      tempo.textContent = `${fmt.temp(dentro)} dentro · ${fmt.temp(fora)} fora · ${ceu}, ${quando}`;
+      tempo.v.textContent = `${fmt.temp(dentro)} dentro`;
+      tempo.s.textContent = fora === null ? ceu : `${fmt.temp(fora)} lá fora${ceu ? `, ${ceu}` : ""}`;
     });
 
     bind(node, (id) => id.startsWith("light."), () => {
       const on = acesas();
+      luzes.i.classList.toggle("vivo", on.length > 0);
       if (!on.length) {
-        luzes.textContent = "Nenhuma luz acesa";
+        luzes.v.textContent = "Luzes apagadas";
+        luzes.s.textContent = "Nenhuma acesa";
         return;
       }
-      const nomes = on.slice(0, 3).map((l) => HA.name(l)).join(", ");
-      const resto = on.length - 3;
-      luzes.textContent = `${on.length === 1 ? "Uma luz acesa" : `${fmt.n(on.length)} luzes acesas`} — ${nomes}${resto > 0 ? ` e mais ${resto}` : ""}`;
+      luzes.v.textContent = on.length === 1 ? "Uma luz acesa" : `${fmt.n(on.length)} luzes acesas`;
+      // onde: pelo nome da divisão, que se reconhece melhor do que o da lâmpada
+      const onde = [...new Set(on.map((l) => (divisoes().find((r) => (r.lights || []).includes(l)) || {}).name).filter(Boolean))];
+      luzes.s.textContent = onde.length <= 2 ? onde.join(" e ") : `Em ${fmt.n(onde.length)} divisões`;
     });
 
     bind(node, (id) => id.startsWith("cover.") || id === CFG.boiler, () => {
       const ab = abertos().length;
       const tot = todosEstores().length;
-      const partes = [ab === 0 ? "Estores todos fechados" : ab === tot ? "Estores todos abertos" : `${fmt.n(ab)} de ${fmt.n(tot)} estores abertos`];
-      if (CFG.boiler && HA.isOn(CFG.boiler)) partes.push("cilindro ligado");
-      estores.textContent = partes.join(" · ");
+      estores.v.textContent = ab === 0 ? "Estores fechados" : ab === tot ? "Estores abertos" : `${fmt.n(ab)} de ${fmt.n(tot)} estores abertos`;
+      estores.s.textContent = CFG.boiler ? (HA.isOn(CFG.boiler) ? "Água quente ligada" : "Água quente desligada") : "";
     });
 
     const porta = divisoes().find((r) => r.lock || r.contact);
     bind(node, (id) => id.startsWith("person.") || (porta && (id === porta.lock || id === porta.contact)), () => {
-      const emCasa = (CFG.people || []).filter((p) => (HA.get(p.entity) || {}).state === "home");
-      const quem = !emCasa.length
+      const pessoas = CFG.people || [];
+      const emCasa = pessoas.filter((p) => (HA.get(p.entity) || {}).state === "home");
+      const fora = pessoas.filter((p) => !emCasa.includes(p));
+      gente.v.textContent = !emCasa.length
         ? "Ninguém em casa"
-        : emCasa.length === (CFG.people || []).length
-          ? `${emCasa.map((p) => p.name).join(" e ")} em casa`
-          : `${emCasa.map((p) => p.name).join(" e ")} em casa, ${(CFG.people || []).length - emCasa.length} fora`;
-      const fecho = porta && porta.lock
-        ? (HA.get(porta.lock) || {}).state === "locked" ? "porta trancada" : "porta destrancada"
-        : "";
-      gente.textContent = fecho ? `${quem}, ${fecho}` : quem;
+        : emCasa.length === pessoas.length
+          ? pessoas.length === 2 ? "Estão os dois em casa" : "Estão todos em casa"
+          : `${emCasa.map((p) => p.name).join(" e ")} em casa`;
+      const trancada = porta && porta.lock ? (HA.get(porta.lock) || {}).state === "locked" : null;
+      const fecho = trancada === null ? "" : trancada ? "Porta trancada" : "Porta destrancada";
+      gente.s.textContent = emCasa.length && fora.length ? `${fora.map((p) => p.name).join(" e ")} fora. ${fecho}` : fecho;
+      gente.i.classList.toggle("alerta", trancada === false);
     });
 
     return node;
@@ -179,7 +183,7 @@
 
     // a miniatura: uma por piso, criada quando é precisa e reaproveitada
     const temPlanta = !!(CFG.planta && K.plantaMiniatura);
-    const quadro = temPlanta ? el('<button class="acol-planta"><span class="ap-leg cap"></span></button>') : null;
+    const quadro = temPlanta ? el('<button class="acol-planta"><span class="ap-leg"></span></button>') : null;
     const minis = {};
     let pisoVisto = null;
     let divisaoDoAviso = null;
@@ -207,7 +211,7 @@
       const nome = ((CFG.floors || []).find((f) => f.id === pisoVisto) || {}).name || "";
       const n = divisoes().filter((r) => r.floor === pisoVisto).flatMap((r) => r.lights || []).filter((l) => HA.isOn(l)).length;
       quadro.querySelector(".ap-leg").textContent = comDestaque
-        ? `${nome} · onde está`
+        ? `${nome}, onde está o aviso`
         : `${nome} · ${n ? `${fmt.n(n)} ${n === 1 ? "luz acesa" : "luzes acesas"}` : "luzes apagadas"}`;
     };
     if (quadro) bind(quadro, (id) => id.startsWith("light."), legenda);
@@ -392,7 +396,7 @@
 
       const g = suave("rede", w(P.grid) || 0);
       rede.querySelector(".v").innerHTML = potencia(Math.abs(g));
-      por(rede, g > 20 ? "Comprado à rede" : g < -20 ? "Vendido à rede" : "Da rede — nada");
+      por(rede, g > 20 ? "Comprado à rede" : g < -20 ? "Vendido à rede" : "Nada da rede");
     });
 
     return node;
@@ -458,7 +462,7 @@
 
   const controlos = () =>
     page("Controlos", "Tudo o que se liga, abre e aquece",
-      porConstruir("sliders", "Luzes, estores, clima e tomadas, cada um no seu separador, com as ações de grupo em cima — desligar todas, fechar todos, a casa a 21 graus.", "4"));
+      porConstruir("sliders", "Luzes, estores, clima e tomadas, cada um no seu separador, com as ações de grupo em cima: desligar todas, fechar todos, a casa a 21 graus.", "4"));
 
   const vigilancia = () =>
     page("Vigilância", "A casa fechada, e quem passou",
@@ -466,7 +470,7 @@
 
   const energia = () =>
     page("Energia", "De onde vem e para onde vai",
-      porConstruir("bolt", "O fluxo de agora — sol, casa, rede e bateria — e o relatório atrás dele: trinta dias, sete circuitos e o custo.", "6"));
+      porConstruir("bolt", "O fluxo de agora (sol, casa, rede e bateria) e o relatório atrás dele: trinta dias, sete circuitos e o custo.", "6"));
 
   const rotina = () =>
     page("Rotina", "O que a casa tem para tratar",

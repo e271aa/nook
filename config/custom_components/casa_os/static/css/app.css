@@ -603,18 +603,24 @@ button.li:active {
   background: var(--tint-soft);
   color: var(--tint);
 }
+/* a amostra: a noite à esquerda, o dia à direita, cada metade com o seu acento */
 .themebtn .sq {
-  width: calc(28px * var(--u));
+  width: calc(40px * var(--u));
   height: calc(28px * var(--u));
   border-radius: calc(9px * var(--u));
-  display: grid;
-  place-items: center;
+  display: flex;
+  overflow: hidden;
   border: var(--hair) solid var(--sep-2);
   flex: 0 0 auto;
 }
+.themebtn .sq .meia {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
 .themebtn .sq i {
-  width: calc(10px * var(--u));
-  height: calc(10px * var(--u));
+  width: calc(9px * var(--u));
+  height: calc(9px * var(--u));
   border-radius: var(--rp);
 }
 .themebtn .tn {
@@ -661,6 +667,13 @@ button.li:active {
   flex-direction: column;
   gap: calc(10px * var(--u));
 }
+/* a data e a hora: texto, não um rótulo em maiúsculas a competir com o veredicto */
+.vdata {
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
+}
 /* o tamanho do veredicto é uma variável: é ela que encolhe quando alguém
    chega à frente do painel (ver "Os dois regimes") */
 .vline {
@@ -668,12 +681,60 @@ button.li:active {
   font-weight: var(--w-b);
   letter-spacing: var(--tr-tighter);
   line-height: 0.98;
-  transition: font-size var(--d3) var(--ease);
 }
+/* Os factos: quatro, um assunto cada, em grelha. Entre o veredicto e eles
+   há ar; entre eles, menos; dentro de cada um, quase nada. */
 .facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4) var(--s5);
+  margin-top: var(--s5);
+  max-width: calc(640px * var(--u));
+}
+.fact {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  min-width: 0;
+}
+.fact .fi {
+  flex: 0 0 auto;
+  width: calc(32px * var(--u));
+  height: calc(32px * var(--u));
+  border-radius: var(--rp);
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--label-2);
+}
+.fact .fi.vivo {
+  background: color-mix(in oklab, var(--solar) 22%, transparent);
+  color: var(--solar);
+}
+.fact .fi.alerta {
+  background: color-mix(in oklab, var(--warn) 22%, transparent);
+  color: var(--warn);
+}
+.fact .ft-tx {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: calc(3px * var(--u));
+  gap: calc(2px * var(--u));
+  padding-top: calc(2px * var(--u));
+}
+.fact .fv {
+  font-size: var(--t-sb);
+  font-weight: var(--w-s);
+  color: var(--label);
+  line-height: 1.25;
+}
+.fact .fs {
+  font-size: var(--t-ft);
+  color: var(--label-2);
+  line-height: 1.3;
+}
+.fact .fs:empty {
+  display: none;
 }
 
 /* ── avisos ── */
@@ -795,6 +856,10 @@ button.li:active {
   font-weight: var(--w-s);
   letter-spacing: -0.01em;
   line-height: 1.2;
+  /* o nome de uma ação cabe numa linha; se não couber, corta, nunca parte */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .key .ks {
   display: block;
@@ -1973,8 +2038,12 @@ select.pill {
 [data-presenca="longe"] .hero .vcol {
   flex: 1.9;
 }
-[data-presenca="longe"] .facts .sub {
+/* de longe lê-se com a letra maior */
+[data-presenca="longe"] .fact .fv {
   font-size: var(--t-bd);
+}
+[data-presenca="longe"] .fact .fs {
+  font-size: var(--t-sb);
 }
 /* a mudança de perto/longe muda o layout: faz-se de uma vez, e o salto
    esconde-se num desvanecer curto (dois nomes para recomeçar) */
@@ -2167,7 +2236,7 @@ select.pill {
 .planta .luzes {
   mix-blend-mode: screen;
 }
-[data-theme="claro"] .planta .luzes {
+[data-modo="claro"] .planta .luzes {
   mix-blend-mode: multiply;
 }
 .planta .poca {
@@ -2176,7 +2245,7 @@ select.pill {
 .planta .raio {
   mix-blend-mode: screen;
 }
-[data-theme="claro"] .planta .raio {
+[data-modo="claro"] .planta .raio {
   mix-blend-mode: multiply;
 }
 
@@ -3724,5 +3793,17 @@ button,
 ::selection {
   background: color-mix(in oklab, var(--tint) 38%, transparent);
   color: var(--label);
+}
+
+/* no telemóvel os factos vão um por linha: dois lado a lado não cabiam sem partir */
+[data-screen="mao"] .facts {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s3);
+  margin-top: var(--s4);
+}
+/* a legenda da casa de relance: texto discreto, não um rótulo */
+.acol-planta .ap-leg {
+  font-size: var(--t-ft);
+  color: var(--label-2);
 }
 

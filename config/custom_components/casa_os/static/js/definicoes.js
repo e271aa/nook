@@ -78,13 +78,27 @@
 
   function aparencia() {
     const { node, corpo } = grupo("Aparência");
-    const grelha = el('<div class="themes"></div>');
     const A = window.APP;
+
+    // o modo: de dia claro, de noite escuro, ou sempre o mesmo
+    const modos = A.MODOS;
+    corpo.appendChild(linha("Modo", "Automático: claro de dia, escuro depois do pôr do sol."));
+    const segModo = K.segmentado(modos.map((m) => m.name), Math.max(0, modos.findIndex((m) => m.id === A.modoEscolhido())), (i) => {
+      A.applyModo(modos[i].id);
+    }, { cheio: true });
+    corpo.appendChild(segModo);
+
+    // as paletas: cada amostra mostra a noite e o dia da mesma cor
+    corpo.appendChild(linha("Paleta", "Cada cor tem o seu modo escuro e o seu modo claro."));
+    const grelha = el('<div class="themes"></div>');
     const pinta = () =>
       grelha.querySelectorAll("[data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === A.currentTheme())));
     A.THEMES.forEach((t) => {
       const b = el(`<button class="themebtn" data-t="${t.id}">
-        <span class="sq" style="background:${t.bg}"><i style="background:${t.tint}"></i></span>
+        <span class="sq" aria-hidden="true">
+          <span class="meia" style="background:${t.escuro.bg}"><i style="background:${t.escuro.tint}"></i></span>
+          <span class="meia" style="background:${t.claro.bg}"><i style="background:${t.claro.tint}"></i></span>
+        </span>
         <span class="tn">${esc(t.name)}</span></button>`);
       b.addEventListener("click", () => {
         A.applyTheme(t.id);

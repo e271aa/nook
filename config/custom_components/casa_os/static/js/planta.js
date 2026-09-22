@@ -895,7 +895,7 @@
     const partes = [n ? `${fmt.n(n)} ${n === 1 ? "luz acesa" : "luzes acesas"}` : "Luzes apagadas"];
     if (rs.some((r) => estores(r).length)) partes.push(a ? `${fmt.n(a)} ${a === 1 ? "estore aberto" : "estores abertos"}` : "estores fechados");
     if (temps.length) partes.push(`${fmt.n(temps.reduce((t, v) => t + v, 0) / temps.length, 1)} °C em média`);
-    return partes.join(" · ");
+    return partes.join(", ");
   }
 
   function planta(args) {

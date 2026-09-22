@@ -37,15 +37,22 @@
     { id: "planta", title: "Planta", icon: "planta", ecras: ["braco", "sala"], se: () => !!CFG.planta },
   ].filter((s) => !s.se || s.se());
 
+  // Cada paleta tem dois modos: o escuro (de noite) e o claro (de dia). As
+  // amostras das Definições mostram a paleta no modo em que o painel está.
   const THEMES = [
-    { id: "grafite", name: "Grafite", bg: "#000000", tint: "#4c9aff" },
-    { id: "lilas", name: "Lilás", bg: "#08060d", tint: "#a98bff" },
-    { id: "dourado", name: "Dourado", bg: "#0a0805", tint: "#e0a94f" },
-    { id: "verde", name: "Verde", bg: "#030805", tint: "#4bd6a0" },
-    { id: "oled", name: "Preto", bg: "#000000", tint: "#ffffff" },
-    { id: "claro", name: "Claro", bg: "#f2f2f7", tint: "#0a66d6" },
+    { id: "grafite", name: "Grafite", escuro: { bg: "#0a0a0c", tint: "#4c9aff" }, claro: { bg: "#f2f2f7", tint: "#0a66d6" } },
+    { id: "lilas", name: "Lilás", escuro: { bg: "#08060d", tint: "#a98bff" }, claro: { bg: "#f2f0f8", tint: "#6a48d8" } },
+    { id: "dourado", name: "Dourado", escuro: { bg: "#0a0805", tint: "#e0a94f" }, claro: { bg: "#f3f1ec", tint: "#8f5f0c" } },
+    { id: "verde", name: "Verde", escuro: { bg: "#030805", tint: "#4bd6a0" }, claro: { bg: "#eef3f0", tint: "#0c7a51" } },
+    { id: "oled", name: "Preto e branco", escuro: { bg: "#000000", tint: "#ffffff" }, claro: { bg: "#ffffff", tint: "#111111" } },
   ];
   const THEME_KEY = "casa_os_theme";
+  const MODO_KEY = "casa_os_modo";
+  const MODOS = [
+    { id: "auto", name: "Automático" },
+    { id: "claro", name: "Claro" },
+    { id: "escuro", name: "Escuro" },
+  ];
 
   /* ───────── Ecrã ─────────
    * mao   — telemóvel: rola
@@ -81,22 +88,66 @@
   }
 
   const currentTheme = () => document.documentElement.getAttribute("data-theme") || "grafite";
+  const guarda = (k, v) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch (e) {
+      /* modo privado */
+    }
+  };
+  const le = (k) => {
+    try {
+      return localStorage.getItem(k);
+    } catch (e) {
+      return null;
+    }
+  };
+  const pintaBarra = () => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+  };
 
   function applyTheme(id, guardar = true) {
+    // "claro" era uma paleta; agora é o modo claro do Grafite
+    if (id === "claro") {
+      id = "grafite";
+      guarda(THEME_KEY, id);
+      if (!le(MODO_KEY)) applyModo("claro");
+    }
     if (!THEMES.some((t) => t.id === id)) return;
     document.documentElement.setAttribute("data-theme", id);
-    if (guardar) {
-      try {
-        localStorage.setItem(THEME_KEY, id);
-      } catch (e) {
-        /* modo privado */
-      }
-    }
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+    if (guardar) guarda(THEME_KEY, id);
+    pintaBarra();
+  }
+
+  /** O modo escolhido: "auto", "claro" ou "escuro". */
+  const modoEscolhido = () => {
+    const m = le(MODO_KEY);
+    return MODOS.some((x) => x.id === m) ? m : "escuro";
+  };
+  /** O modo que está à vista (o automático resolve-se pelo sol da casa). */
+  const currentModo = () => document.documentElement.getAttribute("data-modo") || "escuro";
+
+  function modoDoSol() {
+    const sol = HA.get("sun.sun");
+    if (sol) return sol.state === "above_horizon" ? "claro" : "escuro";
+    const h = new Date().getHours(); // antes de a casa responder, a hora chega
+    return h >= 7 && h < 20 ? "claro" : "escuro";
+  }
+
+  function applyModo(pref, guardar = true) {
+    if (!MODOS.some((m) => m.id === pref)) pref = "escuro";
+    if (guardar) guarda(MODO_KEY, pref);
+    const efetivo = pref === "auto" ? modoDoSol() : pref;
+    if (document.documentElement.getAttribute("data-modo") !== efetivo) {
+      document.documentElement.setAttribute("data-modo", efetivo);
+      pintaBarra();
     }
   }
+  // no automático, o painel muda quando o sol nasce e quando se põe
+  HA.subscribe((id) => {
+    if ((id === "sun.sun" || id === "*") && modoEscolhido() === "auto") applyModo("auto", false);
+  });
 
   /* ───────── Quiosque ─────────
    * Um painel de parede não é um site aberto num tablet: está sempre ligado,
@@ -266,7 +317,7 @@
 
   // O que as Definições vão buscar à casca (não é uma API: é o que ela mostra).
   window.APP = {
-    THEMES, currentTheme, applyTheme,
+    THEMES, currentTheme, applyTheme, MODOS, modoEscolhido, currentModo, applyModo,
     emEcraCheio, trocarEcraCheio, descansarJa,
     aDescansar: () => aDescansar,
     acordar, avaliar,
@@ -423,7 +474,7 @@
       body.appendChild(el(`<div class="pad col grow sem-casa" role="status">
         <span class="sc-ic">${icon("wifioff", "ic-l")}</span>
         <div class="t2">Sem ligação à casa</div>
-        <div class="bd dim">O painel ainda não conseguiu falar com o Home Assistant. Tenta outra vez sozinho — não é preciso fazer nada.</div>
+        <div class="bd dim">O painel ainda não conseguiu falar com o Home Assistant. Tenta outra vez sozinho, não é preciso fazer nada.</div>
         <div class="row sc-estado"><span class="spin"></span><span class="ft">A tentar ligar…</span></div></div>`));
       document.title = `Sem ligação · ${window.CASA.title}`;
       return;
@@ -513,7 +564,8 @@
   function boot() {
     applyScreen();
     DEFS.aplicarTamanho(document.documentElement.getAttribute("data-screen"));
-    applyTheme(localStorage.getItem(THEME_KEY) || "grafite", false);
+    applyModo(modoEscolhido(), false);
+    applyTheme(le(THEME_KEY) || "grafite", false);
     document.documentElement.setAttribute("data-presenca", "longe");
     document.documentElement.setAttribute("data-repouso", "nao");
 

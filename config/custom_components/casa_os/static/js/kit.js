@@ -632,7 +632,9 @@
     if (swOff.length) partes.push(aparelhos(swOff, "desligada"));
     if (swOn.length) partes.push(aparelhos(swOn, "ligada"));
     if (ids.some((id) => d(id) === "lock" && agora(id).state === "locked")) partes.push("porta trancada");
-    return partes.join(" · ");
+    // vírgulas, não pontos: uma frase lê-se melhor do que uma fila de separadores
+    const frase = partes.join(", ");
+    return frase;
   }
 
   /** O nome que a instalação deu à tomada ("TV"), senão o do Home Assistant. */

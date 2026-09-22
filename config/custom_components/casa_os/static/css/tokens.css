@@ -86,10 +86,12 @@
   /* ───── Grafite — a paleta de origem ───── */
   /* as paletas escuras pedem ao browser controlos e barras escuros (a clara pede os claros) */
   color-scheme: dark;
-  --bg: #000000;
-  --l1: #131315;
-  --l2: #1c1c1f;
-  --l3: #26262a;
+  /* quase-preto, não preto: o preto puro tira profundidade aos cartões (o
+     preto de verdade fica para a paleta Preto e branco, que é para OLED) */
+  --bg: #0a0a0c;
+  --l1: #151517;
+  --l2: #1e1e21;
+  --l3: #28282c;
   --sep: rgba(255, 255, 255, 0.09);
   --sep-2: rgba(255, 255, 255, 0.16);
   --label: #f5f5f7;
@@ -201,8 +203,12 @@
   --fill-2: rgba(255, 255, 255, 0.18);
 }
 
-/* A única clara: para salas com muita luz, e para imprimir ecrãs. */
-[data-theme="claro"] {
+/* ═════════ Modo claro ═════════
+   Cada paleta tem os seus dois modos. O claro não é o escuro invertido: os
+   neutros levam um toque da cor da paleta, e o acento escurece até ter
+   contraste de texto sobre branco. Esta é a base (a do Grafite); as outras
+   paletas mudam só o que é delas. */
+[data-modo="claro"] {
   color-scheme: light;
   --bg: #f2f2f7;
   --l1: #ffffff;
@@ -228,4 +234,86 @@
   --sh-2: 0 10px 34px rgba(20, 20, 30, 0.08);
   --fill: rgba(118, 118, 128, 0.12);
   --fill-2: rgba(118, 118, 128, 0.2);
+}
+
+[data-modo="claro"][data-theme="lilas"] {
+  --bg: #f2f0f8;
+  --l1: #fdfcff;
+  --l2: #ffffff;
+  --l3: #f6f4fb;
+  --sep: rgba(70, 50, 130, 0.13);
+  --sep-2: rgba(70, 50, 130, 0.22);
+  --label: #1d1729;
+  --label-2: rgba(50, 38, 82, 0.8);
+  --label-3: rgba(50, 38, 82, 0.76);
+  --label-4: rgba(50, 38, 82, 0.24);
+  --tint: #6a48d8;
+  --tint-soft: rgba(106, 72, 216, 0.12);
+  --mat: rgba(253, 252, 255, 0.78);
+  --sh-1: 0 1px 2px rgba(40, 20, 90, 0.06);
+  --fill: rgba(110, 90, 170, 0.11);
+  --fill-2: rgba(110, 90, 170, 0.19);
+}
+
+[data-modo="claro"][data-theme="dourado"] {
+  --bg: #f3f1ec;
+  --l1: #fffdf9;
+  --l2: #ffffff;
+  --l3: #f8f5ef;
+  --sep: rgba(90, 70, 30, 0.14);
+  --sep-2: rgba(90, 70, 30, 0.23);
+  --label: #221c11;
+  --label-2: rgba(72, 58, 32, 0.8);
+  --label-3: rgba(72, 58, 32, 0.76);
+  --label-4: rgba(72, 58, 32, 0.24);
+  --tint: #8f5f0c;
+  --tint-soft: rgba(143, 95, 12, 0.12);
+  --solar: #a26a10;
+  --mat: rgba(255, 253, 249, 0.78);
+  --sh-1: 0 1px 2px rgba(70, 50, 10, 0.06);
+  --fill: rgba(150, 120, 60, 0.11);
+  --fill-2: rgba(150, 120, 60, 0.19);
+}
+
+[data-modo="claro"][data-theme="verde"] {
+  --bg: #eef3f0;
+  --l1: #fbfefc;
+  --l2: #ffffff;
+  --l3: #f3f8f5;
+  --sep: rgba(30, 80, 55, 0.13);
+  --sep-2: rgba(30, 80, 55, 0.22);
+  --label: #10201a;
+  --label-2: rgba(28, 60, 45, 0.8);
+  --label-3: rgba(28, 60, 45, 0.76);
+  --label-4: rgba(28, 60, 45, 0.24);
+  --tint: #0c7a51;
+  --tint-soft: rgba(12, 122, 81, 0.12);
+  --mat: rgba(251, 254, 252, 0.78);
+  --sh-1: 0 1px 2px rgba(10, 60, 35, 0.06);
+  --fill: rgba(60, 130, 100, 0.11);
+  --fill-2: rgba(60, 130, 100, 0.19);
+}
+
+/* Preto e branco, de dia: papel branco e tinta preta, sem cor nenhuma. Os
+   cartões ficam cinza muito claro: branco sobre branco não se via (no escuro
+   o preto sobre preto é de propósito, poupa o OLED; de dia não há razão). */
+[data-modo="claro"][data-theme="oled"] {
+  --bg: #ffffff;
+  --l1: #f3f3f4;
+  --l2: #ebebed;
+  --l3: #e3e3e6;
+  --sep: rgba(0, 0, 0, 0.14);
+  --sep-2: rgba(0, 0, 0, 0.24);
+  --label: #000000;
+  --label-2: rgba(0, 0, 0, 0.72);
+  --label-3: rgba(0, 0, 0, 0.68);
+  --label-4: rgba(0, 0, 0, 0.22);
+  --tint: #111111;
+  --tint-ink: #ffffff;
+  --tint-soft: rgba(0, 0, 0, 0.07);
+  --mat: rgba(255, 255, 255, 0.86);
+  --sh-1: none;
+  --sh-2: none;
+  --fill: rgba(0, 0, 0, 0.06);
+  --fill-2: rgba(0, 0, 0, 0.12);
 }

@@ -89,12 +89,12 @@
       "confirmar": "Sair na mesma"
     },
     {
-      "nome": "Desligar as luzes",
+      "nome": "Apagar luzes",
       "icone": "bulb",
       "tipo": "luzes"
     },
     {
-      "nome": "Fechar os estores",
+      "nome": "Fechar estores",
       "icone": "blinds",
       "tipo": "estores"
     }

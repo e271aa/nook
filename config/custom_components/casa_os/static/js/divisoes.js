@@ -456,9 +456,9 @@
       const h = r.humidity ? HA.num(r.humidity) : null;
       const partes = [nomePiso(r.floor)];
       if (t !== null) partes.push(`${fmt.n(t, 1)} °C`);
-      if (h !== null) partes.push(`${fmt.n(h)} %`);
+      if (h !== null) partes.push(`${fmt.n(h)} % de humidade`);
       if (r.motion) partes.push(HA.isOn(r.motion) ? "movimento agora" : "sem movimento");
-      head.querySelector(".linha-sub").textContent = partes.join(" · ");
+      head.querySelector(".linha-sub").textContent = partes.join(", ");
       apagar.disabled = acesasDe(r).length === 0;
       fechar.disabled = abertosDe(r).length === 0;
     });

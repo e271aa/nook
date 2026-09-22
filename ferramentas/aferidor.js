@@ -106,21 +106,28 @@ window.AFERIR = (function () {
 })();
 
 window.VARRER = async function (
-  temas = ["grafite", "lilas", "dourado", "verde", "oled", "claro"],
+  temas = ["grafite", "lilas", "dourado", "verde", "oled"],
   seccoes = ["casa", "divisoes", "controlos", "vigilancia", "energia", "rotina"],
+  modos = ["escuro", "claro"],
 ) {
-  const antes = document.documentElement.dataset.theme;
+  // cada paleta tem os dois modos: mede-se a combinação toda
+  const raiz = document.documentElement;
+  const antes = { t: raiz.dataset.theme, m: raiz.dataset.modo };
   const out = [];
-  for (const t of temas) {
-    document.documentElement.setAttribute("data-theme", t);
-    for (const s of seccoes) {
-      location.hash = `#/${s}`;
-      await new Promise((r) => setTimeout(r, 550));
-      out.push(window.AFERIR());
+  for (const m of modos) {
+    raiz.setAttribute("data-modo", m);
+    for (const t of temas) {
+      raiz.setAttribute("data-theme", t);
+      for (const s of seccoes) {
+        location.hash = `#/${s}`;
+        await new Promise((r) => setTimeout(r, 550));
+        out.push({ ...window.AFERIR(), modo: m });
+      }
     }
   }
-  if (antes) document.documentElement.setAttribute("data-theme", antes);
-  const falhas = out.flatMap((x) => x.contraste.map((c) => `${x.tema}/${x.seccao} ${c.cls} ${c.px}px r=${c.r}`));
-  console.table(out.map((x) => ({ ecrã: x.ecra, tema: x.tema, secção: x.seccao, scroll: x.scrollPagina, lateral: x.transbordoLateral, contraste: x.contraste.length, alvos: x.alvos.length })));
+  if (antes.t) raiz.setAttribute("data-theme", antes.t);
+  if (antes.m) raiz.setAttribute("data-modo", antes.m);
+  const falhas = out.flatMap((x) => x.contraste.map((c) => `${x.modo}/${x.tema}/${x.seccao} ${c.cls} ${c.px}px r=${c.r}`));
+  console.table(out.map((x) => ({ ecrã: x.ecra, modo: x.modo, tema: x.tema, secção: x.seccao, scroll: x.scrollPagina, lateral: x.transbordoLateral, contraste: x.contraste.length, alvos: x.alvos.length })));
   return { medições: out.length, falhas, alvos: [...new Set(out.flatMap((x) => x.alvos))] };
 };

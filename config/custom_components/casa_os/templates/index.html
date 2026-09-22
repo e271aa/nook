@@ -13,11 +13,22 @@
     <link rel="stylesheet" href="/casa_os_static/css/tokens.css?v={{ version }}" />
     <link rel="stylesheet" href="/casa_os_static/css/app.css?v={{ version }}" />
     <script>
-      // Paleta guardada, aplicada antes de pintar
+      // Paleta e modo guardados, aplicados antes de pintar (o automático, até a
+      // casa dizer onde está o sol, vai pela hora)
       (function () {
         try {
           var t = localStorage.getItem("casa_os_theme");
+          var m = localStorage.getItem("casa_os_modo");
+          if (t === "claro") {
+            t = "grafite";
+            m = m || "claro";
+          }
+          if (m === "auto") {
+            var h = new Date().getHours();
+            m = h >= 7 && h < 20 ? "claro" : "escuro";
+          }
           if (t) document.documentElement.setAttribute("data-theme", t);
+          document.documentElement.setAttribute("data-modo", m === "claro" ? "claro" : "escuro");
         } catch (e) {}
       })();
     </script>

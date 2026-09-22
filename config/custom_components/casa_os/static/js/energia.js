@@ -66,11 +66,11 @@
     const mesmo = chaveDia(inicio) === chaveDia(fim);
     return {
       id: "de", inicio, fim,
-      nome: mesmo ? curto(inicio) : `${curto(inicio)} – ${curto(fim)}`,
+      nome: mesmo ? curto(inicio) : `${curto(inicio)} - ${curto(fim)}`,
       // no telemóvel o segmentado tem pouco espaço: "8–15 set"
       nomeCurto: mesmo
         ? curto(inicio)
-        : inicio.getMonth() === fim.getMonth() ? `${inicio.getDate()}–${curto(fim)}` : `${curto(inicio)}–${curto(fim)}`,
+        : inicio.getMonth() === fim.getMonth() ? `${inicio.getDate()}-${curto(fim)}` : `${curto(inicio)}-${curto(fim)}`,
       titulo: mesmo ? `${curto(inicio)}, hora a hora` : `De ${curto(inicio)} a ${curto(fim)}`,
       // até dois dias vê-se hora a hora; depois dia a dia; muito longo, mês a mês
       passo: dias <= 2 ? "hour" : dias <= 120 ? "day" : "month",
@@ -150,8 +150,8 @@
       const ok = !!(a && b);
       caixa.querySelector(".cal-aplicar").disabled = !ok;
       caixa.querySelector(".cal-resumo").textContent = ok
-        ? igual(a, b) ? curto(a) : `${curto(a)} – ${curto(b)}`
-        : a ? `${curto(a)} – toca no último dia` : "Toca no primeiro dia";
+        ? igual(a, b) ? curto(a) : `${curto(a)} - ${curto(b)}`
+        : a ? `${curto(a)}, toca no último dia` : "Toca no primeiro dia";
     };
 
     const atalhos = [
