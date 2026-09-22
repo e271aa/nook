@@ -159,7 +159,8 @@
     destinos.appendChild(el('<span class="cap">Para onde vai</span>'));
     // ordenados pelo que gastam quando se abre a vista; depois ficam quietos,
     // para as linhas não trocarem de sítio a cada segundo
-    const ordem = [...circuitos].sort((a, b) => (w(b.potencia) || 0) - (w(a.potencia) || 0));
+    const resto = (c) => /outros/i.test(c.name || c.id || "");
+    const ordem = [...circuitos].sort((a, b) => resto(a) - resto(b) || (w(b.potencia) || 0) - (w(a.potencia) || 0));
     const linhas = ordem.map((c) => {
       const l = linhaCircuito(c);
       destinos.appendChild(l);
@@ -224,7 +225,7 @@
       linhas.forEach(({ c, l }) => {
         const v = Math.max(0, w(c.potencia) || 0);
         l.querySelector(".vl").textContent = potencia(v);
-        l.querySelector(".meter i").style.width = `${h > 0 ? Math.min(100, (v / h) * 100) : 0}%`;
+        l.querySelector(".meter i").style.transform = `scaleX(${h > 0 ? Math.min(1, v / h) : 0})`;
         l.classList.toggle("off", v < PARADO);
       });
 

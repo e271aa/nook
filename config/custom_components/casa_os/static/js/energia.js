@@ -249,7 +249,11 @@
   };
 
   function circuitosCard(stats) {
-    const tarifa = E.tariff || 0;
+    // o que se pagou reparte-se pelos circuitos na proporção do que gastaram:
+    // kWh × tarifa ignorava o sol e a soma dava o dobro do "Custo"
+    const pago = soma(stats[T.import]) * (E.tariff || 0);
+    const gasto = soma(stats[T.home]);
+    const tarifa = gasto > 0 ? pago / gasto : 0;
     const lista = (E.circuits || [])
       .map((c) => ({ ...c, v: soma(stats[c.entity]) }))
       .filter((c) => c.v > 0.005)

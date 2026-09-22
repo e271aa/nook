@@ -134,12 +134,15 @@
         <button class="pill" data-a="pp"></button>
         <button class="pill" data-a="menos" aria-label="Baixar o volume">${icon("minus", "ic-s")}</button>
         <button class="pill" data-a="mais" aria-label="Subir o volume">${icon("plus", "ic-s")}</button>
-        <select class="pill fonte" aria-label="Trocar de fonte"></select>
+        <label class="pill fonte-rot"><span class="dim">Fonte</span><span class="fonte-val"></span>${icon("down", "ic-s")}<select class="fonte-sel" aria-label="Trocar de fonte"></select></label>
       </div></div>`);
-    const sel = node.querySelector(".fonte");
+    const sel = node.querySelector(".fonte-sel");
     const fontes = HA.attr(id, "source_list", []) || [];
     fontes.forEach((f) => sel.appendChild(el(`<option value="${esc(f)}">${esc(f)}</option>`)));
-    sel.addEventListener("change", () => HA.call("media_player", "select_source", id, { source: sel.value }));
+    sel.addEventListener("change", () => {
+      node.querySelector(".fonte-val").textContent = sel.value;
+      HA.call("media_player", "select_source", id, { source: sel.value });
+    });
 
     const volume = (d) => {
       const v = HA.attr(id, "volume_level", 0.2);
@@ -165,6 +168,7 @@
       node.querySelectorAll('[data-a="menos"],[data-a="mais"]').forEach((b) => (b.disabled = desligada));
       sel.disabled = desligada;
       sel.value = HA.attr(id, "source", "");
+      node.querySelector(".fonte-val").textContent = sel.value || "—";
     });
   }
 

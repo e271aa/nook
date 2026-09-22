@@ -608,10 +608,15 @@ class Engine:
             self.room_hum[room] = _clamp(h + (base_h - h) * 0.01 * dt_s + self.rng.uniform(-0.05, 0.05), 25, 95)
 
     def _update_misc(self, now: datetime, dt_s: float) -> None:
-        # Movimento: pulsos aleatórios, mais prováveis em casa e de dia
+        # Movimento: pulsos aleatórios, mais prováveis de dia. Dentro de casa só
+        # há movimento com gente em casa; com a casa vazia a entrada ainda vê,
+        # raramente, alguém à porta (uma entrega) — e lá fora há gatos.
+        alguem = any(self.person_home(p["id"]) for p in PEOPLE)
         for m in ("sala", "entrada", "garagem", "jardim"):
             last = self.motion.get(m)
             p = {"sala": 0.03, "entrada": 0.012, "garagem": 0.006, "jardim": 0.01}[m]
+            if not alguem:
+                p = {"sala": 0.0, "entrada": 0.0015}.get(m, p)
             if not (7 <= now.hour <= 23):
                 p /= 6
             if last is None or (dt_util.utcnow() - last).total_seconds() > 45:

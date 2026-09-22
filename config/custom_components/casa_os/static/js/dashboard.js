@@ -4,7 +4,9 @@
  *  A vista do painel anterior, com a mesma filosofia: três colunas que se arrastam,
  *  e um menu que faz o mesmo que a barra lateral.
  *
- *    esquerda — o que se faz: as teclas rápidas, o comando de tudo, o sistema
+ *    esquerda — o dia (energia desde a meia-noite, o que vem na agenda), o
+ *               comando de tudo e o sistema. As ações rápidas ficam na Casa:
+ *               repeti-las aqui era a mesma decisão em dois sítios
  *    centro   — para onde se vai: um mosaico por secção, cada um com o seu
  *               resumo vivo. É a barra lateral em grande, com o estado lá dentro
  *    direita  — o que se vigia: o fecho da casa e as câmaras
@@ -114,7 +116,8 @@
       t.addEventListener("click", () => go(s.id));
       bind(t, s.vigia, () => {
         const [a, b] = s.diz();
-        t.querySelector(".tv").textContent = a;
+        // o título de cada mosaico começa em maiúscula, venha o resumo como vier
+        t.querySelector(".tv").textContent = a ? a.charAt(0).toUpperCase() + a.slice(1) : "";
         t.querySelector(".ts").textContent = b;
       });
       grelha.appendChild(t);
@@ -211,13 +214,76 @@
     return ajusta;
   }
 
+  /**
+   * O dia: o que a Casa não diz. A energia gasta desde a meia-noite (e quanto
+   * veio do sol, e quanto custou) e o que vem a seguir na agenda. As ações
+   * rápidas vivem na Casa; aqui repeti-las era só mais seis botões.
+   */
+  function oDia() {
+    const E = CFG.energy || {};
+    const T = E.totals || {};
+    const node = el(`<div class="card o-dia"><span class="cap">O dia</span>
+      <div class="sis">
+        <div class="stat"><div class="v num" data-k="casa">—</div><div class="k">kWh gastos</div></div>
+        <div class="stat sol"><div class="v num" data-k="sol">—</div><div class="k">kWh do sol</div></div>
+        <div class="stat"><div class="v num" data-k="custo">—</div><div class="k">€ à rede</div></div>
+      </div>
+      <div class="grouped proximos"></div></div>`);
+    const v = (k, txt) => (node.querySelector(`[data-k="${k}"]`).innerHTML = txt);
+    const soma = (linhas) => (linhas || []).reduce((t, r) => t + ((r.change || 0) >= 0 ? r.change || 0 : Math.max(0, r.sum || 0)), 0);
+
+    K.intervalo(async () => {
+      const ids = [T.home, T.solar, T.import].filter(Boolean);
+      if (!ids.length) return;
+      const ini = new Date();
+      ini.setHours(0, 0, 0, 0);
+      try {
+        const st = await HA.statistics(ids, ini, null, "hour");
+        // a unidade vai na legenda: numa coluna estreita o número tem de caber inteiro
+        v("casa", fmt.n(soma(st[T.home]), 1));
+        v("sol", fmt.n(soma(st[T.solar]), 1));
+        v("custo", fmt.n(soma(st[T.import]) * (E.tariff || 0), 2));
+      } catch (_) {
+        // sem histórico fica o traço: não se inventa um zero
+      }
+    }, 5 * 60 * 1000);
+
+    const lista = node.querySelector(".proximos");
+    const AGENDAS = CFG.calendarios || [];
+    if (!AGENDAS.length) lista.remove();
+    else {
+      K.intervalo(async () => {
+        const ini = new Date();
+        const fim = new Date(Date.now() + 3 * 86400000);
+        const listas = await Promise.all(AGENDAS.map((a) => HA.calendario(a.entidade, ini, fim).catch(() => [])));
+        const eventos = listas
+          .flat()
+          .map((e) => {
+            const diaInteiro = !!(e.start && e.start.date);
+            return { titulo: e.summary, diaInteiro, inicio: new Date(diaInteiro ? `${e.start.date}T00:00:00` : e.start.dateTime) };
+          })
+          .sort((a, b) => a.inicio - b.inicio)
+          .slice(0, 2);
+        lista.innerHTML = "";
+        if (!eventos.length) {
+          lista.appendChild(K.linha("calendar", "Nada marcado", "próximos 3 dias"));
+          return;
+        }
+        const hoje = new Date().toDateString();
+        const amanha = new Date(Date.now() + 86400000).toDateString();
+        eventos.forEach((e) => {
+          const dia = e.inicio.toDateString() === hoje ? "hoje" : e.inicio.toDateString() === amanha ? "amanhã" : fmt.diaSemana(e.inicio).split(",")[0];
+          const h = e.diaInteiro ? "" : ` ${String(e.inicio.getHours()).padStart(2, "0")}:${String(e.inicio.getMinutes()).padStart(2, "0")}`;
+          lista.appendChild(K.linha("calendar", e.titulo, `${dia}${h}`));
+        });
+      }, 10 * 60 * 1000);
+    }
+    return node;
+  }
+
   function esquerda() {
     const col = el('<div class="col dcol"></div>');
-    const acoes = el('<div class="card"><span class="cap">Ações rápidas</span></div>');
-    const teclas = K.teclas();
-    teclas.classList.add("fixas"); // aqui nunca se escondem: é a vista das ações
-    acoes.appendChild(teclas);
-    col.append(acoes, comandoDeTudo(), sistema());
+    col.append(oDia(), comandoDeTudo(), sistema());
     esconderOQueNaoCabe(col);
     return col;
   }

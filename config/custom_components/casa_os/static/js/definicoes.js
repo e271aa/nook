@@ -216,7 +216,13 @@
     });
 
     const repor = el('<button class="pill">Repor definições</button>');
-    repor.addEventListener("click", () => {
+    repor.addEventListener("click", async () => {
+      const ok = await K.folha({
+        titulo: "Repor as definições?",
+        texto: "O tamanho, as teclas rápidas e os tempos voltam aos de origem. A paleta fica como está.",
+        confirmar: "Repor",
+      });
+      if (!ok) return;
       DEFS.repor();
       location.reload();
     });
@@ -233,6 +239,11 @@
       <div class="ft">Tudo o que é do painel, e não da casa.</div></div></div>`));
 
     const corpo = el('<div class="def-corpo"></div>');
+    // o desvanecer de baixo só enquanto houver mais para ver
+    const fim = () => corpo.classList.toggle("no-fim", corpo.scrollTop + corpo.clientHeight >= corpo.scrollHeight - 4);
+    corpo.addEventListener("scroll", fim, { passive: true });
+    new ResizeObserver(fim).observe(corpo);
+    setTimeout(fim, 0);
     const esq = el('<div class="col"></div>');
     const dir = el('<div class="col"></div>');
     esq.append(tamanho(), aparencia());

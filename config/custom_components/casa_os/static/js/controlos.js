@@ -61,12 +61,18 @@
           <span class="badge">${icon(ico(icone || "bulb"))}</span>
           <span class="sw" aria-hidden="true"></span>
         </span>
-        <span class="tn">${esc(nomeCurto(r, id, nome))}</span>
+        <span class="tn"></span>
         <span class="tr"></span>
       </button></div>`);
     const main = node.querySelector(".tile-main");
     const sw = node.querySelector(".sw");
     const sub = node.querySelector(".tr");
+    // "Luz" seis vezes não se distingue de relance: quando o nome é só o tipo,
+    // o cartão chama-se pela divisão e o subtítulo deixa de a repetir
+    const curto = nomeCurto(r, id, nome);
+    const generico = /^(luz|tomada)$/i.test(curto);
+    node.querySelector(".tn").textContent = generico ? r.name : curto;
+    const onde = generico ? "" : `${r.name} · `;
     main.addEventListener("click", () => HA.call(dominio, HA.isOn(id) ? "turn_off" : "turn_on", id));
 
     let brilho = null;
@@ -86,7 +92,7 @@
       main.disabled = morto;
       if (morto) {
         node.classList.remove("on");
-        sub.textContent = `${r.name} · sem resposta`;
+        sub.textContent = `${onde}sem resposta`;
         if (brilho) brilho.hidden = true;
         return;
       }
@@ -96,7 +102,7 @@
       const estado = dominio === "light"
         ? !on ? "apagada" : brilho ? `${fmt.n(pct)} %` : "acesa"
         : on ? "ligada" : "desligada";
-      sub.textContent = `${r.name} · ${estado}`;
+      sub.textContent = `${onde}${estado}`.replace(/^./, (c) => c.toUpperCase());
       if (brilho) {
         brilho.hidden = !on;
         brilho.definir(pct);

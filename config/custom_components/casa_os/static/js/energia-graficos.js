@@ -53,7 +53,7 @@
     const repor = el('<button class="gf-repor" hidden>Repor zoom</button>');
     container.append(svg, tip, repor);
 
-    const M = { e: 46, d: 10, c: 10, b: 24 }; // margens, em px
+    const M = { e: 46, d: 10, c: 24, b: 24 }; // margens, em px (em cima cabe a unidade)
     let W = 0;
     let H = 0;
     let lay = null; // escalas da última desenhada
@@ -102,6 +102,12 @@
         svg.appendChild(t);
       }
       if (vmin < 0) svg.appendChild(mk("line", { class: "gf-zero", x1: M.e, x2: W - M.d, y1: y(0), y2: y(0) }));
+      // a unidade do eixo, por cima dele: "40" sozinho não diz se é kWh ou W
+      if (o.unidade) {
+        const u = mk("text", { class: "gf-eixo gf-unidade", x: M.e - 6, y: M.c - 10, "text-anchor": "end" });
+        u.textContent = o.unidade;
+        svg.appendChild(u);
+      }
 
       // eixo X: no máximo umas seis etiquetas, sem se pisarem
       const marcas = Math.min(n, Math.max(2, Math.floor(pw / 74)));

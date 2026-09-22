@@ -43,7 +43,8 @@
 
   /** A resposta à primeira pergunta, no tamanho que se lê da porta da rua. */
   function veredicto() {
-    const node = el('<div class="verdict"><div class="cap"></div><div class="vline"></div></div>');
+    // o veredicto muda quando a casa muda: quem não vê o ecrã ouve-o
+    const node = el('<div class="verdict"><div class="cap"></div><div class="vline" aria-live="polite"></div></div>');
     const data = node.querySelector(".cap");
     const linha = node.querySelector(".vline");
 
@@ -136,57 +137,123 @@
       <span class="ib">${icon(a.icone || "alert", "ic-s")}</span>
       <div class="tx">
         <div class="${grande ? "hd" : "bd"}" style="font-weight:var(--w-s)">${esc(a.titulo)}</div>
-        <div class="ft">${esc(a.detalhe)}${a.divisao ? ` · ${esc(a.divisao)}` : ""}</div>
+        <div class="ft">${esc(a.detalhe)}${a.divisao && !new RegExp(a.divisao, "i").test(a.detalhe || "") ? ` · ${esc(a.divisao)}` : ""}</div>
       </div></div>`);
 
+    const acts = el('<div class="acts"></div>');
     if (a.acao) {
-      const acts = el('<div class="acts"></div>');
       const b = el(`<button class="pill on">${esc(a.acao.texto)}</button>`);
-      b.addEventListener("click", () => {
-        HA.call(a.acao.dominio, a.acao.servico, a.acao.entidade, a.acao.dados || {});
+      b.addEventListener("click", async () => {
         b.disabled = true;
         b.textContent = "A tratar…";
+        const r = await HA.call(a.acao.dominio, a.acao.servico, a.acao.entidade, a.acao.dados || {});
+        // se não chegou, o botão volta (a nota já disse porquê); se chegou, o aviso some sozinho
+        if (r === null) {
+          b.disabled = false;
+          b.textContent = a.acao.texto;
+        }
       });
       acts.appendChild(b);
-      node.querySelector(".tx").appendChild(acts);
     }
+    // quem vê um aviso numa divisão com câmara quer ver a câmara
+    const r = divisoes().find((d) => d.name === a.divisao);
+    if (r && r.camera) {
+      const c = el(`<button class="pill">${icon("camera", "ic-s")}Ver câmara</button>`);
+      c.addEventListener("click", () => K.ampliar({ entidade: r.camera, nome: r.name }));
+      acts.appendChild(c);
+    }
+    if (acts.children.length) node.querySelector(".tx").appendChild(acts);
     return node;
   }
 
-  /** O espaço dos avisos, que é fixo mesmo quando não há nenhum. */
+  /**
+   * O espaço dos avisos. Em calma não é um cartão vazio: é a casa de relance,
+   * desenhada, com as luzes que estão acesas. Com avisos, a mesma planta
+   * mostra onde é que está o problema. Sem ligação, diz que não sabe.
+   */
   function colunaAvisos({ grande }) {
-    const node = el('<div class="acol"></div>');
+    const node = el('<section class="acol" aria-label="Avisos"></section>');
+    const topo = el('<div class="acol-topo"></div>');
+    const lista = el('<div class="acol-lista" aria-live="polite"></div>');
+    node.append(topo, lista);
+
+    // a miniatura: uma por piso, criada quando é precisa e reaproveitada
+    const temPlanta = !!(CFG.planta && K.plantaMiniatura);
+    const quadro = temPlanta ? el('<button class="acol-planta"><span class="ap-leg cap"></span></button>') : null;
+    const minis = {};
+    let pisoVisto = null;
+    let divisaoDoAviso = null;
+    if (quadro) {
+      node.appendChild(quadro);
+      quadro.addEventListener("click", () => (location.hash = divisaoDoAviso ? `#/planta/${divisaoDoAviso}` : "#/planta"));
+    }
+    const mostraPiso = (pisoId, destaques) => {
+      if (!quadro) return;
+      if (!minis[pisoId]) minis[pisoId] = K.plantaMiniatura(pisoId);
+      const m = minis[pisoId];
+      if (pisoVisto !== pisoId) {
+        quadro.querySelectorAll(".pl-mini").forEach((n) => n.remove());
+        quadro.prepend(m.node);
+        pisoVisto = pisoId;
+      }
+      m.destacar(destaques);
+      comDestaque = destaques.length > 0;
+      legenda();
+      quadro.setAttribute("aria-label", comDestaque ? "Ver na planta onde está o aviso" : "Abrir a planta");
+    };
+    let comDestaque = false;
+    const legenda = () => {
+      if (!quadro || !pisoVisto) return;
+      const nome = ((CFG.floors || []).find((f) => f.id === pisoVisto) || {}).name || "";
+      const n = divisoes().filter((r) => r.floor === pisoVisto).flatMap((r) => r.lights || []).filter((l) => HA.isOn(l)).length;
+      quadro.querySelector(".ap-leg").textContent = comDestaque
+        ? `${nome} · onde está`
+        : `${nome} · ${n ? `${fmt.n(n)} ${n === 1 ? "luz acesa" : "luzes acesas"}` : "luzes apagadas"}`;
+    };
+    if (quadro) bind(quadro, (id) => id.startsWith("light."), legenda);
+    const primeiroPiso = temPlanta ? ((CFG.planta.pisos || [])[0] || {}).id : null;
 
     bind(node, (id) => id === K.AVISOS, () => {
-      const lista = avisos();
-      node.innerHTML = "";
+      const avs = avisos();
+      topo.innerHTML = "";
+      lista.innerHTML = "";
+      node.classList.toggle("incerto", !HA.online());
+      divisaoDoAviso = null;
 
       if (!HA.online()) {
         const t = HA.ultimoContacto();
-        node.appendChild(el(`<div class="calm incerto">
+        topo.appendChild(el(`<div class="calm incerto">
           <span class="mark">${icon("wifioff", "ic-s")}</span>
-          <div class="hd">Não sei se há avisos</div>
-          <div class="ft">${t ? `A casa não responde desde as ${esc(horas(new Date(t).toISOString()))}. O que está à vista é desse momento.` : "O painel ainda não falou com a casa."}</div>
+          <div><div class="hd">Não sei se há avisos</div>
+          <div class="ft">${t ? `A casa não responde desde as ${esc(horas(new Date(t).toISOString()))}. O que está à vista é desse momento.` : "O painel ainda não falou com a casa."}</div></div>
         </div>`));
-        return;
-      }
-      if (!lista.length) {
-        const desde = calmaDesde();
-        node.appendChild(el(`<div class="calm">
-          <span class="mark">${icon("check", "ic-s")}</span>
-          <div class="hd">Nada a precisar de ti</div>
-          <div class="ft">${desde ? `Sem avisos desde as ${esc(horas(desde))}. ` : ""}A casa tem ${fmt.n(HA.count())} aparelhos a responder.</div>
-        </div>`));
+        if (primeiroPiso) mostraPiso(primeiroPiso, []);
         return;
       }
 
-      const topo = el(`<div class="sb"><span class="cap">A precisar de ti</span>
-        ${lista.length > 1 ? `<span class="cap">${fmt.n(lista.length)}</span>` : ""}</div>`);
-      node.appendChild(topo);
-      lista.slice(0, 3).forEach((a) => node.appendChild(cartaoAviso(a, grande && lista.length === 1)));
-      if (lista.length > 3) {
-        node.appendChild(el(`<div class="ft dim2">e mais ${fmt.n(lista.length - 3)}</div>`));
+      if (!avs.length) {
+        const desde = calmaDesde();
+        topo.appendChild(el(`<div class="calm">
+          <span class="mark">${icon("check", "ic-s")}</span>
+          <div><div class="hd">Nada a precisar de ti</div>
+          <div class="ft">${desde ? `Sem avisos desde as ${esc(horas(desde))} · ` : ""}${fmt.n(HA.count())} aparelhos a responder</div></div>
+        </div>`));
+        if (primeiroPiso) mostraPiso(primeiroPiso, []);
+        return;
       }
+
+      topo.appendChild(el(`<div class="sb"><span class="cap">A precisar de ti</span>
+        ${avs.length > 1 ? `<span class="cap">${fmt.n(avs.length)}</span>` : ""}</div>`));
+      // com a planta por baixo cabem dois; sem ela, três
+      const cabem = quadro ? 2 : 3;
+      avs.slice(0, cabem).forEach((a) => lista.appendChild(cartaoAviso(a, grande && avs.length === 1)));
+      if (avs.length > cabem) lista.appendChild(el(`<div class="ft dim2">e mais ${fmt.n(avs.length - cabem)}</div>`));
+
+      // a planta vai para o piso do primeiro aviso que tem sítio, e marca-os todos lá
+      const comSitio = avs.map((a) => divisoes().find((r) => r.name === a.divisao)).filter(Boolean);
+      const piso = comSitio.length && K.pisoDaDivisao ? K.pisoDaDivisao(comSitio[0].id) : primeiroPiso;
+      divisaoDoAviso = comSitio.length ? comSitio[0].id : null;
+      if (piso) mostraPiso(piso, comSitio.filter((r) => K.pisoDaDivisao(r.id) === piso).map((r) => r.id));
     });
 
     return node;
@@ -294,17 +361,36 @@
 
     const por = (n, texto) => (n.querySelector(".k").textContent = texto);
 
+    // Da parede lê-se de relance: um número que salta de 360 para 750 W e volta
+    // em dois segundos lê-se como tremor. Mostra-se uma média dos últimos
+    // segundos (como os contadores), arredondada a 10 W; um salto grande
+    // (ligar o forno) aparece logo.
+    const medias = {};
+    const suave = (chave, x) => {
+      if (x === null || x === undefined) return x;
+      const agora = Date.now();
+      const m = medias[chave];
+      if (!m || Math.abs(x - m.v) > Math.max(800, Math.abs(m.v) * 0.8)) {
+        medias[chave] = { v: x, t: agora };
+        return Math.round(x / 10) * 10;
+      }
+      const a = 1 - Math.exp(-(agora - m.t) / 5000);
+      m.v += (x - m.v) * a;
+      m.t = agora;
+      return Math.round(m.v / 10) * 10;
+    };
+
     bind(node, (id) => id.startsWith("sensor."), () => {
       const w = (id) => (id ? HA.num(id) : null);
-      casa.querySelector(".v").innerHTML = potencia(w(P.home));
-      sol.querySelector(".v").innerHTML = potencia(w(P.solar));
+      casa.querySelector(".v").innerHTML = potencia(suave("casa", w(P.home)));
+      sol.querySelector(".v").innerHTML = potencia(suave("sol", w(P.solar)));
 
       const soc = w(E.battery_soc);
       const fluxo = w(P.battery) || 0;
       bat.querySelector(".v").innerHTML = `${fmt.n(soc)}<small> %</small>`;
       por(bat, fluxo > 20 ? "Bateria, a carregar" : fluxo < -20 ? "Bateria, a dar à casa" : "Bateria");
 
-      const g = w(P.grid) || 0;
+      const g = suave("rede", w(P.grid) || 0);
       rede.querySelector(".v").innerHTML = potencia(Math.abs(g));
       por(rede, g > 20 ? "Comprado à rede" : g < -20 ? "Vendido à rede" : "Da rede — nada");
     });
@@ -335,7 +421,11 @@
   /** No telemóvel a ordem é a mesma, mas em pilha e a rolar. */
   function casaNaMao() {
     const node = el('<div class="scroll pad col home-mao"></div>');
-    node.appendChild(veredicto());
+    // o veredicto vai num cabeçalho: é aí que o painel põe o botão do Menu, e
+    // sem ele o início era o único sítio do telemóvel sem caminho para o resto
+    const cab = el('<div class="head casa-cab"></div>');
+    cab.appendChild(veredicto());
+    node.appendChild(cab);
     node.appendChild(colunaAvisos({ grande: false }));
     node.appendChild(teclas());
     node.appendChild(el('<div class="cap">Energia agora</div>'));

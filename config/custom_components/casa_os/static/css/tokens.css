@@ -27,7 +27,7 @@
   /* Letra — oito passos, rácio apertado, como a da Apple */
   --t-c2: max(11px, calc(11px * var(--u)));
   --t-c1: max(11.5px, calc(12px * var(--u)));
-  --t-ft: calc(13px * var(--u));
+  --t-ft: max(12px, calc(13px * var(--u)));
   --t-sb: calc(15px * var(--u));
   --t-bd: calc(17px * var(--u));
   --t-hd: calc(20px * var(--u));
@@ -77,11 +77,15 @@
   /* Movimento — a primeira curva é a da Apple, sai depressa e pousa devagar */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  /* para o que entra e para a resposta ao toque: arranca já e assenta devagar */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --d1: 140ms;
   --d2: 280ms;
   --d3: 520ms;
 
   /* ───── Grafite — a paleta de origem ───── */
+  /* as paletas escuras pedem ao browser controlos e barras escuros (a clara pede os claros) */
+  color-scheme: dark;
   --bg: #000000;
   --l1: #131315;
   --l2: #1c1c1f;

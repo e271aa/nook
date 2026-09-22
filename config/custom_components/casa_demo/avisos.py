@@ -35,6 +35,7 @@ ORDEM = {PERIGO: 0, AVISO: 1, INFO: 2}
 PORTA_ABERTA = timedelta(minutes=5)
 JANELA_ESQUECIDA = timedelta(hours=3)
 BATERIA_FRACA = 15  # por cento
+PORTA_VISTA = timedelta(minutes=10)
 
 AREA_DE_CONTACTO = {c["id"]: c["area"] for c in CONTACTS}
 NOME_DE_CONTACTO = {c["id"]: c["name"] for c in CONTACTS}
@@ -70,6 +71,7 @@ class Regras:
     engine: Engine
     entry_id: str
     _desde: dict[str, datetime] = field(default_factory=dict)
+    _porta_em: datetime | None = None
     _sem_resposta: list[str] = field(default_factory=list)
     _varrido_em: datetime | None = None
 
@@ -132,7 +134,26 @@ class Regras:
                 ))
 
         # ── a casa vazia ──
-        if not any(e.person_home(p["id"]) for p in PEOPLE):
+        vazia = not any(e.person_home(p["id"]) for p in PEOPLE)
+        # alguém à porta com a casa vazia: diz-se durante dez minutos, porque
+        # quem olha para o painel depois ainda quer saber que alguém lá esteve
+        mov = e.motion.get("entrada")
+        if vazia and mov:
+            self._porta_em = mov
+        if self._porta_em and agora - self._porta_em > PORTA_VISTA:
+            self._porta_em = None
+        if self._porta_em:
+            agora_mesmo = vazia and mov is not None
+            hora = dt_util.as_local(self._porta_em).strftime("%H:%M")
+            avisos.append(Aviso(
+                id="vazia_porta", gravidade=AVISO,
+                titulo="Alguém à porta" if agora_mesmo else "Alguém esteve à porta",
+                detalhe=f"Movimento na entrada às {hora}, com a casa vazia.",
+                icone="motion", divisao="Entrada", desde=self._porta_em,
+                acao={"texto": "Acender a entrada", "dominio": "light", "servico": "turn_on",
+                      "entidade": "light.entrada", "dados": {}},
+            ))
+        if vazia:
             acesas = [l for l in LIGHTS if e.lights[l["id"]].on]
             if acesas:
                 quantas = len(acesas)

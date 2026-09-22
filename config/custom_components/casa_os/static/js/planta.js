@@ -894,8 +894,14 @@
     return partes.join(" · ");
   }
 
-  function planta() {
+  function planta(args) {
     const naMao = ecra() === "mao";
+    // chega-se de um aviso com a divisão no endereço: abre no piso dela, já escolhida
+    const pedida = args && args[0] && divisoes().find((d) => d.id === args[0]);
+    if (pedida && pisoDe(pedida.id)) {
+      pisoAtual = pisoDe(pedida.id);
+      escolhida = pedida.id;
+    }
     const raiz = el(`<div class="${naMao ? "scroll " : ""}pad col grow planta-vista"></div>`);
     if (!PISOS.length) {
       raiz.appendChild(el('<div class="empty"><div class="et">Esta casa não tem planta</div><div class="es">A planta é desenhada por instalação. Sem ela, a casa vê-se pelas Divisões.</div></div>'));
@@ -961,7 +967,14 @@
         else if (r) painel.appendChild(painelDaDivisao(r, fecha));
         else if (naMao) painel.appendChild(painelDoPiso(piso(), escolher));
       });
-      corpo.classList.toggle("com-painel", !!painel.children.length);
+      const abre = !!painel.children.length;
+      const mudou = abre !== corpo.classList.contains("com-painel");
+      corpo.classList.toggle("com-painel", abre);
+      // a planta muda de tamanho uma vez (não a cada imagem de uma animação de
+      // largura); o salto esconde-se numa transição curta de nitidez
+      if (mudou && !reduzido() && quadro.animate) {
+        quadro.animate([{ opacity: 0.55, filter: "blur(3px)" }, { opacity: 1, filter: "blur(0)" }], { duration: 240, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+      }
       quadro.querySelectorAll(".pl-zona, .pl-robo").forEach((z) => z.classList.toggle("escolhida", z.dataset.z === escolhida));
       if (escolhida && naMao) painel.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" });
       setTimeout(ajusta, 0);
@@ -997,6 +1010,37 @@
     fecharPainel = () => document.contains(raiz) && escolhida && escolher(null);
     return raiz;
   }
+
+  /**
+   * A casa em miniatura, para a Casa: o piso desenhado com as luzes acesas, sem
+   * mãos nem nomes. `destacar(ids)` marca as divisões de que se está a falar
+   * (um aviso), sem redesenhar — os ouvintes criam-se uma vez, aqui.
+   */
+  function miniatura(pisoId) {
+    const piso = PISOS.find((p) => p.id === pisoId) || PISOS[0];
+    const caixa = el('<div class="pl-mini"></div>');
+    if (!piso) return { node: caixa, destacar() {}, piso: null };
+    const svg = criar("svg", {
+      class: "planta", viewBox: `${-MARGEM} ${-MARGEM} ${piso.largura + MARGEM * 2} ${piso.altura + MARGEM * 2}`,
+      preserveAspectRatio: "xMidYMid meet", "aria-hidden": "true",
+    });
+    const defs = criar("defs", {}, svg);
+    desenhaPiso(piso, svg, defs, { mini: true });
+    caixa.appendChild(svg);
+    return {
+      node: caixa,
+      piso: piso.id,
+      destacar(ids) {
+        const alvo = new Set(ids || []);
+        svg.querySelectorAll(".zona[data-z]").forEach((g) => g.classList.toggle("destaque", alvo.has(g.dataset.z)));
+        caixa.classList.toggle("com-destaque", alvo.size > 0);
+      },
+    };
+  }
+  /** Em que piso fica uma divisão (para a Casa saber que miniatura mostrar). */
+  const pisoDe = (divisaoId) => (PISOS.find((p) => p.zonas.some((z) => z.divisao === divisaoId)) || {}).id || null;
+  K.plantaMiniatura = miniatura;
+  K.pisoDaDivisao = pisoDe;
 
   // Esc fecha o painel da planta que estiver no ecrã (um só ouvinte para todas)
   let fecharPainel = null;

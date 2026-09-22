@@ -232,8 +232,8 @@ svg {
   align-items: center;
   justify-content: center;
   gap: calc(3px * var(--u));
-  color: var(--label-3);
-  font-size: calc(10px * var(--u));
+  color: var(--label-2);
+  font-size: max(11px, calc(10px * var(--u)));
   font-weight: var(--w-m);
 }
 .tabbar button[aria-current="page"] {
@@ -260,6 +260,10 @@ svg {
 }
 [data-screen="mao"] .pad {
   padding: calc(18px * var(--u));
+  /* instalado como app, a barra de estado fica por cima: o conteúdo começa abaixo dela */
+  padding-top: calc(env(safe-area-inset-top, 0px) + calc(18px * var(--u)));
+  padding-left: calc(env(safe-area-inset-left, 0px) + calc(18px * var(--u)));
+  padding-right: calc(env(safe-area-inset-right, 0px) + calc(18px * var(--u)));
 }
 
 /* Só o telemóvel rola. Na parede e na TV, o que não cabe foi mal pensado. */
@@ -1123,15 +1127,17 @@ button.li:active {
   user-select: none;
   flex: 0 0 auto;
 }
+.nb[hidden],
 .slide[hidden] {
   display: none;
 }
 .slide .fl {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset: 0;
+  transform-origin: left center;
   background: var(--tint);
   opacity: 0.85;
-  transition: width var(--d2) var(--ease);
+  transition: transform var(--d2) var(--ease);
 }
 .slide.dragging .fl {
   transition: none;
@@ -1168,8 +1174,10 @@ button.li:active {
   place-items: center;
   transition: background var(--d1) var(--ease-soft);
 }
-.stepper button:hover {
-  background: var(--fill-2);
+@media (hover: hover) and (pointer: fine) {
+  .stepper button:hover {
+    background: var(--fill-2);
+  }
 }
 .segc.full {
   display: flex;
@@ -1796,8 +1804,10 @@ button.li:active {
   margin-top: calc(5px * var(--u));
 }
 .circ-agora .meter i {
+  width: 100%;
+  transform-origin: left center;
   background: var(--tint);
-  transition: width var(--d3) var(--ease);
+  transition: transform var(--d2) var(--ease);
 }
 
 /* na mão: fontes lado a lado em cima, a casa, e os circuitos por baixo */
@@ -1966,13 +1976,36 @@ select.pill {
 [data-presenca="longe"] .facts .sub {
   font-size: var(--t-bd);
 }
-.hero .vcol,
-.facts .sub {
-  transition: flex var(--d3) var(--ease), font-size var(--d3) var(--ease);
+/* a mudança de perto/longe muda o layout: faz-se de uma vez, e o salto
+   esconde-se numa transição curta de nitidez (dois nomes para recomeçar) */
+[data-presenca="perto"] .hero {
+  animation: acomoda-a var(--d2) var(--ease-out);
+}
+[data-presenca="longe"] .hero {
+  animation: acomoda-b var(--d2) var(--ease-out);
+}
+@keyframes acomoda-a {
+  from {
+    opacity: 0.6;
+    filter: blur(3px);
+  }
+}
+@keyframes acomoda-b {
+  from {
+    opacity: 0.6;
+    filter: blur(3px);
+  }
 }
 
-.keys {
-  transition: max-height var(--d3) var(--ease), opacity var(--d2) var(--ease-soft);
+/* as teclas aparecem de baixo, por cima de um espaço que já está feito */
+[data-presenca="perto"] .keys {
+  animation: teclas-entram var(--d2) var(--ease-out) both;
+}
+@keyframes teclas-entram {
+  from {
+    opacity: 0;
+    transform: translateY(calc(10px * var(--u)));
+  }
 }
 /* escondidas: sempre na TV; no tablet só se a pessoa escolheu "quando alguém se aproxima" */
 [data-screen="sala"] .keys,
@@ -2021,10 +2054,15 @@ select.pill {
    De noite e sem ninguém, fica só o essencial: a hora, o veredicto e o que
    estiver mal. O primeiro toque acorda o painel e não faz mais nada. */
 
-.app,
-.side,
 .body {
-  transition: filter var(--d3) var(--ease-soft), width var(--d3) var(--ease), opacity var(--d3) var(--ease-soft);
+  transition: filter var(--d3) var(--ease-soft);
+}
+.side {
+  transition: opacity var(--d2) var(--ease-soft);
+}
+/* a entrar em repouso: primeiro desvanece, só depois larga o espaço (de uma vez) */
+[data-repouso="sim"] .side {
+  transition: opacity var(--d2) var(--ease-soft), width 0s linear var(--d2), padding 0s linear var(--d2), border-right-width 0s linear var(--d2);
 }
 [data-repouso="sim"] .body {
   filter: brightness(0.5);
@@ -2322,8 +2360,10 @@ select.pill {
   cursor: pointer;
   transition: background var(--d2) var(--ease-soft);
 }
-.pl-toque:hover {
-  background: color-mix(in oklab, var(--label) 4%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .pl-toque:hover {
+    background: color-mix(in oklab, var(--label) 4%, transparent);
+  }
 }
 .pl-zona.escolhida .pl-toque {
   background: color-mix(in oklab, var(--tint) 8%, transparent);
@@ -2457,7 +2497,6 @@ select.pill {
   width: 0;
   padding: var(--s4) 0;
   opacity: 0;
-  transition: width var(--d2) var(--ease), margin var(--d2) var(--ease), opacity var(--d2) var(--ease-soft);
 }
 .pl-painel::-webkit-scrollbar {
   display: none;
@@ -2466,6 +2505,13 @@ select.pill {
   width: calc(340px * var(--u));
   margin-left: var(--s4);
   opacity: 1;
+  animation: painel-entra var(--d2) var(--ease-out);
+}
+@keyframes painel-entra {
+  from {
+    opacity: 0;
+    transform: translateX(calc(14px * var(--u)));
+  }
 }
 .pl-painel > .pp-conteudo {
   width: calc(340px * var(--u));
@@ -2667,6 +2713,17 @@ select.pill {
   scrollbar-width: none;
   align-items: flex-start;
 }
+/* rola sem barra: um desvanecer em baixo diz que há mais (e some quando se chega ao fim) */
+[data-screen="braco"] .def-corpo,
+[data-screen="sala"] .def-corpo {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - calc(48px * var(--u))), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - calc(48px * var(--u))), transparent);
+}
+[data-screen="braco"] .def-corpo.no-fim,
+[data-screen="sala"] .def-corpo.no-fim {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 .def-corpo::-webkit-scrollbar {
   display: none;
 }
@@ -2782,13 +2839,13 @@ select.pill {
   height: calc(46px * var(--u));
   border-radius: var(--rp);
   background: var(--sep-2);
-  transition: background var(--d1) var(--ease), height var(--d1) var(--ease);
+  transition: background var(--d1) var(--ease), transform var(--d1) var(--ease-out);
 }
 .colgrip:hover span,
 .colgrip:focus-visible span,
 .colgrip.dragging span {
   background: var(--tint);
-  height: calc(72px * var(--u));
+  transform: scaleY(1.55);
 }
 .colgrip:focus-visible {
   outline: none;
@@ -3119,13 +3176,29 @@ select.pill {
   }
 }
 
+/* Movimento reduzido quer dizer menos movimento, não nenhum: as mudanças de
+   opacidade e de cor continuam (dizem que algo mudou); o que se desloca,
+   cresce ou roda deixa de o fazer. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    transition-property: opacity, color, background-color, border-color, box-shadow, filter !important;
+    animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  :active {
+    scale: none !important;
+  }
+  /* o que diz "a trabalhar" continua a dizê-lo, sem rodar */
+  .spin {
+    animation: pulsa-lento 1.6s ease-in-out infinite !important;
+  }
+  @keyframes pulsa-lento {
+    50% {
+      opacity: 0.4;
+    }
   }
 }
 
@@ -3355,9 +3428,17 @@ button,
   touch-action: manipulation;
 }
 /* carregar responde já: o que ainda não tinha reação ao toque passa a ter */
-:is(.pill, .segc button, .sw, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .camtile):active:not(:disabled) {
-  opacity: 0.7;
-  transition: opacity 60ms linear;
+:is(.pill, .segc button, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .camtile, .nt-acao) {
+  transition-property: scale, background, color, opacity, border-color;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+:is(.pill, .segc button, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .nt-acao):active:not(:disabled) {
+  scale: 0.96;
+}
+/* os grandes encolhem menos: 4 % de uma câmara é muito */
+.camtile:active {
+  scale: 0.985;
 }
 /* o clima nos Controlos: nome em cima, temperatura ao meio, modo em baixo,
    como os estores ao lado — em vez de tudo encostado ao topo */
@@ -3458,7 +3539,7 @@ button,
 }
 
 /* a folha de confirmação: pequena, ao centro, com a saída segura em foco */
-.folha {
+.confirma {
   position: fixed;
   z-index: 42;
   top: 50%;
@@ -3472,25 +3553,173 @@ button,
   background: var(--l2);
   border-radius: var(--r4);
   box-shadow: 0 calc(20px * var(--u)) calc(60px * var(--u)) rgba(0, 0, 0, 0.5);
-  animation: folha-entra var(--d2) var(--ease) both;
+  animation: confirma-entra var(--d2) var(--ease) both;
 }
-.folha .grouped {
+.confirma .grouped {
   background: var(--l3);
 }
-.folha-botoes {
+.confirma-botoes {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s2);
   margin-top: var(--s2);
 }
-.folha-botoes .pill {
+.confirma-botoes .pill {
   min-height: var(--tap);
   font-size: var(--t-sb);
 }
-@keyframes folha-entra {
+@keyframes confirma-entra {
   from {
     opacity: 0;
     transform: translate(-50%, -48%) scale(0.97);
   }
+}
+
+/* ═════════ A coluna de avisos da Casa ═════════
+   Em cima o que há para resolver (ou uma linha a dizer que não há), por baixo
+   a casa de relance. Os cartões têm o tamanho do que dizem; a planta fica com
+   o resto. */
+
+.acol-topo {
+  flex: 0 0 auto;
+}
+/* só fica compacta quando há planta por baixo; sem planta continua a ocupar a coluna */
+.acol:has(.acol-planta) .acol-topo .calm {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--s3);
+  text-align: left;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+.acol-topo .calm .mark {
+  flex: 0 0 auto;
+}
+.acol:not(:has(.acol-planta)) .acol-topo {
+  flex: 1;
+  display: flex;
+}
+.acol-lista {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--u));
+}
+.acol-lista .alert {
+  flex: 0 0 auto;
+}
+.alert .acts {
+  flex-wrap: wrap;
+}
+.acol-planta {
+  position: relative;
+  flex: 1;
+  min-height: calc(140px * var(--u));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3);
+  border-radius: var(--r4);
+  background: var(--l1);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--d1) var(--ease-soft);
+}
+@media (hover: hover) and (pointer: fine) {
+  .acol-planta:hover {
+    background: var(--l2);
+  }
+}
+.acol-planta:active {
+  opacity: 0.8;
+}
+.acol-planta .ap-leg {
+  flex: 0 0 auto;
+}
+.pl-mini {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.pl-mini .planta {
+  position: absolute;
+  inset: 0;
+}
+/* na miniatura não há paredes grossas a competir com a luz */
+.pl-mini .planta .parede.fora {
+  stroke-width: 1;
+}
+.pl-mini .planta .movel {
+  opacity: 0.7;
+}
+/* o aviso: a divisão acende-se em laranja e as outras recuam */
+.pl-mini.com-destaque .zona:not(.destaque) {
+  opacity: 0.45;
+}
+.planta .zona.destaque .chao {
+  fill: color-mix(in oklab, var(--warn) 24%, var(--l1));
+}
+.acol.incerto .pl-mini {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+[data-screen="mao"] .acol-planta {
+  min-height: calc(230px * var(--u));
+}
+
+/* telemóvel: o veredicto à esquerda, o Menu no canto de cima */
+.casa-cab {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.casa-cab .verdict {
+  min-width: 0;
+}
+
+/* TV: oito secções têm de caber na altura sem cortar a última */
+[data-screen="sala"] .side .nb {
+  min-height: calc(54px * var(--u));
+}
+
+/* a fonte da TV: sem a palavra, "TV" sozinho lia-se como um rótulo solto */
+.fonte-rot {
+  gap: calc(6px * var(--u));
+  cursor: pointer;
+  min-height: var(--tap);
+}
+.fonte-rot .fonte-val {
+  color: var(--label);
+  font-weight: var(--w-s);
+}
+/* o seletor nativo cobre o comprimido inteiro, invisível: o dedo acerta sempre
+   e a lista que abre é a do sistema */
+.fonte-rot select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+.fonte-rot:focus-within {
+  outline: 2px solid var(--tint);
+  outline-offset: 2px;
+}
+
+/* ═════════ O que o browser desenha ═════════
+   A seleção, o cursor de escrita e os controlos nativos também são do painel. */
+:root {
+  accent-color: var(--tint);
+  caret-color: var(--tint);
+}
+::selection {
+  background: color-mix(in oklab, var(--tint) 38%, transparent);
+  color: var(--label);
 }
 

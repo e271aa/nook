@@ -136,9 +136,14 @@
 
     const pinta = (x) => {
       v = Math.max(0, Math.min(100, x));
-      fl.style.width = `${v}%`;
-      p.textContent = `${Math.round(v)} %`;
-      node.setAttribute("aria-valuenow", String(Math.round(v)));
+      // o preenchimento cresce por escala, não por largura: não mexe no layout
+      fl.style.transform = `scaleX(${v / 100})`;
+      // um estore fechado diz "Fechado", não "0 %"
+      const r = Math.round(v);
+      const texto = tipo === "estore" && r <= 0 ? "Fechado" : tipo === "estore" && r >= 100 ? "Aberto" : `${r} %`;
+      p.textContent = texto;
+      node.setAttribute("aria-valuenow", String(r));
+      node.setAttribute("aria-valuetext", texto);
     };
     const de = (e) => {
       const r = node.getBoundingClientRect();
@@ -527,13 +532,13 @@
     return new Promise((resolve) => {
       const antesFoco = document.activeElement;
       const scrim = el('<div class="scrim"></div>');
-      const caixa = el(`<div class="folha" role="alertdialog" aria-modal="true" aria-labelledby="folha-t" aria-describedby="folha-d">
-        <div class="t3" id="folha-t"></div><div class="ft" id="folha-d"></div>
-        <div class="grouped folha-itens"></div>
-        <div class="folha-botoes"><button class="pill nao"></button><button class="pill on sim"></button></div></div>`);
-      caixa.querySelector("#folha-t").textContent = titulo;
-      caixa.querySelector("#folha-d").textContent = texto;
-      const lista = caixa.querySelector(".folha-itens");
+      const caixa = el(`<div class="confirma" role="alertdialog" aria-modal="true" aria-labelledby="confirma-t" aria-describedby="confirma-d">
+        <div class="t3" id="confirma-t"></div><div class="ft" id="confirma-d"></div>
+        <div class="grouped confirma-itens"></div>
+        <div class="confirma-botoes"><button class="pill nao"></button><button class="pill on sim"></button></div></div>`);
+      caixa.querySelector("#confirma-t").textContent = titulo;
+      caixa.querySelector("#confirma-d").textContent = texto;
+      const lista = caixa.querySelector(".confirma-itens");
       itens.forEach((i) => lista.appendChild(linha(i.icone || "alert", i.texto, i.valor || "", i.tom || "warn")));
       if (!itens.length) lista.remove();
       caixa.querySelector(".nao").textContent = cancelar;

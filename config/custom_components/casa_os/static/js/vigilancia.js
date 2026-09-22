@@ -179,7 +179,9 @@
       }
       saida.push(e);
     });
-    return saida.reverse();
+    // juntar movimento repetido atualiza a hora do primeiro: reordena-se no fim,
+    // senão "Movimento (2×) 11:28" ficava abaixo de um "11:24"
+    return saida.sort((a, b) => b.quando - a.quando);
   }
 
   function diario({ cabem }) {

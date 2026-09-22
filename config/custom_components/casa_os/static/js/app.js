@@ -28,7 +28,7 @@
     { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "sala", "mao"] },
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
-    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
+    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco", "sala"] },
     // As Definições não são uma secção da casa: têm o seu botão no fundo da
     // barra e a sua linha no menu, e não entram na navegação principal.
     { id: "definicoes", title: "Definições", icon: "definicoes", ecras: [], oculta: true },
@@ -296,8 +296,9 @@
   // ───────── Peças da casca ─────────
 
   const app = el('<div class="app"></div>');
-  const side = el('<aside class="side"><div class="nav"></div><div class="foot"></div></aside>');
-  const body = el('<div class="body"></div>');
+  const side = el('<aside class="side"><nav class="nav" aria-label="Secções"></nav><div class="foot"></div></aside>');
+  // o conteúdo de cada secção é o "main": quem usa leitor de ecrã salta para lá
+  const body = el('<main class="body" id="conteudo"></main>');
   const tabbar = el('<nav class="tabbar" aria-label="Secções"></nav>');
 
   function navButton(s, atual, cls) {
@@ -319,6 +320,11 @@
 
     tabbar.innerHTML = "";
     visiveis.forEach((s) => tabbar.appendChild(navButton(s, atual, "")));
+
+    // o Menu só existe quando há secções fora da barra — no tablet e na TV
+    // estão todas à vista, e um menu que repete a barra é só mais uma decisão
+    const menu = side.querySelector(".menu-btn");
+    if (menu) menu.hidden = !SECTIONS.some((s) => !s.oculta && !s.ecras.includes(ecra));
   }
 
   /** Quem está em casa, no fundo da barra lateral. */
@@ -336,7 +342,7 @@
       foot.appendChild(avatars);
       avatars.appendChild(av);
     });
-    const menu = el(`<button class="nb" aria-label="Menu">${icon("menu")}<span>Menu</span></button>`);
+    const menu = el(`<button class="nb menu-btn" aria-label="Menu">${icon("menu")}<span>Menu</span></button>`);
     menu.addEventListener("click", openMenu);
     foot.appendChild(menu);
     const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições">${icon("definicoes")}<span>Definições</span></button>`);
@@ -434,9 +440,26 @@
         head.appendChild(b);
       }
     }
+    marcarTitulos(vista);
     body.appendChild(vista);
     const titulo = sectionOf(sec).title;
     document.title = sec === "casa" ? window.CASA.title : `${titulo} · ${window.CASA.title}`;
+  }
+
+  /**
+   * Os títulos desenham-se como texto (div.t2, span.cap) para caberem no
+   * sistema de tamanhos; aqui passam a ser títulos para quem navega por eles.
+   */
+  function marcarTitulos(vista) {
+    const h1 = vista.querySelector(".head .t2, .verdict .vline");
+    if (h1) {
+      h1.setAttribute("role", "heading");
+      h1.setAttribute("aria-level", "1");
+    }
+    vista.querySelectorAll(".card > .cap:first-child, .pp-sec > .cap, .chart .sb > .cap, .def-grupo > .cap, .acol-topo .cap").forEach((c) => {
+      c.setAttribute("role", "heading");
+      c.setAttribute("aria-level", "2");
+    });
   }
 
   window.addEventListener("hashchange", () => {
