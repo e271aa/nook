@@ -671,7 +671,11 @@
       bind(b, entre([ROBO.entidade]), () => b.classList.toggle("ativo", (HA.get(ROBO.entidade) || {}).state === "cleaning"));
       cima.appendChild(b);
     }
-    cima.appendChild(el('<div class="pl-norte" aria-hidden="true"><span>N</span></div>'));
+    // a seta do norte, como nos desenhos de arquitetura: é por ela que o sol
+    // desenhado nas janelas bate certo com a hora
+    cima.appendChild(el(`<div class="pl-norte" role="img" aria-label="Norte" title="Norte">
+      <svg viewBox="0 0 20 30" aria-hidden="true"><text x="10" y="9" text-anchor="middle">N</text>
+        <path d="M10 12 L15 27 L10 23.5 L5 27 Z"/></svg></div>`));
     return cima;
   }
 
@@ -967,14 +971,10 @@
         else if (r) painel.appendChild(painelDaDivisao(r, fecha));
         else if (naMao) painel.appendChild(painelDoPiso(piso(), escolher));
       });
-      const abre = !!painel.children.length;
-      const mudou = abre !== corpo.classList.contains("com-painel");
-      corpo.classList.toggle("com-painel", abre);
-      // a planta muda de tamanho uma vez (não a cada imagem de uma animação de
-      // largura); o salto esconde-se numa transição curta de nitidez
-      if (mudou && !reduzido() && quadro.animate) {
-        quadro.animate([{ opacity: 0.55, filter: "blur(3px)" }, { opacity: 1, filter: "blur(0)" }], { duration: 240, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
-      }
+      // A planta muda de tamanho de uma vez; o movimento é o do painel, que
+      // desliza. (Uma animação da própria planta ficava presa a meio ao chegar
+      // por um endereço — desfocada ou meio apagada.)
+      corpo.classList.toggle("com-painel", !!painel.children.length);
       quadro.querySelectorAll(".pl-zona, .pl-robo").forEach((z) => z.classList.toggle("escolhida", z.dataset.z === escolhida));
       if (escolhida && naMao) painel.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" });
       setTimeout(ajusta, 0);
