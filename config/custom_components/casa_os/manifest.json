@@ -1,7 +1,9 @@
 {
   "domain": "casa_os",
   "name": "Casa OS",
-  "codeowners": [],
+  "codeowners": [
+    "@e271aa"
+  ],
   "dependencies": [
     "http",
     "recorder",

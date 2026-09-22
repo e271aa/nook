@@ -1,159 +1,177 @@
-# Nook — Demo
+# Nook · Demo do painel de domótica
 
-Uma demonstração pública do dashboard **Nook**, ao estilo do
-[demo.home-assistant.io](https://demo.home-assistant.io): um Home Assistant a
-correr em Docker, com uma **moradia portuguesa inteiramente simulada** e o
-dashboard já configurado. Quem abre o link não faz login nem instala nada — entra
-e mexe.
+Demonstração completa do painel **Nook**: um Home Assistant em Docker, com uma
+moradia portuguesa inteiramente simulada e um painel próprio pensado para três
+ecrãs (tablet de parede, televisão e telemóvel). Quem abre a demo não faz login
+nem instala nada: entra como visitante e mexe na casa.
+
+![A Casa no tablet de parede](docs/imagens/casa.webp)
+
+**Home Assistant 2026.9** · **Python** (integrações) · **JavaScript e CSS sem
+dependências nem build** (painel) · **Docker Compose**
+
+## Índice
+
+- [O painel](#o-painel)
+- [A casa simulada](#a-casa-simulada)
+- [Arranque rápido](#arranque-rápido)
+- [Onde está cada coisa](#onde-está-cada-coisa)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Como funciona](#como-funciona)
+- [Publicar a demo](#publicar-a-demo)
+- [Documentação](#documentação)
+- [Licença](#licença)
+
+## O painel
+
+O painel (`casa_os`) serve-se em `/casa` e adapta-se ao ecrã onde está:
+
+| Ecrã | Tamanho de referência | Comportamento |
+|---|---|---|
+| Tablet de parede ou computador | 1024 × 768 | Ocupa o ecrã inteiro, sem rolar; alvos de toque de 44 px |
+| Televisão | 1920 × 1080 | Letra e espaços 1,6 vezes maiores, para ler do sofá; repouso à noite |
+| Telemóvel | 375 × 812 | Coluna única que rola; separadores em baixo |
+
+| Secção | O que faz |
+|---|---|
+| **Casa** | Responde de relance a "está tudo bem?": um veredicto, quatro factos (temperatura, luzes, estores, quem está em casa), os avisos com contexto e a casa desenhada em miniatura |
+| **Divisões** | Cada divisão com o seu estado; o detalhe junta luzes, estores, clima e aparelhos |
+| **Controlos** | Luzes, estores, clima e tomadas por separador, com ações de grupo que se podem desfazer |
+| **Vigilância** | Câmaras ao vivo, o fecho da casa (portas, janelas, portão) e os últimos acontecimentos |
+| **Energia** | O fluxo de agora (sol, casa, rede, bateria) e o histórico por período, com gráficos, custo por circuito e o diagrama de onde veio e para onde foi a energia |
+| **Rotina** | Lembretes, lista de compras, agenda, televisão e robô aspirador |
+| **Planta** | A casa em planta arquitetónica, com a luz de cada candeeiro, o sol pelas janelas e o robô a limpar; tocar numa divisão abre os controlos |
+| **Definições** | Tamanho da interface, paleta e modo, tipo de ecrã e comportamento do painel de parede |
+
+Cinco paletas (Grafite, Lilás, Dourado, Verde, Preto e branco), cada uma com modo
+escuro e claro; o modo automático acompanha o sol da casa.
+
+| Planta | Energia em modo claro | Telemóvel |
+|---|---|---|
+| ![Planta com o painel da divisão aberto](docs/imagens/planta.webp) | ![Energia, últimos sete dias, em modo claro](docs/imagens/energia-claro.webp) | ![A Casa no telemóvel](docs/imagens/telemovel.webp) |
+
+## A casa simulada
+
+A integração `casa_demo` simula uma moradia com 10 divisões em 3 pisos: 15 luzes,
+6 estores e o portão, 4 ares condicionados, 3 câmaras, eletrodomésticos, robô
+aspirador, painéis solares, bateria, carregador de carro elétrico e sensores em
+todas as divisões (cerca de 190 entidades).
+
+Não é um cenário estático. Um motor de simulação dá-lhe física simples:
+
+- os estores demoram o tempo real de percurso;
+- o ar condicionado leva a divisão até à temperatura pedida, e ela volta a mudar
+  quando se desliga;
+- os painéis solares seguem a posição real do sol e o estado do tempo; a bateria
+  carrega com o excedente e descarrega à noite;
+- cada aparelho conta para o consumo do seu circuito;
+- as máquinas correm programas com progresso e tempo restante;
+- as câmaras são geradas em tempo real (o céu pela hora, a chuva, a visão noturna);
+- os avisos da casa (janela aberta com o ar ligado, alguém à porta com a casa
+  vazia, porta destrancada) saem de regras num único sítio, `avisos.py`;
+- no primeiro arranque geram-se 30 dias de histórico de energia.
+
+Para demonstrações, o serviço `casa_demo.simular` põe a casa numa situação (fumo
+na cozinha, fuga de água, movimento na entrada, ninguém em casa, entre outras) e
+`casa_demo.repor` devolve-a ao estado inicial. A casa repõe-se sozinha todas as
+noites às 04:00.
+
+## Arranque rápido
+
+Requisitos: Docker com Docker Compose.
 
 ```bash
-cp .env.example .env     # muda a ADMIN_PASSWORD
+cp .env.example .env        # escolher a ADMIN_PASSWORD
 docker compose up -d
 ```
 
-Ao fim de ~1 minuto: **http://localhost:8123**
+Ao fim de cerca de um minuto, o painel está em **http://localhost:8123/casa**.
 
----
+O contentor `bootstrap` corre uma vez: faz a configuração inicial do Home
+Assistant, cria o utilizador **Visitante** (sem permissões de administrador) e
+liga a entrada direta.
 
-## O que o visitante vê
+```bash
+docker compose logs -f homeassistant    # acompanhar o arranque
+docker compose restart homeassistant    # depois de alterar Python ou YAML
+docker compose down                     # parar
+```
 
-| Onde | O quê |
+## Onde está cada coisa
+
+| Endereço | O quê |
 |---|---|
-| `http://localhost:8123` | Home Assistant (entra sozinho como **Visitante**, sem permissões de administrador) |
+| `/casa` | O painel; o tipo de ecrã é detetado sozinho |
+| `/casa?ecra=braco`, `?ecra=sala`, `?ecra=mao` | Forçar o tablet, a televisão ou o telemóvel |
+| Barra lateral do Home Assistant, **Nook** | O mesmo painel, dentro do Home Assistant |
 
-A casa tem 10 divisões em 3 pisos, 15 luzes, 6 estores + portão, 4 ares
-condicionados, 3 câmaras, 7 eletrodomésticos, robô aspirador, painéis solares,
-bateria, carregador de carro elétrico e sensores em todas as divisões — cerca de
-**180 entidades**.
-
-Nada disto é um mock estático: há um **motor de simulação** com física simples.
-
-- Os estores demoram o tempo real de percurso (18 a 26 s) e a persiana desce na
-  janela do cartão ao mesmo ritmo.
-- O ar condicionado aproxima a temperatura da divisão do valor pedido, e a
-  divisão volta a aquecer sozinha quando se desliga.
-- Os painéis seguem a posição real do sol (astral, com as coordenadas da casa) e
-  o estado do tempo; a bateria carrega com o excedente e descarrega à noite; o
-  que falta vem da rede.
-- Cada luz, tomada, AC e eletrodoméstico contribui para o consumo, por circuito.
-- As máquinas correm programas a sério (aquecer → lavar → enxaguar →
-  centrifugar), com progresso e tempo restante.
-- As câmaras são geradas em tempo real: o céu muda com a hora, chove quando está
-  a chover, o portão aparece na posição em que está e, de noite, a imagem passa a
-  **visão noturna** a preto e branco.
-- **30 dias de histórico de energia** são gerados no primeiro arranque, para a
-  vista Energia nascer com dados credíveis.
-
-Para demonstrações há dois atalhos:
-
-- **Simular tempo** no cartão "Lá fora" (Auto / Céu limpo / Nublado / Chuva) —
-  muda o céu, as câmaras, a temperatura e a produção solar.
-- Serviço `casa_demo.repor` (ou o botão *Repor demo*) devolve a casa ao estado
-  inicial. Corre sozinho todas as noites às 04:00.
-
----
-
-## Estrutura
+## Estrutura do repositório
 
 ```
 acasa_demo/
-├── docker-compose.yml          Home Assistant + contentor de bootstrap
-├── .env.example                password de administrador, porta, fuso
-├── bootstrap/bootstrap.py      onboarding automático + utilizador Visitante
-└── config/                     /config do Home Assistant
-    ├── configuration.yaml      casa demo + dashboard + entrada direta
-    ├── automations.yaml        7 automações realistas (sol, rega, excedente solar…)
-    ├── scripts.yaml            Modo cinema, Sair de casa, Boa noite, Bom dia
-    ├── dashboards/nook.yaml   entrada "Nook" na barra lateral
-    ├── www/nook/              planta e ilustrações das divisões (SVG)
+├── docker-compose.yml             Home Assistant e contentor de arranque
+├── .env.example                   conta de administrador, porta, fuso horário
+├── bootstrap/bootstrap.py         configuração inicial e utilizador Visitante
+├── ferramentas/aferidor.js        medição de transbordo, contraste e alvos de toque
+├── docs/                          arquitetura, desenvolvimento, decisões, imagens
+└── config/                        a pasta /config do Home Assistant
+    ├── configuration.yaml         casa, painéis e entrada direta
+    ├── automations.yaml           automações da casa (sol, rega, excedente solar)
+    ├── scripts.yaml               cenas: Sair de casa, Boa noite, Bom dia, Modo cinema
+    ├── dashboards/nook.yaml      a entrada Nook na barra lateral
     └── custom_components/
-        ├── casa_demo/          a casa simulada (motor + 13 plataformas)
+        ├── casa_os/               o painel (Python, JavaScript, CSS)
+        ├── casa_demo/             a casa simulada
 ```
 
-### Comandos
+## Como funciona
 
-```bash
-docker compose logs -f homeassistant     # ver o que se passa
-docker compose restart homeassistant     # aplicar alterações em Python/YAML
-docker compose down                      # parar
-docker compose down -v && rm -rf config/.storage config/home-assistant_v2.db  # recomeçar do zero
-```
+O `casa_os` é uma integração do Home Assistant em Python que regista a página
+`/casa`, serve os ficheiros do painel e expõe três pontos de API próprios
+(configuração, estatísticas de energia e imagens das câmaras). O painel corre no
+browser, fala com o Home Assistant por WebSocket (estados em tempo real e
+comandos) e por REST (histórico, agenda, listas), e desenha-se a partir de um
+único ficheiro, `casa_os/config.json`, que descreve a casa: divisões, energia,
+câmaras, planta e ações rápidas. Outra casa muda esse ficheiro, não o código.
 
-Alterações a CSS/JS do dashboard não precisam de reiniciar — basta recarregar a
-página (Cmd+Shift+R).
+Pormenores em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
----
+## Publicar a demo
 
-## Como funciona a entrada sem login
+A demo foi pensada para uma rede local ou para ficar atrás de um proxy. Antes de a
+expor na internet:
+
+1. Mudar a `ADMIN_PASSWORD` no `.env`.
+2. Pôr um proxy com HTTPS à frente (Caddy, Traefik ou nginx) e configurar
+   `http.use_x_forwarded_for` e `trusted_proxies` no `configuration.yaml`.
+3. Ter presente que qualquer visitante entra como Visitante e pode mexer em tudo
+   o que é da casa (é esse o objetivo); a reposição das 04:00 limpa-a todos os dias.
+   respondem sem autenticação; ver [docs/NOOK.md](docs/NOOK.md).
+
+### A entrada sem login
 
 O `configuration.yaml` liga o fornecedor `trusted_networks` para toda a rede, mas
-**restrito a um único utilizador**: o "Visitante", que pertence ao grupo dos
-utilizadores normais e não pode alterar a configuração. O administrador continua
-a precisar de password (opção *Home Assistant Local* no ecrã de login).
+restrito a um único utilizador, o Visitante, que não pode alterar a configuração.
+O administrador continua a entrar com palavra-passe ("Home Assistant Local" no
+ecrã de login). Até o `bootstrap` correr, o ficheiro `demo_trusted_users.yaml`
+aponta para um identificador inexistente, ou seja, ninguém entra sem
+palavra-passe.
 
-O ficheiro `config/demo_trusted_users.yaml` começa a apontar para um ID
-inexistente — ou seja, antes do bootstrap **ninguém** entra sem password. O
-contentor `bootstrap` faz o onboarding, cria o Visitante, escreve o ID real nesse
-ficheiro e reinicia o Home Assistant uma vez.
+O Home Assistant também aceita um grupo em `trusted_users`, mas essa variante está
+avariada no core (percorre o nome do grupo letra a letra); por isso usa-se o
+identificador do utilizador.
 
-> Nota: o Home Assistant também permite indicar um *grupo* em `trusted_users`,
-> mas essa variante está avariada no core (o código percorre o nome do grupo
-> letra a letra), por isso usamos mesmo o ID do utilizador.
+## Documentação
 
-quando não há sessão, o servidor gera um token do Visitante para a página, para o
-dashboard abrir diretamente mesmo fora do Home Assistant.
+| Documento | Conteúdo |
+|---|---|
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Integrações, módulos do painel, fluxo de dados, configuração da casa |
+| [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) | Como trabalhar no painel: convenções, verificação, o que pede reinício |
+| [docs/DECISOES.md](docs/DECISOES.md) | Decisões de design e de comportamento, e porquê |
+| [docs/NOOK.md](docs/NOOK.md) | O painel Nook anterior e as correções feitas ao seu código |
 
----
+## Licença
 
-## Antes de pôr isto online
-
-Esta demo foi pensada para correr numa rede local ou atrás de um proxy.
-Para a expor publicamente:
-
-1. Muda a `ADMIN_PASSWORD` no `.env` (e não a partilhes).
-2. Põe um reverse proxy com HTTPS à frente (Caddy, Traefik, nginx) e configura
-   `http.use_x_forwarded_for` + `trusted_proxies` no `configuration.yaml`.
-3. Tem em conta que qualquer visitante entra como Visitante e **pode mexer em
-   tudo o que é da casa** (é esse o objetivo) — o `casa_demo.repor` das 04:00
-   limpa a casa todos os dias.
-   dashboard respondem **sem autenticação** (ver a secção seguinte).
-
----
-
-## O que foi corrigido no código do Nook
-
-intacto). Estas correções valem para qualquer instalação e vale a pena
-levá-las para o projeto principal:
-
-| Ficheiro | Problema | Correção |
-|---|---|---|
-| `modules/cards/energy.js` | A lista `energy.devices` partia-se quando vinha no formato `{entity, name}` — que é **o formato que o próprio configurador grava** | Aceita as duas formas |
-| `modules/cards/energy.js` | O acumulado das estatísticas era datado pelo **início** da hora, quando corresponde ao fim → consumos desfasados e primeira hora perdida | Datado pelo fim, mais um período de contexto antes do início |
-| `modules/cards/appliances.js` | Os cartões de eletrodomésticos **nunca se atualizavam** depois de desenhados (um programa a decorrer ficava parado no ecrã) | `updateEntityUI` passa a refrescar o cartão a que a entidade pertence |
-| `modules/cards/appliances.js` | Rotações e temperatura da máquina de lavar eram desenhadas mas nunca preenchidas | Preenchidas |
-| `modules/cards/appliances.js` | `formatProgramName` partia palavras acentuadas ("Algodão" → "AlgodãO") | Capitalização com `\p{Ll}` e nomes já legíveis deixados como estão |
-| `modules/cards/appliances.js` | Um sensor sem valor (ex.: hora de fim sem programa) marcava o aparelho todo como "Indisponível" | Só o campo fica a `--:--` |
-| `script.js` | Os interruptores das **Ações rápidas** só mostravam o estado do instante em que eram desenhados | Sincronizados com o estado real |
-| `script.js` | O estado da câmara (`idle`) era escrito **por cima da imagem** ("Em espera") | Câmaras excluídas do atualizador genérico |
-| `modules/cards/climate.js` | Ar condicionado sem `outdoor_temperature` mostrava `undefined°C` | `?? null` |
-| `main.js` | O dashboard abria sempre em "Consumos", ignorando a `default_view` | Respeita `default_view` e `remember_last_view` |
-| `config_manager.py` | Criava uma vista/menu "Consumption" em inglês a duplicar os "Consumos" | Deteta a versão portuguesa; textos traduzidos |
-
-Fica por resolver (não bloqueia a demo, mas é sério numa instalação real):
-`requires_auth = False` e devolvem a configuração e **o estado de todas as
-entidades** a quem pedir.
-
----
-
-
-eletrodomésticos, planta, câmaras, configurador) e ganha a linguagem visual do
-projeto pessoal: paleta dourada sobre creme/castanho, cantos redondos, sombras
-suaves e vidro fosco.
-
-Está isolado em dois ficheiros novos — o resto do código não foi tocado:
-
-  `renderSection`, `renderDivisionCover` e `updateEntityUI`:
-    fase certa, nuvens, chuva, estrelas) e o nascer/pôr-do-sol;
-  - **cartão de estore** — janela com o céu lá fora, persiana a descer ao ritmo do
-    motor, barra para arrastar e três presets.
-
+© 2026 Ruben Martins. Todos os direitos reservados. O código está disponível para
+consulta; não é permitido reutilizá-lo, alterá-lo ou redistribuí-lo sem
+autorização escrita.
