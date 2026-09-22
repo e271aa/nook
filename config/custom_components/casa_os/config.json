@@ -61,7 +61,9 @@
       "icone": "moon",
       "tipo": "cena",
       "entidade": "script.boa_noite",
-      "detalhe": "Fecha tudo e baixa as luzes"
+      "detalhe": "Fecha tudo e baixa as luzes",
+      "antes": "fecho",
+      "confirmar": "Continuar na mesma"
     },
     {
       "nome": "Bom dia",
@@ -82,7 +84,9 @@
       "icone": "exit",
       "tipo": "cena",
       "entidade": "script.sair_de_casa",
-      "detalhe": "Tranca e desliga"
+      "detalhe": "Tranca e desliga",
+      "antes": "fecho",
+      "confirmar": "Sair na mesma"
     },
     {
       "nome": "Desligar as luzes",

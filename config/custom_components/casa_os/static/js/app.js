@@ -12,6 +12,7 @@
   const { el, esc, icon } = window.UI;
   const HA = window.HA;
   const V = window.VIEWS;
+  const K = window.KIT;
   const CFG = window.CASA.config || {};
 
   /* ───────── Secções ─────────
@@ -409,6 +410,18 @@
     const bd = side.querySelector('[data-sec="definicoes"]');
     if (bd) sec === "definicoes" ? bd.setAttribute("aria-current", "page") : bd.removeAttribute("aria-current");
     body.innerHTML = "";
+    // Sem nada da casa, nenhuma secção pode dizer a verdade: diz-se isso, e
+    // mais nada. Quando os estados chegarem, desenha-se a secção a sério.
+    semDados = HA.count() === 0;
+    if (semDados) {
+      body.appendChild(el(`<div class="pad col grow sem-casa" role="status">
+        <span class="sc-ic">${icon("wifioff", "ic-l")}</span>
+        <div class="t2">Sem ligação à casa</div>
+        <div class="bd dim">O painel ainda não conseguiu falar com o Home Assistant. Tenta outra vez sozinho — não é preciso fazer nada.</div>
+        <div class="row sc-estado"><span class="spin"></span><span class="ft">A tentar ligar…</span></div></div>`));
+      document.title = `Sem ligação · ${window.CASA.title}`;
+      return;
+    }
     const vista = V[sec](partes.slice(1));
 
     // No telemóvel não há barra lateral: o menu entra no cabeçalho da secção,
@@ -441,7 +454,7 @@
         return;
       }
       if (!banner) {
-        banner = el(`<div class="offline"><span class="spin"></span>
+        banner = el(`<div class="offline" role="status" aria-live="polite"><span class="spin"></span>
           <div class="grow"><div class="bd">Sem ligação à casa</div>
           <div class="ft"></div></div>${icon("wifioff", "ic-s")}</div>`);
       }
@@ -457,7 +470,18 @@
         banner.querySelector(".bd").textContent = "Sessão sem permissão";
         banner.querySelector(".ft").textContent = "Volta a entrar no Home Assistant.";
       }
-      if (!banner.isConnected) body.prepend(banner);
+      // fora da secção: mudar de secção não o pode apagar enquanto a casa não voltar
+      if (!banner.isConnected) document.body.appendChild(banner);
+    });
+
+    // Um comando que não chegou diz-se, com uma saída: tentar outra vez.
+    HA.onFalha((erro, pedido) => {
+      const semLigacao = HA.status !== "online" || /sem ligação|ligação perdida/.test(String(erro && erro.message));
+      K.nota({
+        tom: "erro",
+        texto: semLigacao ? "Sem ligação à casa: o comando não foi enviado." : "A casa não respondeu a este pedido.",
+        acao: { rotulo: "Tentar outra vez", fn: () => HA.call(pedido.domain, pedido.service, pedido.entityId, pedido.data) },
+      });
     });
   }
 
@@ -484,6 +508,12 @@
     watchConnection();
     arrancarQuiosque();
   }
+
+  let semDados = false;
+  // se o painel abriu sem casa, redesenha-se quando ela aparecer
+  HA.subscribe((id) => {
+    if (arrancou && semDados && id === "*" && HA.count() > 0) render();
+  });
 
   let arrancou = false;
   const start = () => {

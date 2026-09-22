@@ -292,7 +292,12 @@
   function comandoMestre(m) {
     const wrap = el('<div class="mestre"></div>');
     if (m.tipo === "slider") {
-      const sl = K.slider({ rotulo: m.rotulo, tipo: m.tom || "luz", valor: 0, aoLargar: m.aplica });
+      // manda na casa inteira: só obedece a um arrasto, nunca a um toque perdido
+      const sl = K.slider({
+        rotulo: m.rotulo, tipo: m.tom || "luz", valor: 0, exigeArrasto: true,
+        aoLargar: (v) => K.emMassa({ nome: `${m.rotulo} de todos`, ids: m.ids, fazer: () => m.aplica(v) }),
+      });
+      sl.setAttribute("aria-description", "Arrasta para mudar todos de uma vez");
       let quando = 0;
       sl.addEventListener("pointerup", () => (quando = Date.now()));
       wrap.append(el(`<span class="cap">${esc(m.rotulo)} de todos</span>`), sl);
@@ -339,7 +344,9 @@
       <span class="gi">${icon(ico(a.icone), "ic-s")}</span>
       <span class="gt"><span class="gn">${esc(a.texto)}</span><span class="gs"></span></span></button>`);
     b.addEventListener("click", () => {
-      a.corre();
+      // parar estores não precisa de desfazer; o resto diz o que fez e deixa voltar atrás
+      if (a.icone === "stop") a.corre();
+      else K.emMassa({ nome: a.texto, ids: a.ids, fazer: a.corre });
       b.classList.add("feito");
       setTimeout(() => b.classList.remove("feito"), 900);
     });

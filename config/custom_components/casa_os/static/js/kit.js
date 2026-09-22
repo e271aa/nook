@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const { el, esc, icon } = window.UI;
+  const { el, esc, icon, fmt } = window.UI;
   const HA = window.HA;
   const CFG = window.CASA.config || {};
 
@@ -114,7 +114,15 @@
   // Arrasta-se com o dedo ou com o rato; com o teclado as setas afinam. O
   // comando só sai quando se larga — durante o arrasto só o desenho se mexe.
 
-  function slider({ rotulo, tipo = "luz", valor = 0, aoLargar }) {
+  // se a janela perde o foco a meio de um arrasto (outra app, um aviso do
+  // sistema), o arrasto acaba ali — um só ouvinte para todos os sliders
+  const arrastosVivos = new Set();
+  window.addEventListener("blur", () => {
+    arrastosVivos.forEach((f) => f({ type: "blur" }));
+    arrastosVivos.clear();
+  });
+
+  function slider({ rotulo, tipo = "luz", valor = 0, aoLargar, exigeArrasto = false }) {
     const node = el(`<div class="slide${tipo === "estore" ? " nt" : ""}" role="slider" tabindex="0"
       aria-label="${esc(rotulo)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="fl"></div>
@@ -138,23 +146,45 @@
     };
     const larga = () => aoLargar && aoLargar(Math.round(v));
 
+    // Um slider que manda na casa inteira não obedece a um toque perdido: só
+    // começa depois de o dedo andar uns píxeis. Os outros seguem o dedo logo.
+    let x0 = 0;
+    let antes = 0;
+    let pegou = false;
+    let dedo = null;
     node.addEventListener("pointerdown", (e) => {
-      node.setPointerCapture(e.pointerId);
+      if (arrastar && e.pointerId !== dedo) return; // um segundo dedo não rouba o primeiro
+      dedo = e.pointerId;
+      try {
+        node.setPointerCapture(e.pointerId);
+      } catch (_) {
+        // sem captura o arrasto funciona na mesma dentro do slider
+      }
       arrastar = true;
+      x0 = e.clientX;
+      antes = v;
+      pegou = !exigeArrasto;
       node.classList.add("dragging");
-      pinta(de(e));
+      if (pegou) pinta(de(e));
     });
     node.addEventListener("pointermove", (e) => {
-      if (arrastar) pinta(de(e));
+      if (!arrastar || e.pointerId !== dedo) return;
+      if (!pegou && Math.abs(e.clientX - x0) > 8) pegou = true;
+      if (pegou) pinta(de(e));
     });
     const fim = (e) => {
-      if (!arrastar) return;
+      if (!arrastar || (e.pointerId !== undefined && e.pointerId !== dedo)) return;
       arrastar = false;
+      dedo = null;
       node.classList.remove("dragging");
-      if (e.type === "pointerup") larga();
+      if (e.type === "pointerup" && pegou) larga();
+      else if (!pegou || e.type !== "pointerup") pinta(antes); // cancelado: volta ao que estava
     };
     node.addEventListener("pointerup", fim);
     node.addEventListener("pointercancel", fim);
+    node.addEventListener("lostpointercapture", fim);
+    node.addEventListener("pointerdown", () => arrastosVivos.add(fim));
+    node.addEventListener("pointerup", () => arrastosVivos.delete(fim));
 
     node.addEventListener("keydown", (e) => {
       const passo = e.shiftKey ? 10 : 5;
@@ -454,11 +484,212 @@
     </div>`);
   }
 
+  // ───────── Notas ─────────
+  // Uma linha em baixo que diz o que aconteceu (ou o que não aconteceu), com
+  // no máximo uma ação: Desfazer, Tentar outra vez. Uma de cada vez; os
+  // leitores de ecrã ouvem-na sem perder o sítio onde estavam.
+
+  let regiao = null;
+  let notaTimer = null;
+  function nota({ texto, tom = "ok", acao = null, ms }) {
+    if (!regiao) {
+      regiao = el('<div class="notas" role="status" aria-live="polite"></div>');
+      document.body.appendChild(regiao);
+    }
+    clearTimeout(notaTimer);
+    regiao.innerHTML = "";
+    const n = el(`<div class="nota ${tom}">${icon(tom === "erro" ? "alert" : "check", "ic-s")}<span class="nt-tx"></span></div>`);
+    n.querySelector(".nt-tx").textContent = texto;
+    const some = () => {
+      n.classList.add("sai");
+      setTimeout(() => n.remove(), 200);
+    };
+    if (acao) {
+      const b = el('<button class="nt-acao"></button>');
+      b.textContent = acao.rotulo;
+      b.addEventListener("click", () => {
+        some();
+        acao.fn();
+      });
+      n.appendChild(b);
+    }
+    regiao.appendChild(n);
+    // tempo para ler e para decidir desfazer; os erros ficam mais
+    notaTimer = setTimeout(some, ms || (tom === "erro" ? 8000 : acao ? 6000 : 3500));
+    return n;
+  }
+
+  // ───────── Folha de confirmação ─────────
+  // Só para os momentos em que um toque tem consequências: sair de casa com
+  // uma janela aberta. Esc e tocar fora cancelam; o foco vai para cancelar.
+
+  function folha({ titulo, texto = "", itens = [], confirmar = "Continuar", cancelar = "Cancelar" }) {
+    return new Promise((resolve) => {
+      const antesFoco = document.activeElement;
+      const scrim = el('<div class="scrim"></div>');
+      const caixa = el(`<div class="folha" role="alertdialog" aria-modal="true" aria-labelledby="folha-t" aria-describedby="folha-d">
+        <div class="t3" id="folha-t"></div><div class="ft" id="folha-d"></div>
+        <div class="grouped folha-itens"></div>
+        <div class="folha-botoes"><button class="pill nao"></button><button class="pill on sim"></button></div></div>`);
+      caixa.querySelector("#folha-t").textContent = titulo;
+      caixa.querySelector("#folha-d").textContent = texto;
+      const lista = caixa.querySelector(".folha-itens");
+      itens.forEach((i) => lista.appendChild(linha(i.icone || "alert", i.texto, i.valor || "", i.tom || "warn")));
+      if (!itens.length) lista.remove();
+      caixa.querySelector(".nao").textContent = cancelar;
+      caixa.querySelector(".sim").textContent = confirmar;
+      const fecha = (r) => {
+        document.removeEventListener("keydown", tecla, true);
+        scrim.remove();
+        caixa.remove();
+        if (antesFoco && antesFoco.focus) antesFoco.focus();
+        resolve(r);
+      };
+      const tecla = (e) => {
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          fecha(false);
+        }
+        if (e.key === "Tab") {
+          // o foco não sai da folha
+          const bs = [...caixa.querySelectorAll("button")];
+          const i = bs.indexOf(document.activeElement);
+          e.preventDefault();
+          bs[(i + (e.shiftKey ? -1 : 1) + bs.length) % bs.length].focus();
+        }
+      };
+      scrim.addEventListener("click", () => fecha(false));
+      caixa.querySelector(".nao").addEventListener("click", () => fecha(false));
+      caixa.querySelector(".sim").addEventListener("click", () => fecha(true));
+      document.addEventListener("keydown", tecla, true);
+      document.body.append(scrim, caixa);
+      caixa.querySelector(".nao").focus();
+    });
+  }
+
+  // ───────── Fotografar e repor ─────────
+  // Antes de uma ação que mexe em muita coisa, guarda-se como estava. Desfazer
+  // repõe luzes, estores, ar e tomadas — a fechadura nunca: destrancar a porta
+  // não é coisa que aconteça por um toque em "Desfazer".
+
+  const DOMINIOS = ["light", "cover", "climate", "switch", "lock"];
+  function fotografia(ids) {
+    const lista = ids || Object.keys(HA.states).filter((id) => DOMINIOS.includes(id.split(".")[0]));
+    const f = {};
+    lista.forEach((id) => {
+      const s = HA.get(id);
+      if (s) f[id] = { state: s.state, a: { ...s.attributes } };
+    });
+    return f;
+  }
+
+  function mudou(antes) {
+    return Object.keys(antes).filter((id) => {
+      const s = HA.get(id);
+      if (!s) return false;
+      const d = id.split(".")[0];
+      if (d === "cover") return (antes[id].a.current_position ?? null) !== (s.attributes.current_position ?? null) || antes[id].state !== s.state;
+      if (d === "light") return antes[id].state !== s.state || (s.state === "on" && antes[id].a.brightness !== s.attributes.brightness);
+      if (d === "climate") return antes[id].state !== s.state || antes[id].a.temperature !== s.attributes.temperature;
+      return antes[id].state !== s.state;
+    });
+  }
+
+  /** "3 luzes apagadas · 6 estores a fechar · porta trancada" */
+  function resumoDe(antes, ids) {
+    const conta = (f) => ids.filter(f).length;
+    const d = (id) => id.split(".")[0];
+    const agora = (id) => HA.get(id) || { state: "", attributes: {} };
+    const partes = [];
+    const apagadas = conta((id) => d(id) === "light" && antes[id].state === "on" && agora(id).state === "off");
+    const acesas = conta((id) => d(id) === "light" && antes[id].state === "off" && agora(id).state === "on");
+    const reguladas = conta((id) => d(id) === "light" && antes[id].state === "on" && agora(id).state === "on");
+    const fecham = conta((id) => d(id) === "cover" && (agora(id).attributes.current_position ?? 100) < (antes[id].a.current_position ?? 100) || (d(id) === "cover" && agora(id).state === "closing"));
+    const abrem = conta((id) => d(id) === "cover" && ((agora(id).attributes.current_position ?? 0) > (antes[id].a.current_position ?? 0) || agora(id).state === "opening"));
+    const arOff = conta((id) => d(id) === "climate" && antes[id].state !== "off" && agora(id).state === "off");
+    const arOn = conta((id) => d(id) === "climate" && antes[id].state === "off" && agora(id).state !== "off");
+    const arMuda = conta((id) => d(id) === "climate") - arOff - arOn;
+    const sw = ids.filter((id) => d(id) === "switch");
+    const swOff = sw.filter((id) => agora(id).state === "off");
+    const swOn = sw.filter((id) => agora(id).state === "on");
+    // uma tomada diz-se pelo nome ("TV desligada"); várias contam-se
+    const aparelhos = (lista, estado) =>
+      lista.length === 1 ? `${nomeCurto(lista[0])} ${estado}` : `${fmt.n(lista.length)} aparelhos ${estado.replace(/a$/, "os")}`;
+    const n = (x, um, varios) => `${fmt.n(x)} ${x === 1 ? um : varios}`;
+    if (apagadas) partes.push(n(apagadas, "luz apagada", "luzes apagadas"));
+    if (acesas) partes.push(n(acesas, "luz acesa", "luzes acesas"));
+    if (reguladas) partes.push(n(reguladas, "luz regulada", "luzes reguladas"));
+    if (fecham) partes.push(n(fecham, "estore a fechar", "estores a fechar"));
+    if (abrem) partes.push(n(abrem, "estore a abrir", "estores a abrir"));
+    if (arOff) partes.push(arOff === 1 ? "ar desligado" : `${fmt.n(arOff)} ares desligados`);
+    if (arOn) partes.push(arOn === 1 ? "ar ligado" : `${fmt.n(arOn)} ares ligados`);
+    if (arMuda) partes.push(arMuda === 1 ? "ar ajustado" : `${fmt.n(arMuda)} ares ajustados`);
+    if (swOff.length) partes.push(aparelhos(swOff, "desligada"));
+    if (swOn.length) partes.push(aparelhos(swOn, "ligada"));
+    if (ids.some((id) => d(id) === "lock" && agora(id).state === "locked")) partes.push("porta trancada");
+    return partes.join(" · ");
+  }
+
+  /** O nome que a instalação deu à tomada ("TV"), senão o do Home Assistant. */
+  function nomeCurto(id) {
+    for (const r of divisoes()) {
+      const s = (r.switches || []).find((x) => x.entity === id);
+      if (s) return s.name;
+    }
+    return HA.name(id);
+  }
+
+  function repor(antes, ids) {
+    ids.forEach((id) => {
+      const a = antes[id];
+      const d = id.split(".")[0];
+      if (!a || d === "lock") return;
+      if (d === "light") {
+        if (a.state === "on") HA.call("light", "turn_on", id, a.a.brightness ? { brightness: a.a.brightness } : {});
+        else HA.call("light", "turn_off", id);
+      } else if (d === "switch") HA.call("switch", a.state === "on" ? "turn_on" : "turn_off", id);
+      else if (d === "cover") {
+        if (a.a.current_position !== undefined && a.a.current_position !== null) HA.call("cover", "set_cover_position", id, { position: a.a.current_position });
+        else HA.call("cover", a.state === "open" ? "open_cover" : "close_cover", id);
+      } else if (d === "climate") {
+        HA.call("climate", "set_hvac_mode", id, { hvac_mode: a.state });
+        if (a.a.temperature) HA.call("climate", "set_temperature", id, { temperature: a.a.temperature });
+      }
+    });
+  }
+
+  /**
+   * Uma ação em massa com fim: faz, espera que a casa responda, diz o que
+   * mudou e oferece Desfazer. `fazer` recebe nada e manda os comandos.
+   */
+  function emMassa({ nome, fazer, ids }) {
+    const antes = fotografia(ids);
+    const r = fazer();
+    Promise.resolve(r).then(() =>
+      setTimeout(() => {
+        const alterados = mudou(antes);
+        if (!alterados.length) return;
+        const trancou = alterados.some((id) => id.startsWith("lock.") && (HA.get(id) || {}).state === "locked");
+        nota({
+          texto: `${nome}: ${resumoDe(antes, alterados)}`,
+          acao: {
+            rotulo: "Desfazer",
+            fn: () => {
+              repor(antes, alterados);
+              nota({ texto: trancou ? "Desfeito. A porta continua trancada." : "Desfeito." });
+            },
+          },
+        });
+      }, 1200),
+    );
+  }
+
   window.KIT = {
     CFG, AVISOS,
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
     avisos, calmaDesde, ico,
     slider, interruptor, segmentado, camara, ampliar, linha, cabem, semResposta, marcarResposta, colunasArrastaveis, linhasArrastaveis,
+    nota, folha, fotografia, emMassa,
   };
 })();

@@ -22,7 +22,12 @@
     if (status === next) return;
     status = next;
     statusListeners.forEach((fn) => fn(next));
+    // o que está à vista redesenha-se: quem mostra estado tem de saber se ainda é verdade
+    emit("*");
   }
+
+  /** Quem quer saber quando um comando não chegou à casa. */
+  const falhaListeners = new Set();
 
   function emit(entityId) {
     listeners.forEach((fn) => fn(entityId));
@@ -75,6 +80,9 @@
     };
 
     socket.onclose = () => {
+      // o que estava à espera de resposta já não a vai ter
+      pending.forEach((w) => w.reject(new Error("ligação perdida")));
+      pending.clear();
       if (status === "unauthorized") return;
       setStatus("offline");
       retry = Math.min(retry + 1, 6);
@@ -89,7 +97,14 @@
         return;
       }
       const id = msgId++;
-      pending.set(id, { resolve, reject });
+      // uma casa que não responde em 10 s não vai responder: diz-se, em vez de esperar para sempre
+      const limite = setTimeout(() => {
+        if (pending.delete(id)) reject(new Error("sem resposta"));
+      }, 10000);
+      pending.set(id, {
+        resolve: (r) => (clearTimeout(limite), resolve(r)),
+        reject: (e) => (clearTimeout(limite), reject(e)),
+      });
       socket.send(JSON.stringify({ ...payload, id }));
     });
   }
@@ -135,15 +150,33 @@
     },
 
     /** Chama um serviço. Devolve uma promessa. */
+    /**
+     * Um comando para a casa. Nunca rebenta em quem o chama: se não chegar, os
+     * ouvintes de onFalha sabem (e o painel diz-o); a promessa resolve a null.
+     */
     call(domain, service, entityId, data = {}) {
       const target = entityId ? { entity_id: entityId } : undefined;
+      const pedido = { domain, service, entityId, data };
       return send({
         type: "call_service",
         domain,
         service,
         service_data: data,
         ...(target ? { target } : {}),
+      }).catch((erro) => {
+        falhaListeners.forEach((fn) => fn(erro, pedido));
+        return null;
       });
+    },
+
+    onFalha(fn) {
+      falhaListeners.add(fn);
+      return () => falhaListeners.delete(fn);
+    },
+
+    /** Há ligação e a casa já disse como está? */
+    online() {
+      return status === "online" && Object.keys(states).length > 0;
     },
 
     /** Quando a casa falou connosco pela última vez. */

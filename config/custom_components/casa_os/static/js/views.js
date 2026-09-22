@@ -54,11 +54,15 @@
 
     bind(node, (id) => id === K.AVISOS, () => {
       const n = avisos().length;
-      linha.innerHTML = !n
-        ? "Está tudo<br>em ordem"
-        : n === 1
-          ? "Uma coisa<br>por resolver"
-          : `${fmt.n(n)} coisas<br>por resolver`;
+      // o pior que um painel destes pode fazer é tranquilizar sem saber
+      node.classList.toggle("sem-ligacao", !HA.online());
+      linha.innerHTML = !HA.online()
+        ? "Sem ligação<br>à casa"
+        : !n
+          ? "Está tudo<br>em ordem"
+          : n === 1
+            ? "Uma coisa<br>por resolver"
+            : `${fmt.n(n)} coisas<br>por resolver`;
     });
 
     node.appendChild(factos());
@@ -157,6 +161,15 @@
       const lista = avisos();
       node.innerHTML = "";
 
+      if (!HA.online()) {
+        const t = HA.ultimoContacto();
+        node.appendChild(el(`<div class="calm incerto">
+          <span class="mark">${icon("wifioff", "ic-s")}</span>
+          <div class="hd">Não sei se há avisos</div>
+          <div class="ft">${t ? `A casa não responde desde as ${esc(horas(new Date(t).toISOString()))}. O que está à vista é desse momento.` : "O painel ainda não falou com a casa."}</div>
+        </div>`));
+        return;
+      }
       if (!lista.length) {
         const desde = calmaDesde();
         node.appendChild(el(`<div class="calm">
@@ -179,6 +192,16 @@
     return node;
   }
 
+  /** Janelas e portas abertas neste momento — o que uma cena não fecha sozinha. */
+  function porFecharAgora() {
+    const lista = [];
+    divisoes().forEach((r) => {
+      (r.windows || []).forEach((w) => HA.isOn(w) && lista.push({ nome: HA.name(w), icone: "window" }));
+      if (r.contact && HA.isOn(r.contact)) lista.push({ nome: HA.name(r.contact), icone: "door" });
+    });
+    return lista;
+  }
+
   /** As seis teclas. São as da instalação: uma casa maior não tem mais. */
   function teclas() {
     const node = el('<div class="keys"></div>');
@@ -192,9 +215,23 @@
 
       if (a.tipo === "cena") {
         sub.textContent = a.detalhe || "";
-        b.addEventListener("click", () => {
-          HA.call((a.entidade || "").split(".")[0], "turn_on", a.entidade);
+        b.addEventListener("click", async () => {
+          // sair de casa (ou deitar) com uma janela aberta: pergunta-se primeiro
+          if (a.antes === "fecho") {
+            const abertas = porFecharAgora();
+            if (abertas.length) {
+              const ok = await K.folha({
+                titulo: abertas.length === 1 ? `${abertas[0].nome} está aberta` : `Há ${fmt.n(abertas.length)} coisas abertas`,
+                texto: `«${a.nome}» não fecha janelas nem portas.`,
+                // uma só já está no título; a lista é para quando há mais
+                itens: abertas.length > 1 ? abertas.map((x) => ({ icone: x.icone, texto: x.nome, valor: "Aberta" })) : [],
+                confirmar: a.confirmar || "Continuar na mesma",
+              });
+              if (!ok) return;
+            }
+          }
           piscar(b);
+          K.emMassa({ nome: a.nome, fazer: () => HA.call((a.entidade || "").split(".")[0], "turn_on", a.entidade) });
         });
       } else if (a.tipo === "luzes") {
         bind(b, (id) => id.startsWith("light."), () => {
@@ -203,8 +240,8 @@
           b.disabled = n === 0;
         });
         b.addEventListener("click", () => {
-          HA.call("light", "turn_off", todasLuzes());
           piscar(b);
+          K.emMassa({ nome: "Luzes", ids: todasLuzes(), fazer: () => HA.call("light", "turn_off", todasLuzes()) });
         });
       } else if (a.tipo === "estores") {
         bind(b, (id) => id.startsWith("cover."), () => {
@@ -213,8 +250,8 @@
           b.disabled = n === 0;
         });
         b.addEventListener("click", () => {
-          HA.call("cover", "set_cover_position", todosEstores(), { position: 0 });
           piscar(b);
+          K.emMassa({ nome: "Estores", ids: todosEstores(), fazer: () => HA.call("cover", "set_cover_position", todosEstores(), { position: 0 }) });
         });
       }
       node.appendChild(b);

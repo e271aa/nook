@@ -3058,14 +3058,22 @@ select.pill {
 }
 
 .offline {
+  /* fica por cima da secção, fora dela: mudar de secção não o apaga */
+  position: fixed;
+  z-index: 45;
+  top: calc(env(safe-area-inset-top, 0px) + var(--s3));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(520px * var(--u)), calc(100vw - 2 * var(--s4)));
   display: flex;
   align-items: center;
   gap: var(--s3);
-  background: var(--l1);
+  background: var(--l2);
+  border: var(--hair) solid var(--sep-2);
   border-radius: var(--r3);
   padding: var(--s3) var(--s4);
-  box-shadow: var(--sh-1);
-  margin: 0 calc(30px * var(--u)) var(--s4);
+  box-shadow: 0 calc(8px * var(--u)) calc(28px * var(--u)) rgba(0, 0, 0, 0.35);
+  color: var(--label);
 }
 .spin {
   width: var(--ic-s);
@@ -3355,5 +3363,134 @@ button,
    como os estores ao lado — em vez de tudo encostado ao topo */
 .tiles.clima .tile {
   justify-content: space-between;
+}
+
+/* ═════════ Sem ligação, notas e confirmações ═════════
+   O painel só tranquiliza quando sabe. Sem casa, diz isso em grande; com a
+   casa a falhar, diz em que momento parou. */
+
+.sem-casa {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--s3);
+}
+.sem-casa .bd {
+  max-width: 34ch;
+}
+.sem-casa .sc-ic {
+  color: var(--warn);
+}
+.sem-casa .sc-estado {
+  gap: var(--s2);
+  align-items: center;
+  color: var(--label-2);
+}
+.verdict.sem-ligacao .vline {
+  color: var(--warn);
+}
+.calm.incerto .mark {
+  background: color-mix(in oklab, var(--warn) 22%, transparent);
+  color: var(--warn);
+}
+
+/* a nota: em baixo, ao centro, acima da barra do telemóvel */
+.notas {
+  position: fixed;
+  z-index: 46;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s5));
+  transform: translateX(-50%);
+  width: min(calc(560px * var(--u)), calc(100vw - 2 * var(--s4)));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+[data-screen="mao"] .notas {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + calc(84px * var(--u)));
+}
+.nota {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--tap);
+  padding: var(--s2) var(--s2) var(--s2) var(--s4);
+  border-radius: var(--rp);
+  background: var(--l3);
+  border: var(--hair) solid var(--sep-2);
+  box-shadow: 0 calc(10px * var(--u)) calc(30px * var(--u)) rgba(0, 0, 0, 0.4);
+  color: var(--label);
+  font-size: var(--t-ft);
+  animation: nota-entra var(--d2) var(--ease) both;
+}
+.nota > .ic {
+  color: var(--good);
+  flex: 0 0 auto;
+}
+.nota.erro > .ic {
+  color: var(--warn);
+}
+.nota .nt-tx {
+  flex: 1;
+  min-width: 0;
+}
+.nota .nt-acao {
+  flex: 0 0 auto;
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+  border-radius: var(--rp);
+  background: var(--fill-2);
+  color: var(--tint);
+  font-weight: var(--w-s);
+  font-size: var(--t-ft);
+}
+.nota.sai {
+  opacity: 0;
+  transform: translateY(calc(6px * var(--u)));
+  transition: opacity 160ms var(--ease-soft), transform 160ms var(--ease-soft);
+}
+@keyframes nota-entra {
+  from {
+    opacity: 0;
+    transform: translateY(calc(10px * var(--u))) scale(0.98);
+  }
+}
+
+/* a folha de confirmação: pequena, ao centro, com a saída segura em foco */
+.folha {
+  position: fixed;
+  z-index: 42;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(420px * var(--u)), calc(100vw - 2 * var(--s4)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s5);
+  background: var(--l2);
+  border-radius: var(--r4);
+  box-shadow: 0 calc(20px * var(--u)) calc(60px * var(--u)) rgba(0, 0, 0, 0.5);
+  animation: folha-entra var(--d2) var(--ease) both;
+}
+.folha .grouped {
+  background: var(--l3);
+}
+.folha-botoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+.folha-botoes .pill {
+  min-height: var(--tap);
+  font-size: var(--t-sb);
+}
+@keyframes folha-entra {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
 }
 
