@@ -691,9 +691,10 @@ button.li:active {
   margin-top: var(--s5);
   max-width: calc(640px * var(--u));
 }
+/* o ícone fica ao meio do bloco de texto (as duas linhas), não da primeira */
 .fact {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--s3);
   min-width: 0;
 }
@@ -720,7 +721,6 @@ button.li:active {
   display: flex;
   flex-direction: column;
   gap: calc(2px * var(--u));
-  padding-top: calc(2px * var(--u));
 }
 .fact .fv {
   font-size: var(--t-sb);
