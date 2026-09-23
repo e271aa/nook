@@ -137,6 +137,29 @@ svg {
 [data-screen="mao"] .side {
   display: none;
 }
+/* Recolhida: só ícones. A largura muda de uma vez (nada de animar largura);
+   só o nome, que já não cabe, se desvanece. */
+.side[data-colapsada="sim"] {
+  width: calc(60px * var(--u));
+}
+.side[data-colapsada="sim"] .nb span {
+  opacity: 0;
+}
+.nb span {
+  transition: opacity var(--d1) var(--ease-soft);
+}
+/* Recolhida, o realce não pode ficar mais alto do que o ícone só porque o
+   nome (invisível) ainda ocupava espaço por baixo dele. */
+.side[data-colapsada="sim"] .nb {
+  min-height: calc(44px * var(--u));
+  gap: 0;
+}
+/* Recolhida, sem nome ao lado, a pílula de fundo nunca fica bem centrada à
+   volta de um ícone só — dizer "isto está ativo" fica só na cor do ícone. */
+.side[data-colapsada="sim"] .nb[aria-current="page"],
+.side[data-colapsada="sim"] .colapsar-btn[aria-pressed="true"] {
+  background: transparent;
+}
 
 .side .nav {
   display: flex;
@@ -159,12 +182,18 @@ svg {
   font-size: var(--t-c2);
   font-weight: var(--w-m);
   letter-spacing: -0.01em;
+  overflow: hidden;
   transition: color var(--d1) var(--ease-soft), background var(--d1) var(--ease-soft);
 }
 .nb:hover {
   color: var(--label-2);
 }
 .nb[aria-current="page"] {
+  color: var(--tint);
+  background: var(--tint-soft);
+}
+/* o mesmo "ligado" da secção ativa: uma pílula, não só a cor do ícone */
+.colapsar-btn[aria-pressed="true"] {
   color: var(--tint);
   background: var(--tint-soft);
 }
@@ -181,9 +210,12 @@ svg {
 .avatars {
   display: flex;
   flex-direction: column;
-  gap: calc(6px * var(--u));
+  align-items: center;
+  gap: calc(8px * var(--u));
+  padding-bottom: calc(4px * var(--u));
 }
 .av {
+  flex: 0 0 auto;
   width: calc(34px * var(--u));
   height: calc(34px * var(--u));
   border-radius: var(--rp);
@@ -193,19 +225,12 @@ svg {
   font-size: var(--t-ft);
   font-weight: var(--w-s);
   color: var(--label-2);
-  position: relative;
 }
-/* o ponto verde só aparece a quem está em casa */
-.av.home::after {
-  content: "";
-  position: absolute;
-  right: calc(-1px * var(--u));
-  bottom: calc(-1px * var(--u));
-  width: calc(10px * var(--u));
-  height: calc(10px * var(--u));
-  border-radius: var(--rp);
-  background: var(--good);
-  border: calc(2px * var(--u)) solid var(--bg);
+/* quem está em casa ganha um anel, não um ponto colado ao canto. Em píxeis
+   fixos, como --hair: um anel a calc(*var(--u)) dá valores fracionários
+   (3,128px) que desenham torto — um círculo pequeno não perdoa isso. */
+.av.em-casa {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--good);
 }
 
 /* ───── Separadores de baixo (telemóvel) ───── */
@@ -3757,6 +3782,11 @@ button,
 /* TV: oito secções têm de caber na altura sem cortar a última */
 [data-screen="sala"] .side .nb {
   min-height: calc(54px * var(--u));
+}
+/* Recolhida, o aperto do destaque (ver acima) tem de ganhar também na TV —
+   mesma especificidade da regra de cima, por isso precisa do atributo extra. */
+[data-screen="sala"] .side[data-colapsada="sim"] .nb {
+  min-height: calc(44px * var(--u));
 }
 
 /* a fonte da TV: sem a palavra, "TV" sozinho lia-se como um rótulo solto */

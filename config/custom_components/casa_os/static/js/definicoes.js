@@ -108,6 +108,19 @@
     });
     pinta();
     corpo.appendChild(grelha);
+
+    // só faz sentido perguntar se há alguém para mostrar
+    if ((K.CFG.people || []).length) {
+      const sw = K.interruptor("Mostrar quem está em casa na barra");
+      sw.definir(DEFS.get("mostrarPresenca") !== false);
+      sw.addEventListener("click", () => {
+        const novo = DEFS.get("mostrarPresenca") === false; // estava desligado, liga
+        DEFS.set("mostrarPresenca", novo ? undefined : false);
+        sw.definir(novo);
+        window.APP.atualizarBarra();
+      });
+      corpo.appendChild(linha("Presença na barra", "Um círculo por pessoa, com um anel quando está em casa.", sw));
+    }
     return node;
   }
 

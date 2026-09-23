@@ -12,8 +12,9 @@ Portugal: interface, comentários e mensagens de commit.
    - **JavaScript e CSS:** recarregar a página (a versão dos ficheiros muda a cada
      pedido, não há cache a limpar);
    - **`config.json`:** recarregar (é lido a cada pedido);
-   - **Python e `templates/index.html`:** `docker compose restart homeassistant`
-     (o template fica em memória).
+   - **Python, `templates/index.html` e `sprite.svg`:** `docker compose restart
+     homeassistant` (o `view.py` lê o template e o sprite uma vez e guarda-os em
+     memória; um ícone novo não aparece sem reiniciar).
 4. Verificar (ver abaixo) nos três ecrãs e nos dois modos.
 
 Na televisão (`?ecra=sala`) o painel pode estar em repouso; um toque ou um

@@ -21,14 +21,15 @@
    */
   const SECTIONS = [
     { id: "casa", title: "Casa", icon: "home", ecras: ["braco", "sala", "mao"] },
-    // O Dashboard não tem separador no telemóvel (são cinco e cabem cinco): lá
-    // chega-se pelo menu.
-    { id: "dashboard", title: "Dashboard", icon: "dashboard", ecras: ["braco", "sala"] },
+    // O Dashboard (a vista antiga, em três colunas) saiu de vista: sem separador
+    // na barra nem linha no menu. O código e a rota #/dashboard ficam — ver
+    // docs/DECISOES.md para o reativar.
+    { id: "dashboard", title: "Dashboard", icon: "dashboard", ecras: ["braco", "sala"], oculta: true },
     { id: "divisoes", title: "Divisões", icon: "rooms", ecras: ["braco", "sala", "mao"] },
     { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "sala", "mao"] },
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
-    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco", "sala"] },
+    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
     // As Definições não são uma secção da casa: têm o seu botão no fundo da
     // barra e a sua linha no menu, e não entram na navegação principal.
     { id: "definicoes", title: "Definições", icon: "definicoes", ecras: [], oculta: true },
@@ -84,6 +85,7 @@
     if (raiz.getAttribute("data-screen") === cls) return;
     raiz.setAttribute("data-screen", cls);
     DEFS.aplicarTamanho(cls); // cada tipo de ecrã tem o seu tamanho
+    aplicarColapsada(cls); // a barra lembra-se de si por tipo de ecrã
     if (aoMudar) aoMudar();
   }
 
@@ -321,6 +323,8 @@
     emEcraCheio, trocarEcraCheio, descansarJa,
     aDescansar: () => aDescansar,
     acordar, avaliar,
+    /** As Definições mudam quem se vê no fundo da barra; isto redesenha-o. */
+    atualizarBarra: () => mountFoot(),
     /** Volta a decidir o tipo de ecrã (depois de a pessoa o escolher) e redesenha. */
     reclassificar: () => applyScreen(render),
     ecraDetetado: () => {
@@ -354,7 +358,7 @@
 
   function navButton(s, atual, cls) {
     const b = el(
-      `<button class="${cls}" data-sec="${s.id}"${s.id === atual ? ' aria-current="page"' : ""}>
+      `<button class="${cls}" data-sec="${s.id}" aria-label="${esc(s.title)}" title="${esc(s.title)}"${s.id === atual ? ' aria-current="page"' : ""}>
         ${icon(s.icon)}<span>${esc(s.title)}</span></button>`,
     );
     b.addEventListener("click", () => go(s.id));
@@ -363,7 +367,7 @@
 
   function paintNav(atual) {
     const ecra = document.documentElement.getAttribute("data-screen");
-    const visiveis = SECTIONS.filter((s) => s.ecras.includes(ecra));
+    const visiveis = SECTIONS.filter((s) => !s.oculta && s.ecras.includes(ecra));
 
     const nav = side.querySelector(".nav");
     nav.innerHTML = "";
@@ -378,27 +382,68 @@
     if (menu) menu.hidden = !SECTIONS.some((s) => !s.oculta && !s.ecras.includes(ecra));
   }
 
-  /** Quem está em casa, no fundo da barra lateral. */
+  /* ───────── Barra lateral: recolher ─────────
+   * Só existe na parede e na TV (no telemóvel não há barra). A escolha é do
+   * aparelho, não da pessoa: o tablet fixo na parede e o computador da
+   * secretária não querem a mesma coisa.
+   */
+  const BARRA_KEY = (ecra) => `casa_os_barra_${ecra}`;
+  const temBarra = (ecra) => ecra === "braco" || ecra === "sala";
+  const colapsada = (ecra) => temBarra(ecra) && le(BARRA_KEY(ecra)) === "sim";
+
+  function aplicarColapsada(ecra) {
+    side.setAttribute("data-colapsada", colapsada(ecra) ? "sim" : "nao");
+    const btn = side.querySelector(".colapsar-btn");
+    if (!btn) return;
+    const acao = colapsada(ecra) ? "Expandir" : "Recolher";
+    btn.setAttribute("aria-label", `${acao} barra lateral`);
+    btn.title = `${acao} barra lateral (tecla [)`;
+    btn.setAttribute("aria-pressed", String(colapsada(ecra)));
+  }
+
+  function alternarColapsada() {
+    const ecra = document.documentElement.getAttribute("data-screen");
+    if (!temBarra(ecra)) return;
+    guarda(BARRA_KEY(ecra), colapsada(ecra) ? "nao" : "sim");
+    aplicarColapsada(ecra);
+  }
+
+  /** Quem está em casa, e os botões do fundo da barra lateral. */
   function mountFoot() {
     const foot = side.querySelector(".foot");
     foot.innerHTML = "";
-    const avatars = el('<div class="avatars"></div>');
-    (CFG.people || []).forEach((p) => {
-      const av = el(`<span class="av" title="${esc(p.name)}">${esc(p.name[0])}</span>`);
-      const pinta = () => av.classList.toggle("home", (HA.get(p.entity) || {}).state === "home");
-      HA.subscribe((id) => {
-        if (id === "*" || id === p.entity) pinta();
+    const pessoas = CFG.people || [];
+    if (pessoas.length && DEFS.get("mostrarPresenca") !== false) {
+      const avatars = el('<div class="avatars"></div>');
+      pessoas.forEach((p) => {
+        const av = el(`<span class="av" role="img">${esc(p.name[0])}</span>`);
+        // "em-casa", não "home": essa classe já é o contentor da Casa (.pad.home)
+        // O anel diz-se pela cor, mas quem usa leitor de ecrã só sabe se estiver no texto.
+        const pinta = () => {
+          const emCasa = (HA.get(p.entity) || {}).state === "home";
+          av.classList.toggle("em-casa", emCasa);
+          const texto = `${p.name}, ${emCasa ? "em casa" : "fora"}`;
+          av.setAttribute("aria-label", texto);
+          av.title = texto;
+        };
+        HA.subscribe((id) => {
+          if (id === "*" || id === p.entity) pinta();
+        });
+        pinta();
+        avatars.appendChild(av);
       });
-      pinta();
       foot.appendChild(avatars);
-      avatars.appendChild(av);
-    });
-    const menu = el(`<button class="nb menu-btn" aria-label="Menu">${icon("menu")}<span>Menu</span></button>`);
+    }
+    const menu = el(`<button class="nb menu-btn" aria-label="Menu" title="Menu">${icon("menu")}<span>Menu</span></button>`);
     menu.addEventListener("click", openMenu);
     foot.appendChild(menu);
-    const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições">${icon("definicoes")}<span>Definições</span></button>`);
+    const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições" title="Definições">${icon("definicoes")}<span>Definições</span></button>`);
     defs.addEventListener("click", () => go("definicoes"));
     foot.appendChild(defs);
+    const colapsar = el(`<button class="nb colapsar-btn" aria-pressed="false">${icon("barra")}<span>Recolher</span></button>`);
+    colapsar.addEventListener("click", alternarColapsada);
+    foot.appendChild(colapsar);
+    aplicarColapsada(document.documentElement.getAttribute("data-screen"));
   }
 
   // ───────── Menu ─────────
@@ -454,7 +499,15 @@
   }
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMenu();
+    if (e.key === "Escape") {
+      closeMenu();
+      return;
+    }
+    // "[" recolhe/expande a barra — mas não enquanto se escreve nalgum campo
+    if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const alvo = e.target;
+    if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return;
+    alternarColapsada();
   });
 
   // ───────── Desenhar ─────────
@@ -507,7 +560,7 @@
       h1.setAttribute("role", "heading");
       h1.setAttribute("aria-level", "1");
     }
-    vista.querySelectorAll(".card > .cap:first-child, .pp-sec > .cap, .chart .sb > .cap, .def-grupo > .cap, .acol-topo .cap").forEach((c) => {
+    vista.querySelectorAll(".card > .cap:first-child, .pp-sec > .cap, .chart .sb > .cap, .def-grupo > .cap, .acol-topo .cap, .grupo-divisao > .cap").forEach((c) => {
       c.setAttribute("role", "heading");
       c.setAttribute("aria-level", "2");
     });

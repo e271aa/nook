@@ -35,6 +35,13 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 - **Sliders "de todos"** só obedecem a um arrasto; um toque perdido não faz nada.
 - **Menu** só existe quando há secções fora da barra lateral; no tablet e na
   televisão estão todas à vista.
+- **Barra lateral:** recolhe-se a ícones (botão no fundo, tecla `[`), lembrado
+  por tipo de ecrã (`casa_os_barra_<ecra>`, em `app.js`). No telemóvel não existe.
+- **Dashboard** (a vista antiga em três colunas) está fora de vista: sem
+  separador na barra nem linha no menu (`oculta: true` em `SECTIONS`, `app.js`).
+  O código e a rota `#/dashboard` continuam a funcionar — para o repor na
+  navegação, tirar essa linha. Ficou de fora porque a Casa já responde à mesma
+  pergunta ("está tudo bem?") de forma mais direta.
 
 ## Movimento
 
