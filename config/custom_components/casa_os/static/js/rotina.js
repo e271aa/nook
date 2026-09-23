@@ -40,35 +40,43 @@
 
   function lembretes() {
     const id = LISTAS.lembretes;
-    const node = el(`<div class="card grow lembretes">
+    // sem "grow": o cartão tem o tamanho do que tem, não estica a ficar meio
+    // vazio — quem ganha o espaço que sobra são as Compras, logo a seguir
+    const node = el(`<div class="card lembretes">
       <div class="sb"><span class="cap">Lembretes</span><span class="pill contagem"></span></div>
       <div class="lista"></div></div>`);
     const corpo = node.querySelector(".lista");
     let itens = [];
 
+    const linhaTarefa = (i) => {
+      const feito = i.status === "completed";
+      const q = i.due ? quando(new Date(`${i.due}T00:00:00`)) : null;
+      const linha = el(`<div class="tarefa${feito ? " feito" : ""}">
+        <button class="caixa" role="checkbox" aria-checked="${feito}" aria-label="${esc(i.summary)}"><span></span></button>
+        <span class="bd tt">${esc(i.summary)}</span>
+        ${q ? `<span class="ft ${q.atrasado ? "atraso" : "dim2"}">${esc(q.texto)}</span>` : ""}</div>`);
+      linha.querySelector(".caixa").addEventListener("click", () => {
+        i.status = feito ? "needs_action" : "completed"; // já se vê; a casa confirma logo a seguir
+        pinta();
+        marcar(id, i, !feito);
+      });
+      return linha;
+    };
+
     const pinta = () => {
       corpo.innerHTML = "";
-      const pendentes = itens.filter((i) => i.status !== "completed");
+      const pendentes = itens.filter((i) => i.status !== "completed").sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999"));
+      const feitos = itens.filter((i) => i.status === "completed");
       node.querySelector(".contagem").textContent = pendentes.length ? `${fmt.n(pendentes.length)} por fazer` : "Tudo feito";
-      const ordem = [...itens].sort((a, b) => {
-        if ((a.status === "completed") !== (b.status === "completed")) return a.status === "completed" ? 1 : -1;
-        return (a.due || "9999").localeCompare(b.due || "9999");
-      });
-      if (!ordem.length) corpo.appendChild(el('<div class="empty-mini">Nada para lembrar.</div>'));
-      ordem.forEach((i) => {
-        const feito = i.status === "completed";
-        const q = i.due ? quando(new Date(`${i.due}T00:00:00`)) : null;
-        const linha = el(`<div class="tarefa${feito ? " feito" : ""}">
-          <button class="caixa" role="checkbox" aria-checked="${feito}" aria-label="${esc(i.summary)}"><span></span></button>
-          <span class="bd tt">${esc(i.summary)}</span>
-          ${q ? `<span class="ft ${q.atrasado ? "atraso" : "dim2"}">${esc(q.texto)}</span>` : ""}</div>`);
-        linha.querySelector(".caixa").addEventListener("click", () => {
-          i.status = feito ? "needs_action" : "completed"; // já se vê; a casa confirma logo a seguir
-          pinta();
-          marcar(id, i, !feito);
-        });
-        corpo.appendChild(linha);
-      });
+      if (!itens.length) corpo.appendChild(el('<div class="empty-mini">Nada para lembrar.</div>'));
+      pendentes.forEach((i) => corpo.appendChild(linhaTarefa(i)));
+      // os feitos não desaparecem, mas também não disputam espaço com o que falta fazer
+      if (feitos.length) {
+        const grupo = el(`<details class="feitos-grupo"><summary><span class="grow">Feitos (${fmt.n(feitos.length)})</span>${icon("down", "ic-s")}</summary></details>`);
+        feitos.forEach((i) => grupo.appendChild(linhaTarefa(i)));
+        grupo.addEventListener("toggle", ajusta); // abrir pode deixar de caber
+        corpo.appendChild(grupo);
+      }
       ajusta();
     };
     const ajusta = ecra() === "mao" ? () => {} : K.cabem(corpo);
@@ -166,6 +174,8 @@
         : `${HA.attr(id, "app_name", HA.attr(id, "source", ""))} · volume ${fmt.n(Math.round((HA.attr(id, "volume_level", 0) || 0) * 100))} %`;
       node.querySelector('[data-a="pp"]').textContent = desligada ? "Ligar" : s.state === "paused" ? "Retomar" : "Pausa";
       node.querySelectorAll('[data-a="menos"],[data-a="mais"]').forEach((b) => (b.disabled = desligada));
+      // desligada não tem fonte nenhuma a trocar — "Fonte —" não dizia nada
+      node.querySelector(".fonte-rot").hidden = desligada;
       sel.disabled = desligada;
       sel.value = HA.attr(id, "source", "");
       node.querySelector(".fonte-val").textContent = sel.value || "—";
@@ -175,6 +185,17 @@
   const ESTADO_ROBO = {
     docked: "Na base", cleaning: "A limpar", returning: "A voltar à base", paused: "Em pausa", idle: "Parado", error: "Com um problema",
   };
+  const NOME_DIVISAO = { sala: "Sala", cozinha: "Cozinha", escritorio: "Escritório", entrada: "Entrada" };
+
+  /** Há quanto tempo, por extenso — "docked" desde há 20 min é "limpou há 20 min". */
+  function haQuanto(iso) {
+    if (!iso) return "";
+    const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (min < 1) return "agora mesmo";
+    if (min < 60) return `há ${fmt.n(min)} min`;
+    const h = Math.floor(min / 60);
+    return `há ${fmt.n(h)} ${h === 1 ? "hora" : "horas"}`;
+  }
 
   function robo() {
     const r = CFG.robo || {};
@@ -190,9 +211,17 @@
       else HA.call("vacuum", "start", r.entidade);
     });
     return bind(node, entre([r.entidade, r.bateria]), () => {
-      const st = (HA.get(r.entidade) || {}).state;
+      const s = HA.get(r.entidade) || {};
+      const st = s.state;
       const bat = r.bateria ? HA.num(r.bateria) : HA.attr(r.entidade, "bateria");
-      node.querySelector(".detalhe").textContent = `${ESTADO_ROBO[st] || st}${bat !== null && bat !== undefined ? ` · bateria a ${fmt.n(bat)} %` : ""}`;
+      const divisao = HA.attr(r.entidade, "divisao");
+      // a limpar: qual divisão; parado na base: há quanto tempo acabou
+      const onde = (st === "cleaning" || st === "paused") && divisao
+        ? ` · ${(NOME_DIVISAO[divisao] || divisao).toLowerCase()}`
+        : st === "docked" && s.last_changed
+          ? ` · limpou ${haQuanto(s.last_changed)}`
+          : "";
+      node.querySelector(".detalhe").textContent = `${ESTADO_ROBO[st] || st}${onde}${bat !== null && bat !== undefined ? ` · bateria a ${fmt.n(bat)} %` : ""}`;
       b.textContent = st === "cleaning" ? "Voltar à base" : "Limpar";
     });
   }
@@ -221,12 +250,22 @@
         corpo.appendChild(el(`<div class="empty-mini">Nada marcado nos próximos ${DIAS_AGENDA} dias.</div>`));
         return;
       }
+      // um título por dia (Hoje, Amanhã, sexta-feira…), não repetido em cada
+      // linha — o título e os eventos desse dia são um bloco só: ou cabem os
+      // dois, ou não fica um título sozinho, sem nada por baixo
+      let diaAtual = null;
+      let grupo = null;
       eventos.forEach((e) => {
         const dia = quando(e.inicio);
+        if (dia.texto !== diaAtual) {
+          diaAtual = dia.texto;
+          grupo = el(`<div class="dia-grupo"><div class="cap dia-agenda">${esc(dia.texto)}</div></div>`);
+          corpo.appendChild(grupo);
+        }
         const h = e.diaInteiro ? "o dia todo" : `${String(e.inicio.getHours()).padStart(2, "0")}:${String(e.inicio.getMinutes()).padStart(2, "0")}`;
-        corpo.appendChild(el(`<div class="evento">
+        grupo.appendChild(el(`<div class="evento">
           <span class="bd">${esc(e.titulo)}</span>
-          <span class="ft dim2">${esc(dia.texto)} · ${esc(h)}</span></div>`));
+          <span class="ft dim2">${esc(h)}</span></div>`));
       });
       ajusta();
     };
