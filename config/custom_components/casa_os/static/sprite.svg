@@ -42,6 +42,8 @@
   <symbol id="i-down" viewBox="0 0 24 24"><path d="m6.4 9.6 5.6 5.6 5.6-5.6"/></symbol>
   <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7.4" y="7.4" width="9.2" height="9.2" rx="2"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7.6h3l1.4-2h7.2l1.4 2h3a1.4 1.4 0 0 1 1.4 1.4v8.6a1.4 1.4 0 0 1-1.4 1.4H4a1.4 1.4 0 0 1-1.4-1.4V9A1.4 1.4 0 0 1 4 7.6z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
+  <symbol id="i-expandir" viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></symbol>
+  <symbol id="i-recolher-ecra" viewBox="0 0 24 24"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></symbol>
   <symbol id="i-wifioff" viewBox="0 0 24 24"><path d="M3.4 4.6 20.6 20"/><path d="M4.6 9.6A14.6 14.6 0 0 1 9 7.2"/><path d="M19.4 9.6a14.6 14.6 0 0 0-5.4-2.9"/><path d="M8 13a9.4 9.4 0 0 1 1.9-1.2"/><circle cx="12" cy="17.8" r="1.3"/></symbol>
   <symbol id="i-planta" viewBox="0 0 24 24"><path d="M3.6 4.4h16.8v15.2H3.6z"/><path d="M3.6 12h7.2M10.8 4.4v15.2M10.8 12h9.6M16.2 12v7.6"/></symbol>
   <symbol id="i-definicoes" viewBox="0 0 24 24"><path d="M10.26 5.74 L10.58 3.52 L13.42 3.52 L13.74 5.74 L15.20 6.34 L16.99 5.00 L19.00 7.01 L17.66 8.80 L18.26 10.26 L20.48 10.58 L20.48 13.42 L18.26 13.74 L17.66 15.20 L19.00 16.99 L16.99 19.00 L15.20 17.66 L13.74 18.26 L13.42 20.48 L10.58 20.48 L10.26 18.26 L8.80 17.66 L7.01 19.00 L5.00 16.99 L6.34 15.20 L5.74 13.74 L3.52 13.42 L3.52 10.58 L5.74 10.26 L6.34 8.80 L5.00 7.01 L7.01 5.00 L8.80 6.34Z"/><circle cx="12" cy="12" r="2.7"/></symbol>

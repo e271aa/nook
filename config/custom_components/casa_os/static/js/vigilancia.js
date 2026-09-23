@@ -430,6 +430,27 @@
     return node;
   }
 
+  // ───────── Só câmaras ─────────
+  // A coluna do fecho e do diário sai, as câmaras ocupam o ecrã todo. Guardado
+  // por tipo de ecrã; Esc volta. O aviso do fecho continua no cabeçalho.
+
+  const CHAVE_SO_CAMARAS = () => `casa_os_so_cameras_${ecra()}`;
+  const soCamerasGuardado = () => {
+    try {
+      return localStorage.getItem(CHAVE_SO_CAMARAS()) === "sim";
+    } catch (e) {
+      return false; // modo privado
+    }
+  };
+  const gravarSoCameras = (v) => {
+    try {
+      if (v) localStorage.setItem(CHAVE_SO_CAMARAS(), "sim");
+      else localStorage.removeItem(CHAVE_SO_CAMARAS());
+    } catch (e) {
+      /* modo privado */
+    }
+  };
+
   // ───────── Vista ─────────
 
   function subtitulo() {
@@ -458,8 +479,6 @@
   function naParede() {
     const raiz = el('<div class="pad col grow"></div>');
     const head = cabecalho();
-    head.appendChild(estado());
-    raiz.appendChild(head);
 
     const corpo = el('<div class="vig"></div>');
     const mos = mosaico();
@@ -469,7 +488,44 @@
     lado.style.gridColumn = "3";
     corpo.append(mos, lado);
     K.colunasArrastaveis(corpo, { chave: "vigilancia", padrao: PROPORCAO_COLUNAS, colunas: [mos, lado] });
+
+    // o aviso do que falta fechar fica sempre no cabeçalho, mesmo só com câmaras
+    const acoes = el('<div class="row" style="align-items:center"></div>');
+    acoes.appendChild(estado());
+    const soBtn = el('<button class="iconbtn" aria-pressed="false"></button>');
+    const pintaBotao = () => {
+      const ativo = corpo.classList.contains("so-cameras");
+      soBtn.setAttribute("aria-pressed", String(ativo));
+      soBtn.setAttribute("aria-label", ativo ? "Vista completa" : "Só câmaras");
+      soBtn.title = ativo ? "Vista completa (Esc)" : "Só câmaras";
+      soBtn.innerHTML = icon(ativo ? "recolher-ecra" : "expandir", "ic-s");
+    };
+    soBtn.addEventListener("click", () => {
+      const novo = !corpo.classList.contains("so-cameras");
+      corpo.classList.toggle("so-cameras", novo);
+      gravarSoCameras(novo);
+      pintaBotao();
+    });
+    corpo.classList.toggle("so-cameras", soCamerasGuardado());
+    pintaBotao();
+    acoes.appendChild(soBtn);
+    head.appendChild(acoes);
+    raiz.appendChild(head);
     raiz.appendChild(corpo);
+
+    // Esc volta à vista completa. A vista não tem um "ao sair" próprio; o
+    // ouvinte larga-se sozinho assim que o corpo já não está no ecrã.
+    document.addEventListener("keydown", function aoEscapar(e) {
+      if (!corpo.isConnected) {
+        document.removeEventListener("keydown", aoEscapar);
+        return;
+      }
+      if (e.key !== "Escape" || !corpo.classList.contains("so-cameras")) return;
+      corpo.classList.remove("so-cameras");
+      gravarSoCameras(false);
+      pintaBotao();
+    });
+
     return raiz;
   }
 

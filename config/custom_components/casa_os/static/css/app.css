@@ -1539,6 +1539,16 @@ button.li:active {
   flex: 1;
   min-height: 0;
 }
+/* só câmaras: a coluna do fecho e o diário saem, a grelha ocupa tudo. As
+   proporções guardadas (--c0/--c1) ficam por baixo, prontas para a vista
+   completa — não se perdem só por se teres escondido a coluna um bocado. */
+.vig.so-cameras {
+  grid-template-columns: 1fr;
+}
+.vig.so-cameras > .lado,
+.vig.so-cameras > .colgrip {
+  display: none;
+}
 .mosaico {
   min-width: 0;
   min-height: 0;
