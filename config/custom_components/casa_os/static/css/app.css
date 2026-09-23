@@ -3525,9 +3525,46 @@ select.pill {
   align-items: center;
   justify-content: center;
   gap: var(--s3);
+  flex: 0 0 auto;
 }
 .pag-nav .iconbtn:disabled {
   opacity: 0.3;
+}
+/* as setas são pequenas à vista (coladas às bolinhas), mas o alvo continua
+   a ser de dedo — a mesma ideia das bolinhas ao lado */
+.pag-seta {
+  position: relative;
+  width: calc(32px * var(--u));
+  height: calc(32px * var(--u));
+}
+.pag-seta::after {
+  content: "";
+  position: absolute;
+  inset: min(calc(-6px * var(--u)), calc((100% - var(--tap)) / 2));
+}
+/* sem rato a barra é só as bolinhas — deslizar já diz a mesma coisa */
+.pag-nav.modo-toque .pag-seta {
+  display: none;
+}
+
+/* a fita que desliza: as duas páginas lado a lado, uma delas sempre fora do
+   ecrã. Só o transform anima (ver docs/DECISOES.md) — a curva assenta como
+   as folhas do iOS, sem disparar. */
+.pager {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.pager-pista {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.4s var(--ease);
+  will-change: transform;
+}
+.pager-pista > .pagina {
+  flex: 0 0 50%;
+  min-width: 0;
 }
 
 /* ═════════ Toque ═════════

@@ -325,6 +325,14 @@
 
   // ───────── Vista ─────────
 
+  // Rato → setas; sem rato (tablet, telemóvel) → deslizar. Num aparelho
+  // híbrido vale o último gesto usado, por isso o de origem (media query) só
+  // conta até ao primeiro toque ou clique.
+  let ultimoPonteiro = null;
+  document.addEventListener("pointerdown", (e) => (ultimoPonteiro = e.pointerType), { capture: true, passive: true });
+  const temRato = () =>
+    ultimoPonteiro ? ultimoPonteiro === "mouse" : window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
   // "Agora" é o fluxo instantâneo; os outros são o histórico; "Escolher…" é um intervalo à mão
   const MODOS_FIXOS = [{ id: "agora", nome: "Agora" }, ...PERIODOS];
 
@@ -405,27 +413,35 @@
 
     const strip = el('<div class="strip totais"></div>');
 
-    // no telemóvel as duas páginas são duas secções seguidas; na parede, uma de cada vez
+    // no telemóvel as duas páginas são duas secções seguidas; na parede, uma de
+    // cada vez, lado a lado numa fita que desliza — os dois gráficos ficam
+    // sempre com um tamanho real, não é preciso redesenhá-los ao aparecer
     const graficos = {};
     const dadosG = {};
     const pontos = el('<div class="dots" role="tablist"></div>');
-    const anterior = el(`<button class="iconbtn" aria-label="Página anterior">${icon("back", "ic-s")}</button>`);
-    const seguinte = el(`<button class="iconbtn" aria-label="Página seguinte">${icon("chev", "ic-s")}</button>`);
+    const anterior = el(`<button class="iconbtn pag-seta" aria-label="Página anterior">${icon("back", "ic-s")}</button>`);
+    const seguinte = el(`<button class="iconbtn pag-seta" aria-label="Página seguinte">${icon("chev", "ic-s")}</button>`);
+    const nav = el('<div class="row pag-nav"></div>');
+    nav.append(anterior, pontos, seguinte);
+    const pista = el('<div class="pager-pista"></div>');
+    pista.append(pag1, pag2);
+    const pager = el('<div class="pager"></div>');
+    pager.appendChild(pista);
+
+    let arrasto = 0; // px, só enquanto se arrasta
+
+    const posicionar = (comTransicao) => {
+      pista.style.transition = comTransicao ? "" : "none";
+      pista.style.transform = `translateX(calc(${-paginaAtual * 50}% + ${arrasto}px))`;
+    };
     const mostra = (i) => {
       i = Math.max(0, Math.min(1, i));
       paginaAtual = i;
-      pag1.hidden = i !== 0;
-      pag2.hidden = i !== 1;
+      arrasto = 0;
+      posicionar(true);
       anterior.disabled = i === 0;
       seguinte.disabled = i === 1;
       [...pontos.children].forEach((b, j) => b.setAttribute("aria-selected", String(j === i)));
-      // um gráfico desenhado às escuras não tem tamanho: desenha-se de novo quando aparece
-      setTimeout(() => {
-        for (const k in graficos) {
-          const d = dadosG[k];
-          if (d) d.length === 2 ? graficos[k].atualizar(d[0], d[1]) : graficos[k].atualizar(d[0]);
-        }
-      }, 0);
     };
     ["Consumo e produção", "Fluxo de energia"].forEach((nome, i) => {
       const b = el(`<button role="tab" aria-label="${esc(nome)}"></button>`);
@@ -434,24 +450,87 @@
     });
     anterior.addEventListener("click", () => mostra(paginaAtual - 1));
     seguinte.addEventListener("click", () => mostra(paginaAtual + 1));
-    const nav = el('<div class="row pag-nav"></div>');
-    nav.append(anterior, pontos, seguinte);
+
     if (naMao) raiz.append(pag1, pag2, strip);
     else {
-      raiz.append(pag1, pag2, nav, strip);
+      raiz.append(pager, nav, strip);
+
+      // rato ou toque: mostra-se ou esconde-se a si mesma sempre que o
+      // último gesto muda de tipo (um híbrido pode usar os dois)
+      const aplicaModo = () => nav.classList.toggle("modo-toque", !temRato());
+      aplicaModo();
+      document.addEventListener("pointerdown", function aoApontar() {
+        if (!raiz.isConnected) {
+          document.removeEventListener("pointerdown", aoApontar);
+          return;
+        }
+        aplicaModo();
+      });
+
+      // ← / → só fazem sentido com rato à vista; ignora-se a escrever nalgum campo
+      document.addEventListener("keydown", function aoTeclar(e) {
+        if (!raiz.isConnected) {
+          document.removeEventListener("keydown", aoTeclar);
+          return;
+        }
+        if (temRato() && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+          const alvo = e.target;
+          if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return;
+          mostra(paginaAtual + (e.key === "ArrowRight" ? 1 : -1));
+        }
+      });
+
       mostra(paginaAtual);
-      // no toque, deslizar muda de página (só na horizontal, e não sobre o gráfico que faz zoom)
-      let x0 = null, y0 = 0;
-      raiz.addEventListener("touchstart", (e) => {
-        x0 = e.target.closest(".gf-svg") ? null : e.touches[0].clientX;
+
+      // Deslizar a sério: a página segue o dedo e só se decide "é isto" depois
+      // de 10 px claramente na horizontal — antes disso pode ser um arrasto de
+      // zoom no gráfico (que trata do seu) ou um scroll vertical (não há
+      // aqui, mas o gesto começa sempre fora de .gf-svg para não lho roubar).
+      let x0 = null, y0 = 0, t0 = 0, direcao = null;
+      pager.addEventListener("touchstart", (e) => {
+        if (e.target.closest(".gf-svg")) {
+          x0 = null;
+          return;
+        }
+        x0 = e.touches[0].clientX;
         y0 = e.touches[0].clientY;
+        t0 = Date.now();
+        direcao = null;
+        pista.style.transition = "none";
       }, { passive: true });
-      raiz.addEventListener("touchend", (e) => {
+
+      pager.addEventListener("touchmove", (e) => {
         if (x0 === null) return;
-        const dx = e.changedTouches[0].clientX - x0;
-        if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(e.changedTouches[0].clientY - y0)) mostra(paginaAtual + (dx < 0 ? 1 : -1));
+        const dx = e.touches[0].clientX - x0;
+        const dy = e.touches[0].clientY - y0;
+        if (direcao === null) {
+          if (Math.hypot(dx, dy) < 10) return;
+          direcao = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+          if (direcao !== "x") return; // é scroll vertical: solta-se, o gesto segue à mesma
+        }
+        if (direcao !== "x") return;
+        e.preventDefault(); // é nosso: não deixa o browser tentar recuar ou rolar
+        // nas pontas custa mais a andar — diz que não há mais nada para esse lado
+        const naPonta = (paginaAtual === 0 && dx > 0) || (paginaAtual === 1 && dx < 0);
+        arrasto = naPonta ? dx * 0.35 : dx;
+        posicionar(false);
+      }, { passive: false });
+
+      const soltar = (e) => {
+        if (x0 === null) return;
+        if (direcao === "x") {
+          const largura = pager.clientWidth || 1;
+          const dt = Math.max(1, Date.now() - t0);
+          const velocidade = Math.abs(arrasto) / dt; // px/ms
+          // um toque rápido chega — não é preciso passar do meio
+          const passa = Math.abs(velocidade) > 0.5 || Math.abs(arrasto) > largura * 0.33;
+          mostra(paginaAtual + (passa ? (arrasto < 0 ? 1 : -1) : 0));
+        }
         x0 = null;
-      }, { passive: true });
+        direcao = null;
+      };
+      pager.addEventListener("touchend", soltar, { passive: true });
+      pager.addEventListener("touchcancel", soltar, { passive: true });
     }
 
     const carrega = async () => {
