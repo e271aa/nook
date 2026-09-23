@@ -296,32 +296,35 @@
   }
 
   function comandoMestre(m) {
-    const wrap = el('<div class="mestre"></div>');
+    const rotuloCheio = `${m.rotulo} de todos`;
     if (m.tipo === "slider") {
-      // manda na casa inteira: só obedece a um arrasto, nunca a um toque perdido
+      // manda na casa inteira: só obedece a um arrasto, nunca a um toque perdido.
+      // O rótulo e o valor vivem dentro do próprio comando ("Brilho de todos · 29 %"),
+      // nunca por cima — assim fica com a mesma altura das outras ações ao lado.
       const sl = K.slider({
-        rotulo: m.rotulo, tipo: m.tom || "luz", valor: 0, exigeArrasto: true,
-        aoLargar: (v) => K.emMassa({ nome: `${m.rotulo} de todos`, ids: m.ids, fazer: () => m.aplica(v) }),
+        rotulo: rotuloCheio, tipo: m.tom || "luz", valor: 0, exigeArrasto: true,
+        aoLargar: (v) => K.emMassa({ nome: rotuloCheio, ids: m.ids, fazer: () => m.aplica(v) }),
       });
+      sl.classList.add("mestre");
       sl.setAttribute("aria-description", "Arrasta para mudar todos de uma vez");
       let quando = 0;
       sl.addEventListener("pointerup", () => (quando = Date.now()));
-      wrap.append(el(`<span class="cap">${esc(m.rotulo)} de todos</span>`), sl);
-      return bind(wrap, entre(m.ids), () => {
+      return bind(sl, entre(m.ids), () => {
         const v = m.valor();
         if (Date.now() - quando > 1500) sl.definir(v === null ? 0 : v);
       });
     }
 
-    // stepper: o valor mostra-se já, e o comando sai meio segundo depois do último toque
+    // stepper: uma fila só, como as outras ações — rótulo, valor e os botões
+    // lado a lado. O valor mostra-se já; o comando sai meio segundo depois do
+    // último toque.
+    const wrap = el(`<div class="mestre mestre-passo"><span class="cap-inline grow">${esc(rotuloCheio)}</span></div>`);
     const num = el('<span class="t3 num"></span>');
-    const menos = el(`<button aria-label="Baixar a temperatura de todos">${icon("minus", "ic-s")}</button>`);
-    const mais = el(`<button aria-label="Subir a temperatura de todos">${icon("plus", "ic-s")}</button>`);
+    const menos = el(`<button aria-label="Baixar a ${esc(m.rotulo.toLowerCase())} de todos">${icon("minus", "ic-s")}</button>`);
+    const mais = el(`<button aria-label="Subir a ${esc(m.rotulo.toLowerCase())} de todos">${icon("plus", "ic-s")}</button>`);
     const passo = el('<div class="stepper"></div>');
     passo.append(menos, mais);
-    const linha = el('<div class="sb"></div>');
-    linha.append(num, passo);
-    wrap.append(el(`<span class="cap">${esc(m.rotulo)} de todos</span>`), linha);
+    wrap.append(num, passo);
 
     let pedida = null;
     let quando = 0;
@@ -428,39 +431,99 @@
 
     // o piso só aparece quando há mais de um com aparelhos deste tipo
     const pisos = [...new Set(itensDe(tipo).map((i) => i.r.floor))];
+    let porPiso = null;
+    let auto = true; // o automático (abaixo) para assim que a pessoa escolher à mão
     if (pisos.length > 1) {
       const ids = ["todos", ...PISOS.filter((f) => pisos.includes(f.id)).map((f) => f.id)];
       if (!ids.includes(filtro)) filtro = "todos";
       const nomes = ["Todos", ...ids.slice(1).map(nomePiso)];
-      const porPiso = K.segmentado(nomes, ids.indexOf(filtro), (i) => {
+      porPiso = K.segmentado(nomes, ids.indexOf(filtro), (i) => {
+        auto = false;
         filtro = ids[i];
         pagina = 0;
         desenha();
       });
       porPiso.classList.add("piso-seg");
-      barra.appendChild(porPiso);
+      // à esquerda das ações: primeiro escolhe-se "onde", depois "o quê"
+      barra.prepend(porPiso);
     } else {
       filtro = "todos";
     }
 
     desenha();
+
+    // Só depois de o esquema assentar (o arranque da página ainda mexe o
+    // layout — estados da casa a chegar, o resto da página a montar-se) é
+    // que dá para medir se "Todos" coube sem rolar. Um só fotograma apanha
+    // isso a meio caminho; por isso espera-se que o tamanho da zona pare de
+    // mudar, não um número fixo de fotogramas. Se não couber, cai para o
+    // piso com mais aparelhos deste tipo — e se mesmo esse não couber (a TV
+    // gasta mais altura nas ações), vai tentando o seguinte, do mais cheio ao
+    // mais vazio — em vez de encolher tudo para caber (parede e TV não rolam).
+    if (porPiso && filtro === "todos" && ecra() !== "mao") {
+      const ids = ["todos", ...PISOS.filter((f) => pisos.includes(f.id)).map((f) => f.id)];
+      const contagem = {};
+      itensDe(tipo).forEach((i) => (contagem[i.r.floor] = (contagem[i.r.floor] || 0) + 1));
+      const candidatos = pisos.slice().sort((a, b) => (contagem[b] || 0) - (contagem[a] || 0));
+      let i = 0;
+      let pousar = null;
+      const verificar = () => {
+        if (!auto || zona.scrollHeight <= zona.clientHeight + 1 || i >= candidatos.length) {
+          ro.disconnect();
+          return;
+        }
+        filtro = candidatos[i];
+        i++;
+        pagina = 0;
+        desenha();
+        porPiso.definir(ids.indexOf(filtro));
+      };
+      const ro = new ResizeObserver(() => {
+        clearTimeout(pousar);
+        pousar = setTimeout(verificar, 200);
+      });
+      ro.observe(zona);
+    }
     return raiz;
   }
 
+  /**
+   * Agrupados por divisão: o título só aparece quando há mais de um aparelho
+   * — um só já se diz no subtítulo do cartão. As divisões de um só aparelho
+   * não ganham cada uma a sua fila (era desperdiçar altura): juntam-se numa
+   * grelha só, pela ordem em que apareceriam. Pouco espaço dentro de cada
+   * grupo, mais entre grupos.
+   */
   function grelha(tipo, itens) {
-    const { linhas, colunas } = K.medidas(itens.length);
-    const node = el(`<div class="tiles ${tipo}"></div>`);
-    node.style.gridTemplateColumns = `repeat(${colunas}, minmax(0, 1fr))`;
-    node.style.gridTemplateRows =
-      itens.length <= 3 ? "minmax(0, calc(240px * var(--u)))" : `repeat(${linhas}, minmax(0, 1fr))`;
-    node.classList.toggle("poucas", itens.length <= 3);
-    const resto = itens.length % colunas;
-    itens.forEach((it, i) => {
-      const c = cartao(tipo, it);
-      if (i === itens.length - 1 && resto) c.style.gridColumn = `span ${colunas - resto + 1}`;
-      node.appendChild(c);
+    const grupos = el('<div class="grupos"></div>');
+    const porDivisao = new Map();
+    itens.forEach((it) => {
+      if (!porDivisao.has(it.r.id)) porDivisao.set(it.r.id, { r: it.r, itens: [] });
+      porDivisao.get(it.r.id).itens.push(it);
     });
-    return node;
+
+    let soltos = [];
+    const flush = () => {
+      if (!soltos.length) return;
+      const mini = el(`<div class="tiles ${tipo}"></div>`);
+      soltos.forEach((it) => mini.appendChild(cartao(tipo, it)));
+      grupos.appendChild(mini);
+      soltos = [];
+    };
+    porDivisao.forEach(({ r, itens: doGrupo }) => {
+      if (doGrupo.length === 1) {
+        soltos.push(doGrupo[0]);
+        return;
+      }
+      flush();
+      const bloco = el(`<div class="grupo-divisao"><span class="cap">${esc(r.name)}</span></div>`);
+      const mini = el(`<div class="tiles ${tipo}"></div>`);
+      doGrupo.forEach((it) => mini.appendChild(cartao(tipo, it)));
+      bloco.appendChild(mini);
+      grupos.appendChild(bloco);
+    });
+    flush();
+    return grupos;
   }
 
   /** No telemóvel: um bloco por piso, e a página rola. */

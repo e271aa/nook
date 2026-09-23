@@ -1400,6 +1400,32 @@ button.li:active {
   min-width: 0;
 }
 
+/* os grupos por divisão: pouco espaço dentro de cada um, mais entre eles */
+.grupos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+  min-height: 0;
+}
+.grupo-divisao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 0 0 auto;
+}
+.grupo-divisao > .cap {
+  padding-left: var(--s1);
+}
+/* mosaicos do tamanho do que têm, não esticados a encher o ecrã — tanto os
+   de uma divisão com título como os soltos (um só aparelho), que partilham
+   grelha em vez de gastarem uma fila cada um */
+.grupo-divisao .tiles,
+.grupos > .tiles {
+  flex: 0 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(calc(150px * var(--u)), 1fr));
+  grid-auto-rows: minmax(0, max-content);
+}
+
 /* a grelha de cartões, que enche como a das divisões */
 .tiles {
   display: grid;
@@ -3107,32 +3133,35 @@ select.pill {
   aspect-ratio: 16 / 9;
 }
 
-/* o comando mestre, ao lado das ações de grupo */
+/* o comando mestre, ao lado das ações de grupo: mesma altura que elas — o
+   rótulo e o valor vivem dentro do comando, nunca por cima. */
 .mestre {
   flex: 1 1 calc(230px * var(--u));
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: calc(3px * var(--u));
-  justify-content: center;
-}
-.mestre .cap {
-  padding-left: var(--s1);
-}
-/* com o dedo o slider mestre não desce dos 44 px */
-.mestre .slide {
-  height: max(var(--tap), calc(40px * var(--u)));
-}
-.mestre .stepper button {
-  width: var(--tap);
-  height: var(--tap);
-}
-.mestre .sb {
-  gap: var(--s3);
 }
 .acoes-mao .mestre {
   grid-column: 1 / -1;
   flex: 0 0 auto;
+}
+/* a variante sem slider (o passo da temperatura): uma fila, como .gact */
+.mestre-passo {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: calc(56px * var(--u));
+  padding: 0 var(--s4);
+  background: var(--l1);
+  border-radius: var(--r3);
+  box-shadow: var(--sh-1);
+}
+.mestre-passo .cap-inline {
+  font-size: var(--t-sb);
+  font-weight: var(--w-m);
+  letter-spacing: -0.01em;
+}
+.mestre-passo .stepper button {
+  width: var(--tap);
+  height: var(--tap);
 }
 
 /* pega horizontal: entre a câmara grande e as pequenas */
