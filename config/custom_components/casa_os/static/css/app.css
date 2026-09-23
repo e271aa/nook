@@ -2261,10 +2261,42 @@ select.pill {
 }
 
 /* ═════════ A planta ═════════
-   Desenho de arquiteto: paredes que se leem, móveis em traço fino, e por
-   cima o que está vivo — a luz de cada candeeiro, o sol que entra pelos
-   estores, o robô. O quadro tem a proporção da casa; o painel ao lado (TV)
-   ou por baixo (tablet, telemóvel) abre a divisão que se tocar. */
+   A planta de arquiteto recua (paredes cheias num cinzento baixo, móveis em
+   traço fino) e por cima desenha-se o que está vivo. O desenho leva as cores
+   nos próprios traços, sempre por variáveis; aqui ficam os tokens da planta,
+   o palco, o que vai por cima e o painel. */
+
+/* os tokens da planta derivam das cores do painel: servem a todas as paletas */
+:root {
+  --pl-chao: var(--l1);
+  --pl-chao-vazio: color-mix(in oklab, var(--bg) 60%, var(--l1));
+  --pl-parede: color-mix(in oklab, var(--label) 30%, var(--l1));
+  --pl-parede-int: color-mix(in oklab, var(--label) 19%, var(--l1));
+  --pl-movel: color-mix(in oklab, var(--label) 17%, var(--l1));
+  --pl-vidro: var(--grid);
+  --pl-estore: color-mix(in oklab, var(--label) 62%, var(--l1));
+  --pl-rasto: color-mix(in oklab, var(--label) 7%, var(--l1));
+  --pl-robo: color-mix(in oklab, var(--label) 88%, var(--l1));
+  --pl-pill: color-mix(in oklab, var(--label) 8%, var(--l1));
+  --pl-on-accent: var(--bg);
+  --pl-solar: var(--solar);
+  --pl-jardim: color-mix(in oklab, var(--good) 6%, var(--l1));
+  --pl-planta: color-mix(in oklab, var(--good) 30%, var(--l1));
+  --pl-caminho: color-mix(in oklab, var(--bg) 70%, var(--l1));
+}
+[data-modo="claro"] {
+  --pl-chao-vazio: color-mix(in oklab, var(--label) 5%, var(--l3));
+  --pl-parede: color-mix(in oklab, var(--label) 60%, var(--l1));
+  --pl-parede-int: color-mix(in oklab, var(--label) 34%, var(--l1));
+  --pl-movel: color-mix(in oklab, var(--label) 22%, var(--l1));
+  --pl-rasto: color-mix(in oklab, var(--tint) 7%, var(--l1));
+  /* o texto sobre cor é branco puro, e o âmbar escurece o bastante para o ler */
+  --pl-on-accent: var(--tint-ink);
+  --pl-solar: color-mix(in oklab, var(--solar) 82%, black);
+  --pl-jardim: color-mix(in oklab, var(--good) 7%, var(--l1));
+  --pl-planta: color-mix(in oklab, var(--good) 42%, var(--l1));
+  --pl-caminho: color-mix(in oklab, var(--label) 6%, var(--l3));
+}
 
 .planta-vista {
   gap: var(--s3);
@@ -2276,247 +2308,105 @@ select.pill {
   min-width: 0;
 }
 .pl-palco {
+  position: relative;
   flex: 1;
   min-height: 0;
   min-width: 0;
-  display: grid;
-  place-items: center;
 }
 .pl-quadro {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.pl-cena {
+  position: absolute;
+  inset: 0;
+}
+/* troca de piso: o novo entra de baixo, o antigo sai */
+.pl-cena.entra {
+  animation: pl-piso 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes pl-piso {
+  from {
+    opacity: 0;
+    transform: translateY(calc(8px * var(--u)));
+  }
+}
+.pl-mundo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
 }
 .planta {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
-/* ── o desenho ── */
-.planta .chao {
-  fill: var(--l1);
-}
-.planta .zona.vazia .chao {
-  fill: color-mix(in oklab, var(--l1) 60%, var(--bg));
-}
-.planta .zona.jardim .chao {
-  fill: color-mix(in oklab, var(--good) 9%, var(--l1));
-}
-.planta .zona.casa .chao {
-  fill: var(--l2);
-}
-.planta .parede {
-  fill: none;
-  stroke: var(--label-3);
-  stroke-width: 0.5;
-}
-.planta .parede.fora {
-  stroke: var(--label-2);
-  stroke-width: 1.3;
-  stroke-linejoin: miter;
-}
-.planta .vedacao {
-  fill: none;
-  stroke: var(--label-4);
-  stroke-width: 0.35;
-  stroke-dasharray: 1.2 1;
-}
-.planta .zona.alerta .chao {
-  fill: color-mix(in oklab, var(--warn) 12%, var(--l1));
-}
-/* a luz soma-se ao chão como a luz a sério; no tema claro escurece-o um pouco */
-.planta .luzes {
-  mix-blend-mode: screen;
-}
-[data-modo="claro"] .planta .luzes {
-  mix-blend-mode: multiply;
-}
-.planta .poca {
-  transition: opacity var(--d3) var(--ease-soft);
-}
-.planta .raio {
-  mix-blend-mode: screen;
-}
-[data-modo="claro"] .planta .raio {
-  mix-blend-mode: multiply;
-}
-
-/* os móveis: estão lá para se reconhecer a divisão, não para competir */
-.planta .movel {
-  fill: none;
-  stroke: var(--label-4);
-  stroke-width: 0.28;
-  stroke-linejoin: round;
-}
-.planta .movel .m-corpo {
-  fill: color-mix(in oklab, var(--label) 4%, var(--l1));
-}
-.planta .zona.acesa .movel .m-corpo {
-  fill: color-mix(in oklab, var(--label) 7%, var(--l1));
-}
-.planta .movel .m-cheio,
-.planta .movel .m-tv {
-  fill: var(--label-3);
-  stroke: none;
-}
-.planta .movel .m-ecra {
-  stroke: var(--label-3);
-  stroke-width: 0.7;
-  stroke-linecap: round;
-}
-.planta .movel .m-tapete {
-  fill: color-mix(in oklab, var(--label) 3%, transparent);
-  stroke-dasharray: 0.6 0.6;
-}
-.planta .movel .m-caminho {
-  fill: color-mix(in oklab, var(--label) 9%, var(--l1));
-  stroke: var(--label-4);
-  stroke-dasharray: 0.5 0.5;
-}
-.planta .movel .m-deck {
-  fill: color-mix(in oklab, var(--solar) 7%, var(--l1));
-}
-.planta .movel .m-tabua {
-  stroke: var(--label-4);
-  stroke-width: 0.15;
-}
-.planta .movel .m-arvore {
-  fill: color-mix(in oklab, var(--good) 16%, transparent);
-  stroke: color-mix(in oklab, var(--good) 40%, transparent);
-}
-.planta .movel .m-vidro {
-  fill: color-mix(in oklab, var(--label) 10%, transparent);
-  stroke: var(--label-4);
-}
-.planta .movel .m-seta {
-  stroke: var(--label-3);
-  stroke-width: 0.3;
-  stroke-linecap: round;
-  fill: none;
-}
-
-/* aberturas: o vão apaga a parede; o vidro é um traço fino; o estore é o
-   traço grosso que cobre o vidro até onde está corrido */
-.planta .vao {
-  stroke: var(--l1);
-  stroke-width: 1.9;
-  stroke-linecap: butt;
-}
-.planta .vidro {
-  stroke: var(--label-3);
-  stroke-width: 0.3;
-}
-.planta .vidro.aberta,
-.planta .folha.aberta {
-  stroke: var(--warn);
-  stroke-width: 0.45;
-}
-.planta .estore {
-  stroke: var(--label-2);
-  stroke-width: 1.1;
-  stroke-linecap: butt;
-}
-.planta .portao {
-  stroke: var(--label-2);
-  stroke-width: 1;
-}
-.planta .portao.aberto {
-  stroke: var(--warn);
-}
-.planta .folha {
-  stroke: var(--label-2);
-  stroke-width: 0.5;
-  stroke-linecap: round;
-}
-.planta .folha.destrancada {
-  stroke: var(--warn);
-  stroke-width: 0.8;
-}
-.planta .folha.trancada {
-  stroke: var(--good);
-  stroke-width: 0.8;
-}
-.planta .arco {
-  fill: none;
-  stroke: var(--label-4);
-  stroke-width: 0.25;
-  stroke-dasharray: 0.8 0.7;
-}
-
-/* o que mexe */
-.planta .onda,
-.planta .rega {
-  fill: none;
+/* ── o que se mexe no desenho ── */
+.planta .pl-onda {
   transform-box: fill-box;
   transform-origin: center;
+  animation: pl-onda 2.7s cubic-bezier(0.2, 0.6, 0.35, 1) infinite both;
 }
-.planta .onda {
-  stroke: var(--tint);
-  stroke-width: 0.35;
-  animation: onda 2.4s var(--ease-soft) infinite;
-}
-.planta .rega {
-  stroke: var(--grid);
-  stroke-width: 0.3;
-  stroke-dasharray: 0.4 0.9;
-  animation: onda 1.8s linear infinite;
-}
-.planta .tarde {
-  animation-delay: -1.2s;
-}
-@keyframes onda {
+@keyframes pl-onda {
   from {
-    transform: scale(0.3);
-    opacity: 0.9;
+    transform: scale(1);
+    opacity: 0.85;
   }
   to {
-    transform: scale(1.6);
+    transform: scale(4.4);
     opacity: 0;
   }
 }
-.planta .robo-corpo {
-  fill: var(--label);
-  stroke: var(--l1);
-  stroke-width: 0.4;
+/* o que muda troca por opacidade: a luz acende em 400 ms e apaga em 600;
+   estores, portão, sol e avisos em 250 */
+.planta .pl-entra-luz {
+  animation: pl-aparece 400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.planta .robo-olho {
-  fill: var(--tint);
+.planta .pl-sai-luz {
+  animation: pl-desaparece 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-.planta .robo.docked .robo-olho,
-.planta .robo.idle .robo-olho {
-  fill: var(--good);
+.planta .pl-entra-troca {
+  animation: pl-aparece 250ms ease-out both;
 }
-.planta .robo-base {
-  fill: var(--label-3);
+.planta .pl-sai-troca {
+  animation: pl-desaparece 250ms ease-out both;
 }
-.planta .robo-rasto {
-  fill: none;
-  stroke: var(--tint);
-  stroke-width: 0.3;
-  stroke-dasharray: 0.4 0.8;
-  stroke-linejoin: round;
-  opacity: 0.45;
+@keyframes pl-aparece {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pl-desaparece {
+  to {
+    opacity: 0;
+  }
+}
+/* sem ligação, a luz e o sol recuam: é o último estado conhecido, não o de agora */
+.planta .pl-c-luz,
+.planta .pl-c-sol {
+  transition: opacity 600ms ease-out;
+}
+.planta.sem-ligacao .pl-c-luz,
+.planta.sem-ligacao .pl-c-sol {
+  opacity: 0.28;
 }
 
-/* ── por cima: nomes, bolinhas, câmaras ── */
-.pl-cima {
+/* ── os toques: um botão invisível por divisão, que se aproxima com o desenho ── */
+.pl-toques {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-}
-.pl-cima > * {
-  pointer-events: auto;
-}
-.pl-zona {
-  position: absolute;
-  pointer-events: none;
 }
 .pl-toque {
   position: absolute;
-  inset: 0;
+  padding: 0;
+  border: 0;
   border-radius: 0;
-  pointer-events: auto;
+  background: none;
   cursor: pointer;
   transition: background var(--d2) var(--ease-soft);
 }
@@ -2525,129 +2415,308 @@ select.pill {
     background: color-mix(in oklab, var(--label) 4%, transparent);
   }
 }
-.pl-zona.escolhida .pl-toque {
-  background: color-mix(in oklab, var(--tint) 8%, transparent);
-  box-shadow: inset 0 0 0 calc(2px * var(--u)) var(--tint);
+.pl-toque:focus-visible {
+  outline: 2px solid var(--tint);
+  outline-offset: -2px;
 }
-.pl-zona.casa .pl-toque {
-  display: grid;
-  place-items: center;
-}
-.pl-zona.casa .pl-nome,
-.pl-zona.vazia .pl-nome {
-  color: var(--label-3);
-  font-weight: var(--w-m);
-}
-.pl-rotulo {
+
+/* ── por cima: nomes, avisos, atalhos, câmaras, a porta da rua ──
+   Do mesmo tamanho a qualquer distância; quando a planta se aproxima de uma
+   divisão, deslizam para o sítio novo. */
+.pl-cima {
   position: absolute;
-  top: calc(8px * var(--u));
-  left: calc(10px * var(--u));
-  right: calc(8px * var(--u));
+  inset: 0;
+  pointer-events: none;
+}
+.pl-cima > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: opacity var(--d1) var(--ease-soft);
+}
+.pl-cena.a-mover .pl-mundo {
+  transition: transform 320ms var(--ease);
+}
+.pl-cena.a-mover .pl-cima > * {
+  transition: transform 320ms var(--ease), opacity 200ms var(--ease-soft);
+}
+.pl-cima > .fora {
+  opacity: 0;
+  visibility: hidden;
+}
+.pl-rot {
   display: flex;
   flex-direction: column;
-  gap: calc(1px * var(--u));
-  pointer-events: none;
-  text-shadow: 0 0 calc(6px * var(--u)) var(--l1), 0 0 calc(2px * var(--u)) var(--l1);
+  align-items: flex-start;
+  gap: calc(3px * var(--u));
+  text-shadow: 0 0 calc(6px * var(--u)) var(--pl-chao), 0 0 calc(2px * var(--u)) var(--pl-chao);
 }
 .pl-nome {
-  font-size: var(--t-bd);
+  max-width: 100%;
+  font-size: calc(15px * var(--u));
   font-weight: var(--w-s);
-  letter-spacing: -0.01em;
   line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.pl-info {
-  font-size: var(--t-ft);
+.pl-rot.vazia .pl-nome {
+  color: var(--label-3);
+}
+.pl-rot.escolhida .pl-nome {
+  color: var(--tint);
+}
+.pl-clima {
+  max-width: 100%;
+  font-size: calc(13px * var(--u));
+  line-height: 1.25;
   color: var(--label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.pl-aviso {
-  font-size: var(--t-ft);
-  font-weight: var(--w-s);
-  color: var(--warn);
-}
-.pl-aviso:empty {
+.pl-clima:empty {
   display: none;
 }
-.pl-chips {
-  position: absolute;
-  left: calc(8px * var(--u));
-  bottom: calc(8px * var(--u));
-  right: calc(8px * var(--u));
-  display: flex;
-  flex-wrap: wrap-reverse;
-  gap: calc(6px * var(--u));
-  pointer-events: none;
+.pl-av {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(5px * var(--u));
+  max-width: 100%;
+  min-width: 0;
+  margin-top: calc(2px * var(--u));
+  padding: calc(3px * var(--u)) calc(9px * var(--u)) calc(3px * var(--u)) calc(6px * var(--u));
+  border-radius: var(--rp);
+  background: var(--warn);
+  color: var(--pl-on-accent);
+  font-size: calc(12.5px * var(--u));
+  font-weight: var(--w-s);
+  line-height: 1.2;
+  text-shadow: none;
 }
-.pl-chip,
-.pl-cam {
+.pl-av[data-n="danger"] {
+  background: var(--danger);
+}
+.pl-av .ic {
+  width: calc(14px * var(--u));
+  height: calc(14px * var(--u));
+  flex: 0 0 auto;
+}
+.pl-av span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-atalhos {
+  display: flex;
+  gap: calc(2px * var(--u));
+  margin: calc(-2px * var(--u)) 0 0 calc(-6px * var(--u));
+  text-shadow: none;
+}
+.pl-atalhos:not(:has(.pl-atalho:not([hidden]))) {
+  display: none;
+}
+/* uma pílula de 30 à vista dentro de um alvo de 44 */
+.pl-atalho,
+.pl-porta {
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 calc(4px * var(--u));
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.pl-pilula {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: calc(4px * var(--u));
-  height: max(var(--tap), calc(36px * var(--u)));
-  min-width: max(var(--tap), calc(36px * var(--u)));
-  padding: 0 calc(10px * var(--u));
+  height: calc(30px * var(--u));
+  min-width: calc(30px * var(--u));
+  padding: 0 calc(9px * var(--u)) 0 calc(7px * var(--u));
   border-radius: var(--rp);
-  background: color-mix(in oklab, var(--l3) 88%, transparent);
-  border: var(--hair) solid var(--sep-2);
-  color: var(--label-2);
-  font-size: var(--t-ft);
+  background: var(--pl-solar);
+  color: var(--pl-on-accent);
+  font-size: calc(13px * var(--u));
   font-weight: var(--w-s);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  line-height: 1;
+  white-space: nowrap;
 }
-.pl-chip span:empty {
-  display: none;
+.pl-pilula .ic {
+  width: calc(15px * var(--u));
+  height: calc(15px * var(--u));
 }
-.pl-chip.luz[aria-pressed="true"] {
-  background: var(--solar);
-  border-color: transparent;
-  color: #241a05;
+.pl-atalho.rega .pl-pilula {
+  background: var(--grid);
 }
-.pl-chip.estore[aria-pressed="true"],
-.pl-chip.rega[aria-pressed="true"] {
+.pl-porta .pl-pilula {
+  height: calc(26px * var(--u));
+  gap: calc(5px * var(--u));
+  padding: 0 calc(10px * var(--u)) 0 calc(8px * var(--u));
+  font-size: calc(12.5px * var(--u));
+  background: var(--pl-pill);
   color: var(--label);
-  border-color: var(--label-3);
 }
-.pl-chip.rega[aria-pressed="true"] {
-  background: color-mix(in oklab, var(--grid) 40%, var(--l3));
+.pl-porta[data-estado="trancada"] .pl-pilula {
+  background: var(--good);
+  color: var(--pl-on-accent);
 }
-.pl-quadro.apertado .pl-chips,
-.pl-quadro.apertado .pl-cam {
-  display: none;
+.pl-porta[data-estado="destrancada"] .pl-pilula,
+.pl-porta[data-estado="aberta"] .pl-pilula {
+  background: var(--warn);
+  color: var(--pl-on-accent);
+}
+.pl-porta .pl-pilula .ic {
+  width: calc(14px * var(--u));
+  height: calc(14px * var(--u));
+}
+/* uma porta ou uma janela que muda de estado diz-se uma vez, com um salto pequeno */
+.pl-cima .pop {
+  animation: pl-pop 240ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes pl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
 }
 .pl-cam {
-  position: absolute;
-  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
   padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.pl-cam > span {
+  display: grid;
+  place-items: center;
+  width: calc(28px * var(--u));
+  height: calc(28px * var(--u));
+  border-radius: 50%;
+  background: var(--l3);
+  box-shadow: 0 0 0 1px var(--sep-2);
+  color: var(--label-2);
+  transition: color var(--d1) var(--ease-soft), box-shadow var(--d1) var(--ease-soft);
+}
+[data-modo="claro"] .pl-cam > span {
+  background: var(--l1);
+}
+.pl-cam .ic {
+  width: calc(15px * var(--u));
+  height: calc(15px * var(--u));
+}
+.pl-robo.ativo > span {
+  color: var(--tint);
+}
+.pl-robo.escolhida > span,
+.pl-cam:focus-visible > span {
+  box-shadow: 0 0 0 2px var(--tint);
+}
+.pl-cam:focus-visible,
+.pl-atalho:focus-visible,
+.pl-porta:focus-visible {
+  outline: none;
+}
+.pl-atalho:focus-visible .pl-pilula,
+.pl-porta:focus-visible .pl-pilula {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--tint);
 }
 .pl-norte {
-  position: absolute;
-  top: 0;
-  right: 0;
-  transform: translate(30%, -25%);
-  width: calc(22px * var(--u));
-  height: calc(33px * var(--u));
-  pointer-events: none;
+  left: auto !important;
+  right: calc(8px * var(--u));
+  top: calc(5px * var(--u)) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  color: var(--label-3);
+  font-size: calc(10px * var(--u));
+  font-weight: var(--w-s);
+  line-height: 1;
 }
 .pl-norte svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+  width: calc(10px * var(--u));
+  height: calc(12px * var(--u));
+  fill: currentColor;
 }
-.pl-norte text {
-  fill: var(--label-2);
-  font-size: 9px;
+.pl-sem-ligacao {
+  left: 50% !important;
+  top: auto !important;
+  bottom: calc(12px * var(--u));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: calc(7px * var(--u));
+  padding: calc(7px * var(--u)) calc(13px * var(--u)) calc(7px * var(--u)) calc(10px * var(--u));
+  border-radius: var(--rp);
+  background: var(--l2);
+  box-shadow: 0 0 0 1px var(--sep-2);
+  color: var(--label);
+  font-size: calc(13px * var(--u));
+  white-space: nowrap;
+}
+.pl-sem-ligacao .bd {
   font-weight: var(--w-s);
 }
-.pl-norte path {
-  fill: var(--label-2);
+.pl-sem-ligacao .dim {
+  color: var(--label-2);
+}
+.pl-av[hidden],
+.pl-atalho[hidden],
+.pl-sem-ligacao[hidden],
+.pp-acoes[hidden],
+.pp-acoes [hidden] {
+  display: none;
+}
+
+/* pouco espaço (o telemóvel, um tablet estreito): ficam os nomes; saem o clima,
+   os atalhos e as câmaras; o aviso e o cadeado ficam só com o ícone */
+.pl-cena.compacto .pl-nome {
+  font-size: calc(12px * var(--u));
+}
+.pl-cena.compacto .pl-clima,
+.pl-cena.compacto .pl-atalhos,
+.pl-cena.compacto .pl-cam {
+  display: none;
+}
+.pl-cena.compacto .pl-av {
+  justify-content: center;
+  width: calc(18px * var(--u));
+  height: calc(18px * var(--u));
+  padding: 0;
+}
+.pl-cena.compacto .pl-av .ic {
+  width: calc(11px * var(--u));
+  height: calc(11px * var(--u));
+}
+.pl-cena.compacto .pl-av span,
+.pl-cena.compacto .pl-porta .pl-pilula span {
+  display: none;
+}
+.pl-cena.compacto .pl-porta .pl-pilula {
+  height: calc(18px * var(--u));
+  min-width: calc(18px * var(--u));
+  padding: 0;
+}
+.pl-cena.compacto .pl-porta .pl-pilula .ic {
+  width: calc(11px * var(--u));
+  height: calc(11px * var(--u));
 }
 
 /* ── o painel ──
-   Na parede e na TV entra pela direita quando se escolhe uma divisão; a
-   planta encolhe para lhe dar lugar e volta a crescer quando se fecha. */
+   Na parede entra pela direita quando se escolhe uma divisão, e a planta
+   aproxima-se dela; na TV mostra o que está a acontecer agora. */
 .pl-painel {
   min-width: 0;
   min-height: 0;
@@ -2670,12 +2739,22 @@ select.pill {
   width: calc(340px * var(--u));
   margin-left: var(--s4);
   opacity: 1;
-  animation: painel-entra var(--d2) var(--ease-out);
+  animation: painel-entra 320ms var(--ease);
 }
 @keyframes painel-entra {
   from {
-    opacity: 0;
-    transform: translateX(calc(14px * var(--u)));
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .planta-corpo.com-painel .pl-painel {
+    animation: pl-aparece 200ms var(--ease-soft);
+  }
+  .pl-cena.entra {
+    animation: pl-aparece 240ms var(--ease-soft);
+  }
+  .pl-cima .pop {
+    animation: pl-aparece 240ms var(--ease-soft);
   }
 }
 .pl-painel > .pp-conteudo {
@@ -2690,9 +2769,6 @@ select.pill {
 }
 .pl-cab .pp-acoes {
   flex-wrap: nowrap;
-}
-.pp-acoes [hidden] {
-  display: none;
 }
 [data-screen="mao"] .pp-acoes .pill {
   min-height: var(--tap);
@@ -2735,47 +2811,104 @@ select.pill {
   color: var(--label-3);
   flex: 0 0 auto;
 }
+.pp-div .ig {
+  color: var(--label-3);
+}
+/* o nome da divisão não se corta: é o estado que cede */
+.pp-div .nm {
+  flex: 1 0 auto;
+  max-width: 60%;
+}
+.pp-div .vl {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: calc(14px * var(--u));
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-div[data-tom="acesa"] .ig {
+  color: var(--solar);
+}
+.pp-div[data-tom="aviso"] .ig,
+.pp-div[data-tom="aviso"] .vl {
+  color: var(--warn);
+}
 .pp-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s2);
 }
+
+/* as luzes em mosaico, cada uma com a cor que tem */
 .pp-luzes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(calc(92px * var(--u)), 1fr));
-  gap: var(--s2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(8px * var(--u));
 }
 .pp-luz {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: calc(2px * var(--u));
-  min-height: var(--tap);
-  padding: var(--s2) var(--s3);
-  border-radius: var(--r3);
+  gap: calc(8px * var(--u));
+  min-height: calc(84px * var(--u));
+  min-width: 0;
+  padding: calc(11px * var(--u)) calc(12px * var(--u));
+  border-radius: calc(16px * var(--u));
   background: var(--l2);
   color: var(--label-2);
   text-align: left;
+  transition: background var(--d2) var(--ease-soft);
+}
+[data-modo="claro"] .pp-luz {
+  background: var(--l1);
+  box-shadow: 0 0 0 1px var(--sep);
+}
+.pp-luz[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--cor-luz, var(--solar)) 24%, var(--l2));
+}
+[data-modo="claro"] .pp-luz[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--cor-luz, var(--solar)) 30%, var(--l1));
+}
+.pp-luz-ic {
+  display: grid;
+  place-items: center;
+  width: calc(28px * var(--u));
+  height: calc(28px * var(--u));
+  border-radius: 50%;
+  background: var(--pl-pill);
+  color: var(--label-3);
+}
+.pp-luz-ic .ic {
+  width: calc(16px * var(--u));
+  height: calc(16px * var(--u));
+}
+.pp-luz[aria-pressed="true"] .pp-luz-ic {
+  background: var(--cor-luz, var(--solar));
+  color: color-mix(in oklab, var(--cor-luz, var(--solar)) 22%, black);
+}
+.pp-luz-tx {
+  display: flex;
+  flex-direction: column;
+  gap: calc(3px * var(--u));
   min-width: 0;
+  max-width: 100%;
 }
 .pp-luz .nm {
   color: var(--label);
-  font-size: var(--t-ft);
+  font-size: calc(14px * var(--u));
   font-weight: var(--w-s);
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
 }
 .pp-luz .vl {
   color: var(--label-2);
-}
-.pp-luz[aria-pressed="true"] {
-  background: color-mix(in oklab, var(--solar) 22%, var(--l2));
-}
-.pp-luz[aria-pressed="true"] .ic {
-  color: var(--solar);
+  font-size: calc(13px * var(--u));
+  line-height: 1.15;
 }
 .pp-clima {
   display: flex;
@@ -2804,11 +2937,77 @@ select.pill {
   align-items: center;
 }
 
-/* no telemóvel o quadro ocupa a largura e o painel segue por baixo */
+/* TV: "Agora", ao lado da planta, para ler do sofá */
+.pl-painel > .pl-agora {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.pl-agora-lista {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pl-agora-li {
+  display: flex;
+  align-items: center;
+  gap: calc(14px * var(--u));
+  width: 100%;
+  padding: calc(12px * var(--u)) 0;
+  border-bottom: 1px solid var(--sep);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.pl-agora-li:disabled {
+  cursor: default;
+}
+.pl-agora-ic {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: calc(36px * var(--u));
+  height: calc(36px * var(--u));
+  border-radius: 50%;
+}
+.pl-agora-ic .ic {
+  width: calc(18px * var(--u));
+  height: calc(18px * var(--u));
+}
+.pl-agora-tx {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--u));
+  min-width: 0;
+}
+.pl-agora-tx .bd {
+  font-size: calc(18px * var(--u));
+  font-weight: var(--w-s);
+  line-height: 1.1;
+  color: var(--label);
+}
+.pl-agora-tx .dim {
+  font-size: calc(14px * var(--u));
+  color: var(--label-2);
+}
+
+/* no telemóvel o quadro ocupa a largura, com a proporção da casa, e o painel
+   segue por baixo, sem botão de fechar (volta-se a tocar na divisão) */
 [data-screen="mao"] .planta-corpo {
   flex: 0 0 auto;
   flex-direction: column;
   gap: var(--s4);
+}
+[data-screen="mao"] .pl-palco {
+  flex: 0 0 auto;
+}
+/* sem aproximação no telemóvel, o que fica por fora (a porta da rua) pode sair do quadro */
+[data-screen="mao"] .pl-quadro {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  overflow: visible;
 }
 [data-screen="mao"] .pl-painel,
 [data-screen="mao"] .planta-corpo.com-painel .pl-painel {
@@ -2817,52 +3016,16 @@ select.pill {
   opacity: 1;
   padding: 0;
   background: none;
-  transition: none;
+  box-shadow: none;
+  animation: none;
   overflow: visible;
 }
 [data-screen="mao"] .pl-painel > .pp-conteudo {
   width: auto;
   padding: 0;
 }
-[data-screen="mao"] .pl-palco {
-  flex: 0 0 auto;
-}
-[data-screen="mao"] .pl-rotulo {
-  top: calc(4px * var(--u));
-  left: calc(5px * var(--u));
-}
-[data-screen="mao"] .pl-nome {
-  font-size: var(--t-ft);
-}
-[data-screen="mao"] .pl-info,
-[data-screen="mao"] .pl-aviso {
-  font-size: var(--t-c1);
-}
-.pl-aviso,
-.pl-info {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pl-robo {
-  width: max(var(--tap), calc(34px * var(--u)));
-  min-width: 0;
-}
-.pl-robo.ativo {
-  color: var(--tint);
-  border-color: var(--tint);
-}
-.pl-robo.escolhida,
-.pl-cam:focus-visible {
-  box-shadow: 0 0 0 calc(2px * var(--u)) var(--tint);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .planta .onda,
-  .planta .rega {
-    animation: none;
-    opacity: 0.6;
-  }
+[data-screen="mao"] .pl-painel .pp-cab .fechar {
+  display: none;
 }
 
 /* ═════════ Definições ═════════
@@ -3633,12 +3796,12 @@ button,
   touch-action: manipulation;
 }
 /* carregar responde já: o que ainda não tinha reação ao toque passa a ter */
-:is(.pill, .segc button, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .camtile, .nt-acao) {
+:is(.pill, .segc button, .pl-atalho, .pl-porta, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .camtile, .nt-acao) {
   transition-property: scale, background, color, opacity, border-color;
   transition-duration: 160ms;
   transition-timing-function: var(--ease-out);
 }
-:is(.pill, .segc button, .pl-chip, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .nt-acao):active:not(:disabled) {
+:is(.pill, .segc button, .pl-atalho, .pl-porta, .pl-cam, .pp-luz, .nb, .stepper button, .caixa, .dots button, .nt-acao):active:not(:disabled) {
   scale: 0.96;
 }
 /* os grandes encolhem menos: 4 % de uma câmara é muito */
@@ -3855,20 +4018,6 @@ button,
 .pl-mini .planta {
   position: absolute;
   inset: 0;
-}
-/* na miniatura não há paredes grossas a competir com a luz */
-.pl-mini .planta .parede.fora {
-  stroke-width: 1;
-}
-.pl-mini .planta .movel {
-  opacity: 0.7;
-}
-/* o aviso: a divisão acende-se em laranja e as outras recuam */
-.pl-mini.com-destaque .zona:not(.destaque) {
-  opacity: 0.45;
-}
-.planta .zona.destaque .chao {
-  fill: color-mix(in oklab, var(--warn) 24%, var(--l1));
 }
 .acol.incerto .pl-mini {
   opacity: 0.4;

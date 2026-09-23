@@ -66,6 +66,8 @@ class CasaVacuum(CasaEntity, StateVacuumEntity):
                     break
                 feito -= m2
             atributos["divisao"] = divisao
+            # quanto desta divisão já está limpo (0–1): a planta desenha o rasto até aí
+            atributos["progresso"] = round(min(1.0, feito / m2), 2)
         return atributos
 
     def _set(self, activity: str) -> None:

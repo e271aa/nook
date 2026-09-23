@@ -46,7 +46,8 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 ## Movimento
 
 - Só `transform` e `opacity`. As mudanças de layout (presença, repouso, painel da
-  planta) fazem-se de uma vez; o movimento é o do que entra.
+  planta) fazem-se de uma vez; o movimento é o do que entra. Na planta, a
+  aproximação à divisão escolhida é `translate` + `scale` do desenho.
 - Sem desfocar em transições.
 - Sem `element.animate()` em elementos que ainda não estão no ecrã: a animação
   fica presa no primeiro fotograma.
@@ -73,7 +74,30 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 
 ## Planta
 
-- Os dados vivem em `config.json → planta` (zonas, portas, móveis, pontos de luz e
-  câmaras); o desenho é SVG gerado a partir deles.
-- A luz de cada candeeiro tem a cor dele; o sol entra pelas janelas conforme o
-  azimute real; o robô aparece na divisão que está a limpar.
+- Os dados vivem em `config.json → planta` (zonas, janelas, portas, móveis, pontos
+  de luz e câmaras); o desenho é SVG gerado a partir deles. As janelas dizem o
+  estore e o sensor de cada uma; sem lista, sai uma janela por estore.
+- A planta de arquiteto recua (paredes cheias num cinzento baixo, móveis em traço
+  fino) e o que está vivo desenha-se por cima: a luz de cada candeeiro como luz,
+  na cor e no brilho dela (soma-se ao chão no escuro, escurece-o no claro); o sol
+  como a mancha que o estore deixa entrar, tão comprida quanto o sol está baixo;
+  o movimento e a rega como ondas; o robô com o rasto do que já limpou.
+- Nenhum estado depende só da cor: a porta da rua diz "Trancada" ou
+  "Destrancada", a janela aberta tem folhas e um aviso com texto, o robô em pausa
+  tem o sinal de pausa.
+- Com uma divisão escolhida, a planta não encolhe: aproxima-se dela. Os nomes e as
+  pílulas ficam do mesmo tamanho a qualquer distância.
+- Os atalhos por cima de cada divisão só aparecem para o que está ligado (apagar
+  as luzes acesas, desligar a rega); o resto abre-se ao tocar na divisão.
+- Com pouco espaço (o telemóvel) ficam os nomes; saem o clima, os atalhos e as
+  câmaras, e o aviso e o cadeado ficam só com o ícone.
+- Na TV, ao lado da planta, a lista "Agora": luzes acesas, avisos, porta da rua,
+  movimento, robô.
+- Sem ligação à casa, a planta mostra o último estado conhecido e diz de quando é;
+  a luz e o sol recuam e os atalhos e as ações do piso escondem-se.
+- As cores da planta são tokens `--pl-*` derivados das cores do painel, por isso
+  servem a todas as paletas. No claro, o texto sobre cor é branco puro e o âmbar
+  dos atalhos é mais escuro que o `--solar`, para se ler (mínimo 4,5:1).
+- Uma pílula que muda (porta, janela, aviso novo) dá um salto pequeno, uma vez
+  (`cubic-bezier(.34, 1.4, .64, 1)`, 0,92 → 1). É a única curva com ressalto do
+  painel e é de propósito; o detetor do impeccable assinala-a.
