@@ -450,7 +450,9 @@
 
     if (naMao) raiz.append(pag1, pag2, strip);
     else {
-      raiz.append(pager, nav, strip);
+      // o seletor de páginas fica por cima dos cartões, à esquerda: quem lê o
+      // título e vê o período à direita vê logo que há duas páginas
+      raiz.append(nav, pager, strip);
 
       // ← / → só fazem sentido com rato à vista; ignora-se a escrever nalgum campo
       document.addEventListener("keydown", function aoTeclar(e) {

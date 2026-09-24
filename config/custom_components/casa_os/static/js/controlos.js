@@ -502,9 +502,10 @@
     });
     porDivisao.forEach(({ r, itens: doGrupo }) => {
       if (doGrupo.length === 1) {
-        const c = cartao(tipo, doGrupo[0]);
-        c.classList.add("solto");
-        grupos.appendChild(c);
+        // reserva a linha do nome (invisível): assim os cartões alinham com os das outras colunas
+        const solto = el(`<div class="grupo-divisao solto" data-n="1"><span class="cap" aria-hidden="true">${esc(r.name)}</span></div>`);
+        solto.appendChild(cartao(tipo, doGrupo[0]));
+        grupos.appendChild(solto);
         return;
       }
       const bloco = el(`<div class="grupo-divisao" data-n="${doGrupo.length}"><span class="cap">${esc(r.name)}</span></div>`);

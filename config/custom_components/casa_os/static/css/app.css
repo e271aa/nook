@@ -167,7 +167,7 @@ svg {
   left: 0;
   top: 50%;
   width: 3px;
-  height: calc(20px * var(--u));
+  height: calc(24px * var(--u));
   border-radius: var(--rp);
   background: var(--tint);
   transform: translateY(-50%);
@@ -267,7 +267,8 @@ svg {
   box-sizing: border-box;
   border-radius: var(--rp);
   background: var(--good);
-  border: calc(2px * var(--u)) solid var(--l1);
+  /* o anel de 2 px tem a cor da barra, para o ponto se separar do avatar */
+  border: calc(2px * var(--u)) solid color-mix(in oklab, var(--l1) 55%, var(--bg));
 }
 
 /* ───── Separadores de baixo (telemóvel) ───── */
@@ -1489,7 +1490,7 @@ button.li:active {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(150px * var(--u)), 1fr));
   grid-auto-flow: row dense;
-  align-items: end;
+  align-items: stretch;
   gap: var(--s4) var(--s3);
   flex: 0 0 auto;
   min-height: 0;
@@ -1506,10 +1507,19 @@ button.li:active {
 .grupo-divisao > .cap {
   padding-left: var(--s1);
 }
+/* um aparelho sozinho reserva a linha do nome, vazia, para os cartões de todas
+   as colunas ficarem à mesma altura */
+.grupo-divisao.solto > .cap {
+  visibility: hidden;
+}
 .grupo-divisao .tiles {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   grid-template-columns: repeat(var(--k, 2), minmax(0, 1fr));
-  grid-auto-rows: minmax(0, max-content);
+  grid-auto-rows: minmax(0, 1fr);
+}
+/* os cartões esticam até ao fim da fila: todos à mesma altura */
+.grupo-divisao.solto > .tile {
+  flex: 1 1 auto;
 }
 .zona:has(> .grupos) {
   overflow: hidden;
@@ -3844,7 +3854,7 @@ select.pill {
 
 .pag-nav {
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--s3);
   flex: 0 0 auto;
 }
