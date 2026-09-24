@@ -56,6 +56,7 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
   de que precisa e as outras encaixam ao lado. O que não cabe vai para a página
   seguinte (medindo a altura, em qualquer piso); o piso nunca muda sozinho. Com
   um piso escolhido, todas as ações da fila são desse piso.
+  Na TV, que quase não se toca, as páginas passam sozinhas (12 s).
 - **Janelas por cima** (menu, câmara ampliada, calendário, confirmações) prendem
   o foco enquanto estão abertas e devolvem-no ao fechar (`K.prenderFoco`).
 - **Demonstração** (Definições, só com `"demo": true` no `config.json`): botões que

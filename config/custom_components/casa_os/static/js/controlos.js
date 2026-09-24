@@ -473,6 +473,19 @@
     }
 
     desenha();
+
+    // A TV vê-se do sofá e quase não se toca: com mais de uma página, as
+    // páginas passam sozinhas (um aparelho escondido não pode ficar escondido)
+    if (ecra() === "sala") {
+      let primeira = true;
+      K.intervalo(() => {
+        if (primeira) return (primeira = false);
+        if (paginas.length > 1 && !document.hidden) {
+          pagina = (pagina + 1) % paginas.length;
+          mostra();
+        }
+      }, 12000);
+    }
     // o ecrã muda de tamanho (a barra recolhe, o tamanho do texto muda): volta a paginar
     let pousar = null;
     let antes = "";
