@@ -15,7 +15,6 @@
   const { CFG, bind, entre, ecra, divisoes, eGaragem, posicao, ico } = K;
 
   const PISOS = CFG.floors || [];
-  const POR_PAGINA = 28;
 
   const TIPOS = [
     { id: "luzes", nome: "Luzes", sub: "Acender, apagar e regular" },
@@ -167,6 +166,7 @@
     const lista = [];
 
     if (tipo === "luzes") {
+      // com um piso escolhido, tudo nesta fila é desse piso: a casa inteira está em "Todos"
       const acesas = (ids) => ids.filter((l) => HA.isOn(l));
       const alvoL = contextual ? doPiso : todos;
       lista.push({
@@ -176,19 +176,11 @@
         corre: () => HA.call("light", "turn_on", alvoL),
       });
       lista.push({
-        icone: "bulb", texto: "Desligar todas", ids: todos,
-        sub: () => (acesas(todos).length ? plural(acesas(todos).length, "acesa", "acesas") : "estão todas apagadas"),
-        ativa: () => acesas(todos).length > 0,
-        corre: () => HA.call("light", "turn_off", todos),
+        icone: "bulb", texto: contextual ? `Apagar as do ${contextual}` : "Apagar todas", ids: alvoL,
+        sub: () => (acesas(alvoL).length ? plural(acesas(alvoL).length, "acesa", "acesas") : "estão todas apagadas"),
+        ativa: () => acesas(alvoL).length > 0,
+        corre: () => HA.call("light", "turn_off", alvoL),
       });
-      if (contextual) {
-        lista.push({
-          icone: "bulb", texto: `Desligar as do ${contextual}`, ids: doPiso,
-          sub: () => (acesas(doPiso).length ? plural(acesas(doPiso).length, "acesa", "acesas") : "estão apagadas"),
-          ativa: () => acesas(doPiso).length > 0,
-          corre: () => HA.call("light", "turn_off", doPiso),
-        });
-      }
     } else if (tipo === "estores") {
       const abertos = (ids) => ids.filter((c) => posicao(c) > 0);
       const alvo = contextual ? doPiso : todos;
@@ -260,7 +252,7 @@
       const dim = ids.filter(regulavel);
       if (!dim.length) return null;
       return {
-        tipo: "slider", rotulo: "Brilho", ids: dim,
+        tipo: "slider", rotulo: "Brilho", cheio: "Brilho de todas", ids: dim,
         // as acesas, ou todas se nenhuma estiver acesa
         valor: () => {
           const on = dim.filter((l) => HA.isOn(l));
@@ -276,14 +268,14 @@
     }
     if (tipo === "estores") {
       return {
-        tipo: "slider", rotulo: "Abertos", tom: "estore", ids,
+        tipo: "slider", rotulo: "Abertura", cheio: "Abertura de todos", tom: "estore", ids,
         valor: () => media(ids.map(posicao)),
         aplica: (v) => HA.call("cover", "set_cover_position", ids, { position: v }),
       };
     }
     if (tipo === "clima") {
       return {
-        tipo: "stepper", rotulo: "Temperatura", ids, min: 16, max: 30, passo: 0.5,
+        tipo: "stepper", rotulo: "Temperatura", cheio: "Temperatura de todos", ids, min: 16, max: 30, passo: 0.5,
         valor: () => {
           const ligados = ids.filter((c) => (HA.get(c) || {}).state !== "off");
           const de = ligados.length ? ligados : ids;
@@ -296,7 +288,7 @@
   }
 
   function comandoMestre(m) {
-    const rotuloCheio = `${m.rotulo} de todos`;
+    const rotuloCheio = m.cheio;
     if (m.tipo === "slider") {
       // manda na casa inteira: só obedece a um arrasto, nunca a um toque perdido.
       // O rótulo e o valor vivem dentro do próprio comando ("Brilho de todos · 29 %"),
@@ -397,7 +389,57 @@
     raiz.appendChild(zona);
 
     let pagina = 0;
+    let paginas = [];
     const esc2 = K.escopo();
+    const pontos = el('<div class="dots" role="tablist" aria-label="Páginas"></div>');
+
+    // Tablet e TV não rolam: o que não cabe vai para a página seguinte. As
+    // páginas fazem-se medindo, não contando cartões — um grupo de divisão
+    // ocupa mais do que um cartão solto, e o tamanho muda com o ecrã.
+    const mostra = () => {
+      pagina = Math.min(pagina, Math.max(0, paginas.length - 1));
+      const aVista = new Set(paginas[pagina] || []);
+      const grupos = zona.querySelector(".grupos");
+      if (grupos) [...grupos.children].forEach((b) => (b.hidden = !aVista.has(b)));
+      pontos.hidden = paginas.length < 2;
+      pontos.innerHTML = "";
+      paginas.forEach((_, i) => {
+        const b = el(`<button role="tab" aria-selected="${i === pagina}" aria-label="Página ${i + 1} de ${paginas.length}"></button>`);
+        b.addEventListener("click", () => {
+          pagina = i;
+          mostra();
+        });
+        pontos.appendChild(b);
+      });
+    };
+    const paginar = () => {
+      const grupos = zona.querySelector(".grupos");
+      if (!grupos) return;
+      const blocos = [...grupos.children];
+      blocos.forEach((b) => (b.hidden = false));
+      pontos.hidden = true;
+      ajustaColunas(grupos);
+      const H = zona.clientHeight;
+      if (!H) return;
+      const fundo = (b) => b.offsetTop + b.offsetHeight;
+      if (blocos.every((b) => fundo(b) <= H + 1)) {
+        paginas = [blocos];
+        return mostra();
+      }
+      // com mais de uma página, as bolinhas ficam com o seu espaço em baixo
+      pontos.hidden = false;
+      const Hp = H - pontos.offsetHeight - parseFloat(getComputedStyle(zona).rowGap || 0);
+      paginas = [];
+      let resto = blocos;
+      while (resto.length) {
+        blocos.forEach((b) => (b.hidden = !resto.includes(b)));
+        const cabem = resto.filter((b) => fundo(b) <= Hp + 1);
+        const pag = cabem.length ? cabem : [resto[0]];
+        paginas.push(pag);
+        resto = resto.filter((b) => !pag.includes(b));
+      }
+      mostra();
+    };
 
     const desenha = () => {
       K.esvaziar(esc2);
@@ -406,39 +448,19 @@
         acoesDe(tipo).forEach((a) => acoes.appendChild(botaoAcao(a)));
         const mestre = mestreDe(tipo);
         if (mestre) acoes.appendChild(comandoMestre(mestre));
-
-        const todos = doFiltro(itensDe(tipo));
-        const paginas = Math.max(1, Math.ceil(todos.length / POR_PAGINA));
-        pagina = Math.min(pagina, paginas - 1);
-        const daPagina = todos.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
-
         zona.innerHTML = "";
-        zona.appendChild(grelha(tipo, daPagina));
-        if (paginas > 1) {
-          const pontos = el('<div class="dots" role="tablist"></div>');
-          for (let i = 0; i < paginas; i++) {
-            const b = el(`<button role="tab" aria-selected="${i === pagina}" aria-label="Página ${i + 1}"></button>`);
-            b.addEventListener("click", () => {
-              pagina = i;
-              desenha();
-            });
-            pontos.appendChild(b);
-          }
-          zona.appendChild(pontos);
-        }
+        zona.append(grelha(tipo, doFiltro(itensDe(tipo))), pontos);
       });
+      requestAnimationFrame(paginar);
     };
 
     // o piso só aparece quando há mais de um com aparelhos deste tipo
     const pisos = [...new Set(itensDe(tipo).map((i) => i.r.floor))];
-    let porPiso = null;
-    let auto = true; // o automático (abaixo) para assim que a pessoa escolher à mão
     if (pisos.length > 1) {
       const ids = ["todos", ...PISOS.filter((f) => pisos.includes(f.id)).map((f) => f.id)];
       if (!ids.includes(filtro)) filtro = "todos";
       const nomes = ["Todos", ...ids.slice(1).map(nomePiso)];
-      porPiso = K.segmentado(nomes, ids.indexOf(filtro), (i) => {
-        auto = false;
+      const porPiso = K.segmentado(nomes, ids.indexOf(filtro), (i) => {
         filtro = ids[i];
         pagina = 0;
         desenha();
@@ -451,39 +473,16 @@
     }
 
     desenha();
-
-    // Só depois de o esquema assentar (o arranque da página ainda mexe o
-    // layout — estados da casa a chegar, o resto da página a montar-se) é
-    // que dá para medir se "Todos" coube sem rolar. Um só fotograma apanha
-    // isso a meio caminho; por isso espera-se que o tamanho da zona pare de
-    // mudar, não um número fixo de fotogramas. Se não couber, cai para o
-    // piso com mais aparelhos deste tipo — e se mesmo esse não couber (a TV
-    // gasta mais altura nas ações), vai tentando o seguinte, do mais cheio ao
-    // mais vazio — em vez de encolher tudo para caber (parede e TV não rolam).
-    if (porPiso && filtro === "todos" && ecra() !== "mao") {
-      const ids = ["todos", ...PISOS.filter((f) => pisos.includes(f.id)).map((f) => f.id)];
-      const contagem = {};
-      itensDe(tipo).forEach((i) => (contagem[i.r.floor] = (contagem[i.r.floor] || 0) + 1));
-      const candidatos = pisos.slice().sort((a, b) => (contagem[b] || 0) - (contagem[a] || 0));
-      let i = 0;
-      let pousar = null;
-      const verificar = () => {
-        if (!auto || zona.scrollHeight <= zona.clientHeight + 1 || i >= candidatos.length) {
-          ro.disconnect();
-          return;
-        }
-        filtro = candidatos[i];
-        i++;
-        pagina = 0;
-        desenha();
-        porPiso.definir(ids.indexOf(filtro));
-      };
-      const ro = new ResizeObserver(() => {
-        clearTimeout(pousar);
-        pousar = setTimeout(verificar, 200);
-      });
-      ro.observe(zona);
-    }
+    // o ecrã muda de tamanho (a barra recolhe, o tamanho do texto muda): volta a paginar
+    let pousar = null;
+    let antes = "";
+    new ResizeObserver(() => {
+      const agora = `${zona.clientWidth}x${zona.clientHeight}`;
+      if (agora === antes) return;
+      antes = agora;
+      clearTimeout(pousar);
+      pousar = setTimeout(paginar, 120);
+    }).observe(zona);
     return raiz;
   }
 
@@ -495,35 +494,41 @@
    * grupo, mais entre grupos.
    */
   function grelha(tipo, itens) {
-    const grupos = el('<div class="grupos"></div>');
+    const grupos = el(`<div class="grupos ${tipo}"></div>`);
     const porDivisao = new Map();
     itens.forEach((it) => {
       if (!porDivisao.has(it.r.id)) porDivisao.set(it.r.id, { r: it.r, itens: [] });
       porDivisao.get(it.r.id).itens.push(it);
     });
-
-    let soltos = [];
-    const flush = () => {
-      if (!soltos.length) return;
-      const mini = el(`<div class="tiles ${tipo}"></div>`);
-      soltos.forEach((it) => mini.appendChild(cartao(tipo, it)));
-      grupos.appendChild(mini);
-      soltos = [];
-    };
     porDivisao.forEach(({ r, itens: doGrupo }) => {
       if (doGrupo.length === 1) {
-        soltos.push(doGrupo[0]);
+        const c = cartao(tipo, doGrupo[0]);
+        c.classList.add("solto");
+        grupos.appendChild(c);
         return;
       }
-      flush();
-      const bloco = el(`<div class="grupo-divisao"><span class="cap">${esc(r.name)}</span></div>`);
+      const bloco = el(`<div class="grupo-divisao" data-n="${doGrupo.length}"><span class="cap">${esc(r.name)}</span></div>`);
       const mini = el(`<div class="tiles ${tipo}"></div>`);
       doGrupo.forEach((it) => mini.appendChild(cartao(tipo, it)));
       bloco.appendChild(mini);
       grupos.appendChild(bloco);
     });
-    flush();
     return grupos;
+  }
+
+  /**
+   * Uma divisão ocupa as colunas de que precisa (até à largura toda) e as
+   * outras encaixam ao lado, em vez de cada uma gastar uma fila. As colunas
+   * são as que a grelha tiver neste ecrã; os cartões de dentro alinham com
+   * os de fora porque têm a mesma largura e o mesmo intervalo.
+   */
+  function ajustaColunas(grupos) {
+    const cols = getComputedStyle(grupos).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    grupos.querySelectorAll(":scope > .grupo-divisao").forEach((b) => {
+      const k = Math.min(Number(b.dataset.n) || 1, cols);
+      b.style.gridColumn = `span ${k}`;
+      b.style.setProperty("--k", k);
+    });
   }
 
   /** No telemóvel: um bloco por piso, e a página rola. */

@@ -276,6 +276,20 @@
   /** As seis teclas. São as da instalação: uma casa maior não tem mais. */
   function teclas() {
     const node = el('<div class="keys"></div>');
+    // escondidas (sempre na TV; no tablet quando ninguém está perto) não recebem
+    // o foco: um Tab não pode ir parar a um botão que não se vê
+    const raiz = document.documentElement;
+    const sincroniza = () => {
+      node.inert = raiz.dataset.screen === "sala" || (raiz.dataset.teclas === "presenca" && raiz.dataset.presenca === "longe");
+    };
+    sincroniza();
+    let esteve = false;
+    const mo = new MutationObserver(() => {
+      if (node.isConnected) esteve = true;
+      else if (esteve) return mo.disconnect();
+      sincroniza();
+    });
+    mo.observe(raiz, { attributes: true, attributeFilter: ["data-screen", "data-teclas", "data-presenca"] });
 
     (CFG.acoes || []).forEach((a) => {
       const b = el(`<button class="key${a.tipo === "cena" ? " prime" : ""}">

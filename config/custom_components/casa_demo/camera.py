@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 import random
 import time
+import unicodedata
 from dataclasses import dataclass
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
@@ -50,6 +51,12 @@ class Snapshot:
     now: str
     area: float
     vacuum: str
+
+
+def _osd(texto: str) -> str:
+    """O texto gravado na imagem, em maiúsculas e sem acentos, como nas câmaras
+    a sério — e porque a letra de reserva do Pillow não tem o "Â"."""
+    return "".join(c for c in unicodedata.normalize("NFD", texto.upper()) if not unicodedata.combining(c))
 
 
 def _font(size: int) -> ImageFont.ImageFont:
@@ -112,7 +119,7 @@ def _finish(img: Image.Image, s: Snapshot, rng: random.Random) -> bytes:
     # Margem de 72 px: os cartões cortam as laterais da imagem
     pad = 72
     d.rectangle([0, 0, W, 44], fill=(0, 0, 0))
-    d.text((pad, 10), s.label.upper(), font=f, fill=(255, 255, 255))
+    d.text((pad, 10), _osd(s.label), font=f, fill=(255, 255, 255))
     d.text((W - pad - d.textlength(s.now, font=f), 10), s.now, font=f, fill=(255, 255, 255))
     if int(time.time()) % 2 == 0:
         d.ellipse([W - pad - d.textlength(s.now, font=f) - 30, 16, W - pad - d.textlength(s.now, font=f) - 16, 30], fill=(235, 50, 50))

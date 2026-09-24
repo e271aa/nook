@@ -455,7 +455,9 @@
 
   function subtitulo() {
     const n = (CFG.cameras || []).length;
-    const dica = ecra() !== "mao" && n > 1 ? " · arrasta uma câmara para a trocar de sítio" : "";
+    // a TV não se toca; no toque é preciso segurar antes de arrastar
+    const rato = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const dica = ecra() === "braco" && n > 1 ? (rato ? " · arrasta uma câmara para a trocar de sítio" : " · segura uma câmara e arrasta para a trocar de sítio") : "";
     return `${fmt.n(n)} ${n === 1 ? "câmara" : "câmaras"} ao vivo${dica}`;
   }
 
@@ -492,13 +494,14 @@
     // o aviso do que falta fechar fica sempre no cabeçalho, mesmo só com câmaras
     const acoes = el('<div class="row" style="align-items:center"></div>');
     acoes.appendChild(estado());
-    const soBtn = el('<button class="iconbtn" aria-pressed="false"></button>');
+    // Um interruptor com nome fixo: diz-se "ligado" pelo fundo e pelo
+    // aria-pressed, não trocando o nome (um leitor ouvia "Vista completa,
+    // premido", que é o contrário do que está no ecrã).
+    const soBtn = el(`<button class="pill so-cam" aria-pressed="false">${icon("camera", "ic-s")}<span>Só câmaras</span></button>`);
     const pintaBotao = () => {
       const ativo = corpo.classList.contains("so-cameras");
       soBtn.setAttribute("aria-pressed", String(ativo));
-      soBtn.setAttribute("aria-label", ativo ? "Vista completa" : "Só câmaras");
-      soBtn.title = ativo ? "Vista completa (Esc)" : "Só câmaras";
-      soBtn.innerHTML = icon(ativo ? "recolher-ecra" : "expandir", "ic-s");
+      soBtn.title = ativo ? "Esc volta à vista completa" : "";
     };
     soBtn.addEventListener("click", () => {
       const novo = !corpo.classList.contains("so-cameras");

@@ -29,7 +29,9 @@
     { id: "controlos", title: "Controlos", icon: "sliders", ecras: ["braco", "sala", "mao"] },
     { id: "vigilancia", title: "Vigilância", icon: "camera", ecras: ["braco", "sala", "mao"] },
     { id: "energia", title: "Energia", icon: "bolt", ecras: ["braco", "sala", "mao"] },
-    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"] },
+    // Na TV não existe de todo (nem no menu, nem pelo endereço): a lista de
+    // compras e os lembretes são da casa, não de quem está de visita na sala.
+    { id: "rotina", title: "Rotina", icon: "list", ecras: ["braco"], nunca: ["sala"] },
     // As Definições não são uma secção da casa: têm o seu botão no fundo da
     // barra e a sua linha no menu, e não entram na navegação principal.
     { id: "definicoes", title: "Definições", icon: "definicoes", ecras: [], oculta: true },
@@ -340,9 +342,10 @@
   // ───────── Rotas ─────────
 
   const sectionOf = (id) => SECTIONS.find((s) => s.id === id);
+  const existe = (s, ecra = document.documentElement.getAttribute("data-screen")) => !!s && !(s.nunca || []).includes(ecra);
   const parseHash = () => {
     const partes = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
-    return { sec: sectionOf(partes[0]) ? partes[0] : "casa", partes };
+    return { sec: existe(sectionOf(partes[0])) ? partes[0] : "casa", partes };
   };
   const go = (id) => {
     location.hash = `#/${id === "casa" ? "" : id}`;
@@ -379,8 +382,26 @@
     // o Menu só existe quando há secções fora da barra — no tablet e na TV
     // estão todas à vista, e um menu que repete a barra é só mais uma decisão
     const menu = side.querySelector(".menu-btn");
-    if (menu) menu.hidden = !SECTIONS.some((s) => !s.oculta && !s.ecras.includes(ecra));
+    if (menu) menu.hidden = !SECTIONS.some((s) => !s.oculta && existe(s, ecra) && !s.ecras.includes(ecra));
+    ajustaBarra();
   }
+
+  /*
+   * Com o texto a 110 % ou 120 %, as secções deixam de caber na altura da
+   * barra e a última ficava escondida sem aviso. A barra aperta-se sozinha:
+   * primeiro botões mais baixos, depois só ícones (como a recolhida).
+   */
+  function ajustaBarra() {
+    const nav = side.querySelector(".nav");
+    if (!nav || !side.isConnected) return;
+    const cabe = () => nav.scrollHeight <= nav.clientHeight + 1;
+    side.removeAttribute("data-apertada");
+    if (cabe()) return;
+    side.setAttribute("data-apertada", "1");
+    if (cabe()) return;
+    side.setAttribute("data-apertada", "2");
+  }
+  new ResizeObserver(() => ajustaBarra()).observe(side);
 
   /* ───────── Barra lateral: recolher ─────────
    * Só existe na parede e na TV (no telemóvel não há barra). A escolha é do
@@ -395,10 +416,10 @@
     side.setAttribute("data-colapsada", colapsada(ecra) ? "sim" : "nao");
     const btn = side.querySelector(".colapsar-btn");
     if (!btn) return;
-    const acao = colapsada(ecra) ? "Expandir" : "Recolher";
-    btn.setAttribute("aria-label", `${acao} barra lateral`);
-    btn.title = `${acao} barra lateral (tecla [)`;
-    btn.setAttribute("aria-pressed", String(colapsada(ecra)));
+    // um nome fixo e o estado em aria-expanded: o botão não é uma secção
+    // "ligada", e trocar o nome e o estado ao mesmo tempo lia-se ao contrário
+    btn.setAttribute("aria-expanded", String(!colapsada(ecra)));
+    btn.title = `${colapsada(ecra) ? "Expandir" : "Recolher"} a barra lateral (tecla [)`;
   }
 
   function alternarColapsada() {
@@ -440,7 +461,7 @@
     const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições" title="Definições">${icon("definicoes")}<span>Definições</span></button>`);
     defs.addEventListener("click", () => go("definicoes"));
     foot.appendChild(defs);
-    const colapsar = el(`<button class="nb colapsar-btn" aria-pressed="false">${icon("barra")}<span>Recolher</span></button>`);
+    const colapsar = el(`<button class="nb colapsar-btn" aria-label="Barra lateral" aria-expanded="true">${icon("barra")}<span>Recolher</span></button>`);
     colapsar.addEventListener("click", alternarColapsada);
     foot.appendChild(colapsar);
     aplicarColapsada(document.documentElement.getAttribute("data-screen"));
@@ -449,9 +470,12 @@
   // ───────── Menu ─────────
 
   let aberto = null;
+  let soltaMenu = null;
 
   function closeMenu() {
     if (!aberto) return;
+    if (soltaMenu) soltaMenu();
+    soltaMenu = null;
     aberto.forEach((n) => n.remove());
     aberto = null;
   }
@@ -466,7 +490,7 @@
 
     const secs = el('<div></div>');
     secs.appendChild(el('<div class="cap" style="margin-bottom:var(--s2)">Secções</div>'));
-    SECTIONS.filter((s) => !s.oculta).forEach((s) => {
+    SECTIONS.filter((s) => !s.oculta && existe(s, ecra)).forEach((s) => {
       const fora = !s.ecras.includes(ecra);
       const r = el(
         `<button class="mrow"${s.id === atual ? ' aria-current="page"' : ""}>${icon(s.icon)}
@@ -496,6 +520,7 @@
     scrim.addEventListener("click", closeMenu);
     document.body.append(scrim, drawer);
     aberto = [scrim, drawer];
+    soltaMenu = window.KIT.prenderFoco(drawer);
   }
 
   document.addEventListener("keydown", (e) => {
@@ -503,8 +528,10 @@
       closeMenu();
       return;
     }
-    // "[" recolhe/expande a barra — mas não enquanto se escreve nalgum campo
-    if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey) return;
+    // "[" recolhe/expande a barra — mas não enquanto se escreve nalgum campo.
+    // Num teclado português o "[" faz-se com Option+8 (Mac) ou AltGr+8
+    // (Windows, que chega como Ctrl+Alt): o Alt não pode excluir a tecla.
+    if (e.key !== "[" || e.metaKey || (e.ctrlKey && !e.altKey)) return;
     const alvo = e.target;
     if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return;
     alternarColapsada();

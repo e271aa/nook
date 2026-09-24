@@ -444,7 +444,7 @@
     });
 
     const acoes = el('<div class="row acoes"></div>');
-    const apagar = el(`<button class="pill">${icon("bulb", "ic-s")}Desligar as luzes</button>`);
+    const apagar = el(`<button class="pill">${icon("bulb", "ic-s")}Apagar as luzes</button>`);
     apagar.addEventListener("click", () => HA.call("light", "turn_off", luzes(r)));
     const fechar = el(`<button class="pill">${icon("blinds", "ic-s")}Fechar os estores</button>`);
     fechar.addEventListener("click", () => HA.call("cover", "set_cover_position", estores(r), { position: 0 }));

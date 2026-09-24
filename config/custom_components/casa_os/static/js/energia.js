@@ -176,7 +176,9 @@
       }),
     );
 
+    let solta = null;
     const fecha = () => {
+      if (solta) solta();
       scrim.remove();
       caixa.remove();
       document.removeEventListener("keydown", tecla);
@@ -186,6 +188,7 @@
     caixa.querySelector(".sb .iconbtn").addEventListener("click", fecha);
     scrim.addEventListener("click", fecha);
     caixa.querySelector(".cal-aplicar").addEventListener("click", () => {
+      if (solta) solta();
       scrim.remove();
       caixa.remove();
       document.removeEventListener("keydown", tecla);
@@ -194,6 +197,7 @@
     document.addEventListener("keydown", tecla);
     document.body.append(scrim, caixa);
     desenha();
+    solta = window.KIT.prenderFoco(caixa);
   }
 
   // ───────── O relatório ─────────
@@ -333,7 +337,7 @@
   const temRato = () =>
     ultimoPonteiro ? ultimoPonteiro === "mouse" : window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-  // "Agora" é o fluxo instantâneo; os outros são o histórico; "Escolher…" é um intervalo à mão
+  // "Agora" é o fluxo instantâneo; os outros são o histórico; "Datas…" é um intervalo à mão
   const MODOS_FIXOS = [{ id: "agora", nome: "Agora" }, ...PERIODOS];
 
   function energia(args) {
@@ -349,7 +353,7 @@
     bind(sub, entre([P.home, P.solar, P.grid, P.battery]), () => (sub.textContent = frase()));
 
     const escolhido = ativo && ativo.id === "de" ? ativo : null;
-    const nomes = [...MODOS_FIXOS.map((m) => m.nome), escolhido ? (naMao ? escolhido.nomeCurto : escolhido.nome) : naMao ? "Datas…" : "Escolher…"];
+    const nomes = [...MODOS_FIXOS.map((m) => m.nome), escolhido ? (naMao ? escolhido.nomeCurto : escolhido.nome) : "Datas…"];
     const indice = ativo ? (escolhido ? nomes.length - 1 : MODOS_FIXOS.findIndex((m) => m.id === ativo.id)) : 0;
     let seg;
     seg = K.segmentado(nomes, indice, (i) => {
@@ -357,7 +361,7 @@
         location.hash = i === 0 ? "#/energia" : `#/energia/${MODOS_FIXOS[i].id}`;
         return;
       }
-      // "Escolher…" abre o calendário; se se desistir, o segmentado volta ao que estava
+      // "Datas…" abre o calendário; se se desistir, o segmentado volta ao que estava
       calendario(
         escolhido,
         (a, b) => (location.hash = `#/energia/de/${chaveDia(a)}/${chaveDia(b)}`),
@@ -418,11 +422,13 @@
     // sempre com um tamanho real, não é preciso redesenhá-los ao aparecer
     const graficos = {};
     const dadosG = {};
-    const pontos = el('<div class="dots" role="tablist"></div>');
-    const anterior = el(`<button class="iconbtn pag-seta" aria-label="Página anterior">${icon("back", "ic-s")}</button>`);
-    const seguinte = el(`<button class="iconbtn pag-seta" aria-label="Página seguinte">${icon("chev", "ic-s")}</button>`);
+    // As páginas dizem-se pelo nome: bolinhas sem nome não contavam que havia
+    // um fluxo de energia do outro lado, sobretudo no toque, sem setas.
+    const PAGINAS = ["Consumo e produção", "Fluxo de energia"];
+    const escolhe = K.segmentado(PAGINAS, paginaAtual, (i) => mostra(i));
+    escolhe.classList.add("pag-seg");
     const nav = el('<div class="row pag-nav"></div>');
-    nav.append(anterior, pontos, seguinte);
+    nav.append(escolhe);
     const pista = el('<div class="pager-pista"></div>');
     pista.append(pag1, pag2);
     const pager = el('<div class="pager"></div>');
@@ -439,33 +445,12 @@
       paginaAtual = i;
       arrasto = 0;
       posicionar(true);
-      anterior.disabled = i === 0;
-      seguinte.disabled = i === 1;
-      [...pontos.children].forEach((b, j) => b.setAttribute("aria-selected", String(j === i)));
+      escolhe.definir(i);
     };
-    ["Consumo e produção", "Fluxo de energia"].forEach((nome, i) => {
-      const b = el(`<button role="tab" aria-label="${esc(nome)}"></button>`);
-      b.addEventListener("click", () => mostra(i));
-      pontos.appendChild(b);
-    });
-    anterior.addEventListener("click", () => mostra(paginaAtual - 1));
-    seguinte.addEventListener("click", () => mostra(paginaAtual + 1));
 
     if (naMao) raiz.append(pag1, pag2, strip);
     else {
       raiz.append(pager, nav, strip);
-
-      // rato ou toque: mostra-se ou esconde-se a si mesma sempre que o
-      // último gesto muda de tipo (um híbrido pode usar os dois)
-      const aplicaModo = () => nav.classList.toggle("modo-toque", !temRato());
-      aplicaModo();
-      document.addEventListener("pointerdown", function aoApontar() {
-        if (!raiz.isConnected) {
-          document.removeEventListener("pointerdown", aoApontar);
-          return;
-        }
-        aplicaModo();
-      });
 
       // ← / → só fazem sentido com rato à vista; ignora-se a escrever nalgum campo
       document.addEventListener("keydown", function aoTeclar(e) {
@@ -486,7 +471,7 @@
       // de 10 px claramente na horizontal — antes disso pode ser um arrasto de
       // zoom no gráfico (que trata do seu) ou um scroll vertical (não há
       // aqui, mas o gesto começa sempre fora de .gf-svg para não lho roubar).
-      let x0 = null, y0 = 0, t0 = 0, direcao = null;
+      let x0 = null, y0 = 0, direcao = null, amostras = [];
       pager.addEventListener("touchstart", (e) => {
         if (e.target.closest(".gf-svg")) {
           x0 = null;
@@ -494,7 +479,7 @@
         }
         x0 = e.touches[0].clientX;
         y0 = e.touches[0].clientY;
-        t0 = Date.now();
+        amostras = [{ t: Date.now(), x: x0 }];
         direcao = null;
         pista.style.transition = "none";
       }, { passive: true });
@@ -503,6 +488,8 @@
         if (x0 === null) return;
         const dx = e.touches[0].clientX - x0;
         const dy = e.touches[0].clientY - y0;
+        amostras.push({ t: Date.now(), x: e.touches[0].clientX });
+        if (amostras.length > 12) amostras.shift();
         if (direcao === null) {
           if (Math.hypot(dx, dy) < 10) return;
           direcao = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
@@ -520,10 +507,13 @@
         if (x0 === null) return;
         if (direcao === "x") {
           const largura = pager.clientWidth || 1;
-          const dt = Math.max(1, Date.now() - t0);
-          const velocidade = Math.abs(arrasto) / dt; // px/ms
-          // um toque rápido chega — não é preciso passar do meio
-          const passa = Math.abs(velocidade) > 0.5 || Math.abs(arrasto) > largura * 0.33;
+          // a velocidade do fim do gesto (últimos 100 ms), não a média: um
+          // gesto que começa devagar e acaba num sacudir rápido também passa
+          const ult = amostras[amostras.length - 1];
+          const ref = amostras.slice().reverse().find((a) => ult.t - a.t >= 100) || amostras[0];
+          const velocidade = (ult.x - ref.x) / Math.max(1, ult.t - ref.t); // px/ms
+          const rapido = Math.abs(velocidade) > 0.25 && Math.sign(velocidade) === Math.sign(arrasto);
+          const passa = rapido || Math.abs(arrasto) > largura * 0.33;
           mostra(paginaAtual + (passa ? (arrasto < 0 ? 1 : -1) : 0));
         }
         x0 = null;

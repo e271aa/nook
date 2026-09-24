@@ -857,7 +857,8 @@
 
       if (luzes(r).length) {
         const c = el(`<button class="pl-atalho luz"><span class="pl-pilula">${icon("bulb", "ic-s")}<span class="num"></span></span></button>`);
-        c.addEventListener("click", () => HA.call("light", "turn_off", acesasDe(r)));
+        // um toque apaga, e a nota em baixo deixa desfazer
+        c.addEventListener("click", () => K.emMassa({ nome: `Apagar as luzes: ${r.name}`, ids: luzes(r), fazer: () => HA.call("light", "turn_off", acesasDe(r)) }));
         bind(c, entre(luzes(r)), () => {
           const n = acesasDe(r).length;
           // sem ligação à casa, um atalho não faria nada
@@ -870,7 +871,7 @@
       const rega = regaDe(r);
       if (rega) {
         const c = el(`<button class="pl-atalho rega" aria-label="Desligar a rega"><span class="pl-pilula">${icon("water", "ic-s")}<span>Rega</span></span></button>`);
-        c.addEventListener("click", () => HA.call("switch", "turn_off", rega.entity));
+        c.addEventListener("click", () => K.emMassa({ nome: "Desligar a rega", ids: [rega.entity], fazer: () => HA.call("switch", "turn_off", rega.entity) }));
         bind(c, entre([rega.entity]), () => (c.hidden = !HA.isOn(rega.entity) || HA.status !== "online"));
         atalhos.appendChild(c);
       }
@@ -1034,7 +1035,7 @@
     const node = el('<div class="pp-conteudo"></div>');
     const cab = el(`<div class="pp-topo"><div class="pp-cab">
       <div class="t3">${esc(r.name)}</div>
-      <div class="row"><button class="pill abrir">Abrir ${icon("chev", "ic-s")}</button>
+      <div class="row"><button class="pill abrir">Ver divisão ${icon("chev", "ic-s")}</button>
         <button class="iconbtn fechar" aria-label="Fechar">${icon("plus", "ic-s")}</button></div></div>
       <div class="ft sub"></div></div>`);
     cab.querySelector(".fechar .ic").style.transform = "rotate(45deg)";
@@ -1158,7 +1159,8 @@
     const av = S.avisos[k];
     const n = acesasDe(r).length;
     const p = [];
-    if (av) p.push(av.t);
+    // na lista, a linha já é da divisão: "Janela da Cozinha aberta" diz-se "Janela aberta"
+    if (av) p.push(av.t.replace(new RegExp(`\\s+(?:da|do|na|no|de)\\s+${r.name}\\b`, "i"), "").trim() || av.t);
     const porta = S.portas[k];
     if (porta && porta.trancada !== null) p.push(porta.trancada ? "Trancada" : "Destrancada");
     if (S.mov[k]) p.push(p.length ? "movimento" : "Movimento");
@@ -1264,7 +1266,9 @@
     if (a) partes.push(`${fmt.n(a)} ${a === 1 ? "estore aberto" : "estores abertos"}`);
     if (rs.some((r) => regaDe(r) && HA.isOn(regaDe(r).entity))) partes.push("rega ligada");
     if (temps.length) partes.push(`${fmt.n(temps.reduce((t, v) => t + v, 0) / temps.length, 1)} °C em média`);
-    return partes.join(", ");
+    // o resumo é do piso à vista, não da casa: diz-se qual
+    const onde = piso.zonas.some((z) => z.jardim) ? "No exterior" : `No ${nomePiso(piso.id)}`;
+    return `${onde}: ${partes.join(", ").replace(/^./, (c) => c.toLowerCase())}`;
   }
 
   function planta(args) {

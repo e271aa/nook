@@ -217,9 +217,9 @@
       const divisao = HA.attr(r.entidade, "divisao");
       // a limpar: qual divisão; parado na base: há quanto tempo acabou
       const onde = (st === "cleaning" || st === "paused") && divisao
-        ? ` · ${(NOME_DIVISAO[divisao] || divisao).toLowerCase()}`
+        ? `, ${(NOME_DIVISAO[divisao] || divisao).toLowerCase()}`
         : st === "docked" && s.last_changed
-          ? ` · limpou ${haQuanto(s.last_changed)}`
+          ? `, limpou ${haQuanto(s.last_changed)}`
           : "";
       node.querySelector(".detalhe").textContent = `${ESTADO_ROBO[st] || st}${onde}${bat !== null && bat !== undefined ? ` · bateria a ${fmt.n(bat)} %` : ""}`;
       b.textContent = st === "cleaning" ? "Voltar à base" : "Limpar";

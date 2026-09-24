@@ -140,7 +140,8 @@ svg {
 /* Recolhida: só ícones. A largura muda de uma vez (nada de animar largura);
    só o nome, que já não cabe, se desvanece. */
 .side[data-colapsada="sim"] {
-  width: calc(60px * var(--u));
+  /* nunca mais estreita do que um alvo de toque e as margens da barra */
+  width: max(calc(60px * var(--u)), calc(var(--tap) + 2 * var(--s2)));
 }
 .side[data-colapsada="sim"] .nb span {
   opacity: 0;
@@ -151,16 +152,38 @@ svg {
 /* Recolhida, o realce não pode ficar mais alto do que o ícone só porque o
    nome (invisível) ainda ocupava espaço por baixo dele. */
 .side[data-colapsada="sim"] .nb {
-  min-height: calc(44px * var(--u));
+  min-height: max(calc(44px * var(--u)), var(--tap));
   gap: 0;
 }
 /* Recolhida, sem nome ao lado, a pílula de fundo nunca fica bem centrada à
-   volta de um ícone só — dizer "isto está ativo" fica só na cor do ícone. */
-.side[data-colapsada="sim"] .nb[aria-current="page"],
-.side[data-colapsada="sim"] .colapsar-btn[aria-pressed="true"] {
+   volta de um ícone só. A secção ativa diz-se pela cor do ícone e por um
+   traço à esquerda (não só pela cor), centrado na altura do botão. */
+.side[data-colapsada="sim"] .nb[aria-current="page"] {
   background: transparent;
 }
+.side[data-colapsada="sim"] .nb[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: calc(20px * var(--u));
+  border-radius: var(--rp);
+  background: var(--tint);
+  transform: translateY(-50%);
+}
 
+/* aperto automático quando as secções não cabem (texto a 110 % ou 120 %) */
+.side[data-apertada] .nb {
+  min-height: max(calc(48px * var(--u)), var(--tap));
+  gap: calc(2px * var(--u));
+}
+.side[data-apertada="2"] .nav .nb span {
+  display: none;
+}
+.side[data-apertada="2"] .nav .nb {
+  min-height: max(calc(40px * var(--u)), var(--tap));
+}
 .side .nav {
   display: flex;
   flex-direction: column;
@@ -171,6 +194,7 @@ svg {
 }
 
 .nb {
+  position: relative;
   min-height: calc(62px * var(--u));
   border-radius: var(--r2);
   display: flex;
@@ -185,15 +209,13 @@ svg {
   overflow: hidden;
   transition: color var(--d1) var(--ease-soft), background var(--d1) var(--ease-soft);
 }
-.nb:hover {
-  color: var(--label-2);
+/* só com rato: num ecrã de toque, a cor do "passar por cima" ficava presa */
+@media (hover: hover) and (pointer: fine) {
+  .nb:hover {
+    color: var(--label-2);
+  }
 }
 .nb[aria-current="page"] {
-  color: var(--tint);
-  background: var(--tint-soft);
-}
-/* o mesmo "ligado" da secção ativa: uma pílula, não só a cor do ícone */
-.colapsar-btn[aria-pressed="true"] {
   color: var(--tint);
   background: var(--tint-soft);
 }
@@ -226,11 +248,26 @@ svg {
   font-weight: var(--w-s);
   color: var(--label-2);
 }
-/* quem está em casa ganha um anel, não um ponto colado ao canto. Em píxeis
-   fixos, como --hair: um anel a calc(*var(--u)) dá valores fracionários
-   (3,128px) que desenham torto — um círculo pequeno não perdoa isso. */
-.av.em-casa {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--good);
+/* quem está em casa tem o ponto verde do desenho original, no canto: "estão
+   todos em casa" é o normal e não pode ser o que mais se vê na barra. Quem
+   está fora fica sem ponto e mais apagado. */
+.av {
+  position: relative;
+}
+.av:not(.em-casa) {
+  color: var(--label-3);
+}
+.av.em-casa::after {
+  content: "";
+  position: absolute;
+  right: calc(-1px * var(--u));
+  bottom: calc(-1px * var(--u));
+  width: calc(10px * var(--u));
+  height: calc(10px * var(--u));
+  box-sizing: border-box;
+  border-radius: var(--rp);
+  background: var(--good);
+  border: calc(2px * var(--u)) solid var(--l1);
 }
 
 /* ───── Separadores de baixo (telemóvel) ───── */
@@ -449,6 +486,7 @@ svg {
   color: var(--label-2);
 }
 .li .ig {
+  flex: 0 0 auto;
   width: calc(28px * var(--u));
   display: grid;
   place-items: center;
@@ -473,6 +511,20 @@ button.li:active {
 .pill.on {
   background: var(--tint-soft);
   color: var(--tint);
+}
+/* uma pílula que liga e desliga uma vista: ligada tem o fundo da cor de destaque */
+.pill.so-cam[aria-pressed="true"] {
+  background: var(--tint-soft);
+  color: var(--tint);
+}
+/* a pílula é pequena à vista, o toque não */
+.so-cam {
+  position: relative;
+}
+.so-cam::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, calc((100% - var(--tap)) / 2)) 0;
 }
 .pill.warn {
   background: color-mix(in oklab, var(--warn) 18%, transparent);
@@ -1066,11 +1118,15 @@ button.li:active {
   justify-content: center;
   gap: var(--s2);
 }
+.dots[hidden] {
+  display: none;
+}
+/* a bolinha de fora tem de se ver (3:1 com o fundo), não só a de dentro */
 .dots button {
   width: calc(8px * var(--u));
   height: calc(8px * var(--u));
   border-radius: var(--rp);
-  background: var(--fill-2);
+  background: var(--label-3);
   padding: 0;
   position: relative;
 }
@@ -1301,6 +1357,23 @@ button.li:active {
   height: 100%;
   object-fit: cover;
 }
+/* a imagem traz escrito o que a câmara é (IR, a data): uma sombra por baixo
+   do nome e do "ao vivo" separa-os do que vem na imagem */
+.camtile::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(64px * var(--u));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+.camtile .cl,
+.camtile .live,
+.camtile .mov {
+  z-index: 1;
+}
 .camtile .cl {
   position: absolute;
   left: var(--s3);
@@ -1401,30 +1474,39 @@ button.li:active {
   min-width: 0;
 }
 
-/* os grupos por divisão: pouco espaço dentro de cada um, mais entre eles */
+/* Uma grelha só para a secção inteira: uma divisão com vários aparelhos
+   ocupa as colunas de que precisa (--k, posto pelo JS) com o nome por cima,
+   e os aparelhos sozinhos encaixam ao lado. Os cartões soltos assentam em
+   baixo, alinhados com os de um grupo na mesma fila. */
 .grupos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s6);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(150px * var(--u)), 1fr));
+  grid-auto-flow: row dense;
+  align-items: end;
+  gap: var(--s4) var(--s3);
+  flex: 0 0 auto;
   min-height: 0;
+}
+.grupos > [hidden] {
+  display: none;
 }
 .grupo-divisao {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  flex: 0 0 auto;
+  min-width: 0;
 }
 .grupo-divisao > .cap {
   padding-left: var(--s1);
 }
-/* mosaicos do tamanho do que têm, não esticados a encher o ecrã — tanto os
-   de uma divisão com título como os soltos (um só aparelho), que partilham
-   grelha em vez de gastarem uma fila cada um */
-.grupo-divisao .tiles,
-.grupos > .tiles {
+.grupo-divisao .tiles {
   flex: 0 0 auto;
-  grid-template-columns: repeat(auto-fill, minmax(calc(150px * var(--u)), 1fr));
+  grid-template-columns: repeat(var(--k, 2), minmax(0, 1fr));
   grid-auto-rows: minmax(0, max-content);
+}
+.zona:has(> .grupos) {
+  overflow: hidden;
 }
 
 /* a grelha de cartões, que enche como a das divisões */
@@ -2021,8 +2103,12 @@ button.li:active {
   min-height: var(--tap);
   padding: 0 var(--s4);
 }
+/* feito: riscado e mais recuado, mas ainda legível (4,5:1) — a opacidade
+   baixava o texto para 2,3:1 */
 .pill.compra.feito {
-  opacity: 0.45;
+  color: var(--label-3);
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--hair) var(--sep-2);
   text-decoration: line-through;
 }
 .agora {
@@ -3710,7 +3796,7 @@ select.pill {
 }
 .cal-dia.ponta {
   background: var(--tint);
-  color: var(--on-tint, #fff);
+  color: var(--tint-ink);
 }
 .cal-dia.hoje {
   font-weight: 700;
@@ -3722,26 +3808,6 @@ select.pill {
   gap: var(--s3);
   flex: 0 0 auto;
 }
-.pag-nav .iconbtn:disabled {
-  opacity: 0.3;
-}
-/* as setas são pequenas à vista (coladas às bolinhas), mas o alvo continua
-   a ser de dedo — a mesma ideia das bolinhas ao lado */
-.pag-seta {
-  position: relative;
-  width: calc(32px * var(--u));
-  height: calc(32px * var(--u));
-}
-.pag-seta::after {
-  content: "";
-  position: absolute;
-  inset: min(calc(-6px * var(--u)), calc((100% - var(--tap)) / 2));
-}
-/* sem rato a barra é só as bolinhas — deslizar já diz a mesma coisa */
-.pag-nav.modo-toque .pag-seta {
-  display: none;
-}
-
 /* a fita que desliza: as duas páginas lado a lado, uma delas sempre fora do
    ecrã. Só o transform anima (ver docs/DECISOES.md) — a curva assenta como
    as folhas do iOS, sem disparar. */
@@ -3754,8 +3820,7 @@ select.pill {
   display: flex;
   width: 200%;
   height: 100%;
-  transition: transform 0.4s var(--ease);
-  will-change: transform;
+  transition: transform 280ms var(--ease);
 }
 .pager-pista > .pagina {
   flex: 0 0 50%;

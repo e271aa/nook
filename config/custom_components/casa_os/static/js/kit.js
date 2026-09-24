@@ -261,6 +261,32 @@
     return node;
   }
 
+  // ───────── Foco preso numa janela por cima ─────────
+  // O menu, a câmara ampliada, o calendário: enquanto estão abertos, o Tab
+  // anda só lá dentro e o que está por trás não recebe o foco; ao fechar, o
+  // foco volta para onde estava.
+
+  const FOCAVEIS = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function prenderFoco(caixa) {
+    const antes = document.activeElement;
+    caixa.setAttribute("aria-modal", "true");
+    const tecla = (e) => {
+      if (e.key !== "Tab") return;
+      const fs = [...caixa.querySelectorAll(FOCAVEIS)].filter((n) => n.offsetParent !== null);
+      if (!fs.length) return;
+      const i = fs.indexOf(document.activeElement);
+      e.preventDefault();
+      fs[(i + (e.shiftKey ? -1 : 1) + fs.length) % fs.length].focus();
+    };
+    document.addEventListener("keydown", tecla, true);
+    const primeiro = caixa.querySelector(FOCAVEIS);
+    if (primeiro) primeiro.focus({ preventScroll: true });
+    return () => {
+      document.removeEventListener("keydown", tecla, true);
+      if (antes && antes.isConnected && antes.focus) antes.focus({ preventScroll: true });
+    };
+  }
+
   // ───────── Câmara ao vivo ─────────
 
   function camara({ entidade, nome, grande = false, movimento = null }) {
@@ -296,8 +322,10 @@
     const pinta = () => (img.src = HA.cameraUrl(entidade, Date.now()));
     pinta();
     const t = setInterval(pinta, 1000);
+    let solta = null;
     const saiu = () => {
       clearInterval(t);
+      if (solta) solta();
       scrim.remove();
       caixa.remove();
       document.removeEventListener("keydown", tecla);
@@ -310,6 +338,7 @@
     document.addEventListener("keydown", tecla);
     window.addEventListener("hashchange", saiu);
     document.body.append(scrim, caixa);
+    solta = prenderFoco(caixa);
     aberta = saiu;
   }
   let aberta = null;
@@ -695,7 +724,7 @@
     CFG, AVISOS,
     bind, entre, intervalo, limpar, escopo, dentro, esvaziar, medidas,
     ecra, divisoes, eGaragem, todasLuzes, todosEstores, posicao, acesas, abertos,
-    avisos, calmaDesde, ico,
+    avisos, calmaDesde, ico, prenderFoco,
     slider, interruptor, segmentado, camara, ampliar, linha, cabem, semResposta, marcarResposta, colunasArrastaveis, linhasArrastaveis,
     nota, folha, fotografia, emMassa,
   };

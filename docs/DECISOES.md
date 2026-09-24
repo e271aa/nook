@@ -35,8 +35,23 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 - **Sliders "de todos"** só obedecem a um arrasto; um toque perdido não faz nada.
 - **Menu** só existe quando há secções fora da barra lateral; no tablet e na
   televisão estão todas à vista.
-- **Barra lateral:** recolhe-se a ícones (botão no fundo, tecla `[`), lembrado
-  por tipo de ecrã (`casa_os_barra_<ecra>`, em `app.js`). No telemóvel não existe.
+- **Rotina** não existe na televisão (`nunca: ["sala"]` em `SECTIONS`): nem na
+  barra, nem no menu, nem pelo endereço. As compras e os lembretes são da casa,
+  não de quem está de visita na sala.
+- **Barra lateral:** recolhe-se a ícones (botão no fundo, tecla `[`, também
+  Option+8 ou AltGr+8 num teclado português), lembrado por tipo de ecrã
+  (`casa_os_barra_<ecra>`, em `app.js`). No telemóvel não existe. Recolhida, a
+  secção ativa tem a cor e um traço à esquerda; o botão de recolher nunca fica
+  "ativo". Se as secções não couberem na altura (texto a 110 % ou 120 %), a barra
+  aperta-se sozinha e, se preciso, fica só com ícones.
+- **Presença:** um ponto verde no canto do avatar de quem está em casa, como no
+  desenho original; estar em casa é o normal e não pode ser o que mais se vê.
+- **Controlos:** uma grelha só; uma divisão com vários aparelhos ocupa as colunas
+  de que precisa e as outras encaixam ao lado. O que não cabe vai para a página
+  seguinte (medindo a altura, em qualquer piso); o piso nunca muda sozinho. Com
+  um piso escolhido, todas as ações da fila são desse piso.
+- **Janelas por cima** (menu, câmara ampliada, calendário, confirmações) prendem
+  o foco enquanto estão abertas e devolvem-no ao fechar (`K.prenderFoco`).
 - **Dashboard** (a vista antiga em três colunas) está fora de vista: sem
   separador na barra nem linha no menu (`oculta: true` em `SECTIONS`, `app.js`).
   O código e a rota `#/dashboard` continuam a funcionar — para o repor na
@@ -57,7 +72,8 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 
 ## Texto
 
-- Verbo à frente nos botões; um verbo por ação.
+- Verbo à frente nos botões; um verbo por ação. Luzes: "Acender" e "Apagar", em
+  todo o lado (tomadas e ar condicionado é que se ligam e desligam).
 - Sem travessões no texto visível; "—" só como símbolo de valor em falta. No
   máximo um "·" por linha.
 - Datas escritas à mão ("8 set"), porque o pt-PT de alguns browsers devolve "8/09".
