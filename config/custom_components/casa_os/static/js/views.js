@@ -267,7 +267,7 @@
   function porFecharAgora() {
     const lista = [];
     divisoes().forEach((r) => {
-      (r.windows || []).forEach((w) => HA.isOn(w) && lista.push({ nome: HA.name(w), icone: "window" }));
+      (r.windows || []).forEach((w) => HA.isOn(w) && lista.push({ nome: HA.name(w), icone: "janela-aberta" }));
       if (r.contact && HA.isOn(r.contact)) lista.push({ nome: HA.name(r.contact), icone: "door" });
     });
     return lista;

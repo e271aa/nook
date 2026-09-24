@@ -96,7 +96,7 @@
           chips.push(pill(`${MODOS[modo] || "Ligado"}${alvo ? ` · ${fmt.n(alvo, 1)}°` : ""}`, "on", "ac"));
         }
       }
-      if (janelas(r).some((w) => HA.isOn(w))) chips.push(pill("Janela aberta", "warn", "window"));
+      if (janelas(r).some((w) => HA.isOn(w))) chips.push(pill("Janela aberta", "warn", "janela-aberta"));
       if (r.camera) chips.push(pill("Câmara", "", "camera"));
       node.querySelector(".rc").innerHTML = chips.join("");
     });

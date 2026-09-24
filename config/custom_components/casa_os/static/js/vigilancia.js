@@ -81,6 +81,7 @@
         const aberta = HA.isOn(id);
         li.querySelector(".vl").textContent = aberta ? "Aberta" : "Fechada";
         li.querySelector(".ig").style.color = aberta ? "var(--warn)" : "";
+        li.querySelector(".ig").innerHTML = `<svg class="ic ic-s" aria-hidden="true"><use href="#i-${aberta ? "janela-aberta" : "window"}"/></svg>`;
       });
       linhas.push({ li, ids: [id] });
     });
@@ -141,7 +142,7 @@
     if (janelas().some((j) => j.id === id) || portas().some((r) => r.contact === id)) {
       if (st !== "on" && st !== "off") return null;
       const nome = janelas().some((j) => j.id === id) ? HA.name(id) : "Porta de entrada";
-      return { texto: `${nome} ${st === "on" ? "aberta" : "fechada"}`, icone: janelas().some((j) => j.id === id) ? "window" : "door", tom: st === "on" ? "warn" : "", quando };
+      return { texto: `${nome} ${st === "on" ? "aberta" : "fechada"}`, icone: janelas().some((j) => j.id === id) ? (st === "on" ? "janela-aberta" : "window") : "door", tom: st === "on" ? "warn" : "", quando };
     }
     if (portas().some((r) => r.lock === id)) {
       if (st !== "locked" && st !== "unlocked") return null;
@@ -497,7 +498,7 @@
     // Um interruptor com nome fixo: diz-se "ligado" pelo fundo e pelo
     // aria-pressed, não trocando o nome (um leitor ouvia "Vista completa,
     // premido", que é o contrário do que está no ecrã).
-    const soBtn = el(`<button class="pill so-cam" aria-pressed="false">${icon("camera", "ic-s")}<span>Só câmaras</span></button>`);
+    const soBtn = el(`<button class="pill so-cam" aria-pressed="false">${icon("so-camaras", "ic-s")}<span>Só câmaras</span></button>`);
     const pintaBotao = () => {
       const ativo = corpo.classList.contains("so-cameras");
       soBtn.setAttribute("aria-pressed", String(ativo));

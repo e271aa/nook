@@ -62,7 +62,7 @@
       ? [...luzes(r), ...(r.covers || []), ...janelas(r), ...(r.switches || []).map((s) => s.entity),
         r.climate, r.temperature, r.humidity, r.motion, r.contact, r.lock, K.AVISOS]
       : [];
-  const eRega = (s) => s.icon === "water" || /[._]rega$/.test(s.entity);
+  const eRega = (s) => s.icon === "rega" || s.icon === "water" || /[._]rega$/.test(s.entity);
   const regaDe = (r) => ((r && r.switches) || []).find(eRega);
   const semNome = (r, id) => {
     const n = HA.name(id).replace(new RegExp(`\\s*${r.name}\\s*`, "i"), " ").trim();
@@ -368,7 +368,7 @@
       const doSitio = avs.filter((a) => a.divisao === r.name);
       const a = doSitio.find((x) => x.gravidade === "perigo") || doSitio[0];
       if (a) S.avisos[k] = { t: a.titulo, n: nivel(a), i: temIcone(a.icone) };
-      else if (janelas(r).some((j) => HA.isOn(j))) S.avisos[k] = { t: "Janela aberta", n: "warn", i: "window" };
+      else if (janelas(r).some((j) => HA.isOn(j))) S.avisos[k] = { t: "Janela aberta", n: "warn", i: "janela-aberta" };
       else if (extra.destaques) S.avisos[k] = { t: "", n: "warn", i: "alert" };
     });
     const rid = ROBO.entidade;
@@ -870,7 +870,7 @@
       }
       const rega = regaDe(r);
       if (rega) {
-        const c = el(`<button class="pl-atalho rega" aria-label="Desligar a rega"><span class="pl-pilula">${icon("water", "ic-s")}<span>Rega</span></span></button>`);
+        const c = el(`<button class="pl-atalho rega" aria-label="Desligar a rega"><span class="pl-pilula">${icon("rega", "ic-s")}<span>Rega</span></span></button>`);
         c.addEventListener("click", () => K.emMassa({ nome: "Desligar a rega", ids: [rega.entity], fazer: () => HA.call("switch", "turn_off", rega.entity) }));
         bind(c, entre([rega.entity]), () => (c.hidden = !HA.isOn(rega.entity) || HA.status !== "online"));
         atalhos.appendChild(c);
@@ -1102,7 +1102,7 @@
     apagar.addEventListener("click", () => HA.call("light", "turn_off", todasL));
     const fechar = el(`<button class="pill">${icon("blinds", "ic-s")}<span></span></button>`);
     fechar.addEventListener("click", () => HA.call("cover", "close_cover", todosE));
-    const rega = el(`<button class="pill">${icon("water", "ic-s")}<span>Desligar a rega</span></button>`);
+    const rega = el(`<button class="pill">${icon("rega", "ic-s")}<span>Desligar a rega</span></button>`);
     rega.addEventListener("click", () => HA.call("switch", "turn_off", regas));
     acoes.append(apagar, fechar, rega);
     return bind(acoes, (id) => id === "*" || todasL.includes(id) || todosE.includes(id) || regas.includes(id), () => {

@@ -420,6 +420,7 @@
     // "ligada", e trocar o nome e o estado ao mesmo tempo lia-se ao contrário
     btn.setAttribute("aria-expanded", String(!colapsada(ecra)));
     btn.title = `${colapsada(ecra) ? "Expandir" : "Recolher"} a barra lateral (tecla [)`;
+    btn.querySelector(".ic").innerHTML = `<use href="#i-${colapsada(ecra) ? "barra-expandir" : "barra-recolher"}"></use>`;
   }
 
   function alternarColapsada() {
@@ -461,7 +462,7 @@
     const defs = el(`<button class="nb" data-sec="definicoes" aria-label="Definições" title="Definições">${icon("definicoes")}<span>Definições</span></button>`);
     defs.addEventListener("click", () => go("definicoes"));
     foot.appendChild(defs);
-    const colapsar = el(`<button class="nb colapsar-btn" aria-label="Barra lateral" aria-expanded="true">${icon("barra")}<span>Recolher</span></button>`);
+    const colapsar = el(`<button class="nb colapsar-btn" aria-label="Barra lateral" aria-expanded="true">${icon("barra-recolher")}<span>Recolher</span></button>`);
     colapsar.addEventListener("click", alternarColapsada);
     foot.appendChild(colapsar);
     aplicarColapsada(document.documentElement.getAttribute("data-screen"));

@@ -195,7 +195,7 @@
         {
           "entity": "switch.rega",
           "name": "Rega",
-          "icon": "water"
+          "icon": "rega"
         }
       ],
       "motion": "binary_sensor.movimento_jardim"
@@ -307,7 +307,7 @@
       {
         "name": "Águas quentes",
         "entity": "sensor.energia_aguas_quentes",
-        "icon": "water",
+        "icon": "agua-quente",
         "potencia": "sensor.potencia_aguas_quentes"
       },
       {
