@@ -72,7 +72,8 @@
     const d = new Date(t);
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
-  const temIcone = (n) => (n && document.getElementById(`i-${n}`) ? n : "alert");
+  // um aviso de janela é sempre de uma janela aberta
+  const temIcone = (n) => (n === "window" ? "janela-aberta" : n && document.getElementById(`i-${n}`) ? n : "alert");
 
   /** A cor de uma luz acesa: a que ela diz ter, senão a de uma lâmpada quente. */
   function corDaLuz(id) {
@@ -537,7 +538,8 @@
     if (op.k === "janela") {
       const aberta = op.j.sensor && S.abertas[op.j.sensor];
       const pos = op.j.id ? (S.estores[op.j.id] ?? 100) / 100 : 1;
-      s += R(rectSeg(sg, t1, t2, 0.4), `fill:${aberta ? "var(--warn)" : "var(--pl-vidro)"}`);
+      // aberta, o vidro não se desenha: ficam as folhas
+      if (!aberta) s += R(rectSeg(sg, t1, t2, 0.4), "fill:var(--pl-vidro)");
       [t1, t2].forEach((t) => (s += R(rectSeg(sg, t - 0.15, t + 0.15, EXT), "fill:var(--pl-parede)")));
       if (!o.mini && op.j.id) {
         // o estore corre numa calha por fora da parede
@@ -546,12 +548,19 @@
         if (pos < 1) s += R(rectSeg(sg, t1 + wd * pos, t2, 1.1, off), "fill:var(--pl-estore)", 0.35);
       }
       if (aberta) {
-        const ang = (65 * Math.PI) / 180, hw = wd / 2;
+        // duas folhas de batente, metade do vão cada, a 70° a partir da face de
+        // dentro da parede (nunca por cima da calha, que fica dentro da espessura)
+        const ang = (70 * Math.PI) / 180, hw = wd / 2, cor = o.D ? "var(--warn)" : "var(--warn-fg)";
         [[t1, 1], [t2, -1]].forEach(([t, dir]) => {
-          const h = pt(sg, t, 0), ao = sg.h ? [dir, 0] : [0, dir];
+          const h = pt(sg, t, EXT / 2), ao = sg.h ? [dir, 0] : [0, dir];
           const v = [ao[0] * Math.cos(ang) + sg.n[0] * Math.sin(ang), ao[1] * Math.cos(ang) + sg.n[1] * Math.sin(ang)];
-          const e = add(h, v, hw), fecho = add(h, ao, hw);
-          s += `<path d="M${P2(h)}L${P2(e)}L${P2(fecho)}Z" style="fill:var(--warn);opacity:.28"/><line x1="${f(h[0])}" y1="${f(h[1])}" x2="${f(e[0])}" y2="${f(e[1])}" style="stroke:var(--warn);stroke-width:${o.mini ? 0.9 : 0.55};stroke-linecap:round"/>`;
+          const e = add(h, v, hw), meio = add(h, ao, hw);
+          s += `<line x1="${f(h[0])}" y1="${f(h[1])}" x2="${f(e[0])}" y2="${f(e[1])}" style="stroke:${cor};stroke-width:${o.mini ? 0.5 : 0.3};stroke-linecap:round"/>`;
+          // o arco (da ponta da folha ao meio do vão) só se lê com espaço: a miniatura não o leva
+          if (!o.mini) {
+            const sw = v[0] * ao[1] - v[1] * ao[0] > 0 ? 1 : 0;
+            s += `<path d="M${P2(e)}A${f(hw)} ${f(hw)} 0 0 ${sw} ${P2(meio)}" style="fill:none;stroke:${cor};stroke-width:.15;stroke-dasharray:.37 .37;opacity:.7"/>`;
+          }
         });
       }
     } else if (op.k === "porta") {
@@ -772,6 +781,18 @@
   // nomes, pílulas e câmaras ficam numa camada à parte, do mesmo tamanho a
   // qualquer distância, e deslizam para o sítio novo.
 
+  /** Um atalho aparece de repente e sai com opacidade (280 ms) quando já não há nada para fazer. */
+  function mostraAtalho(c, ver) {
+    clearTimeout(c._sai);
+    if (ver) {
+      c.hidden = false;
+      c.classList.remove("saindo");
+    } else if (!c.hidden && !c.classList.contains("saindo")) {
+      c.classList.add("saindo");
+      c._sai = setTimeout(() => (c.hidden = true), reduzido() ? 0 : 280);
+    }
+  }
+
   function cena(piso, escolher) {
     const naTV = ecra() === "sala";
     const no = el('<div class="pl-cena"></div>');
@@ -856,23 +877,25 @@
       });
 
       if (luzes(r).length) {
-        const c = el(`<button class="pl-atalho luz"><span class="pl-pilula">${icon("bulb", "ic-s")}<span class="num"></span></span></button>`);
+        const c = el(`<button class="pl-atalho luz" hidden><span class="pl-pilula">${icon("bulb-off", "ic-s")}<span class="tx"></span></span></button>`);
         // um toque apaga, e a nota em baixo deixa desfazer
         c.addEventListener("click", () => K.emMassa({ nome: `Apagar as luzes: ${r.name}`, ids: luzes(r), fazer: () => HA.call("light", "turn_off", acesasDe(r)) }));
         bind(c, entre(luzes(r)), () => {
           const n = acesasDe(r).length;
           // sem ligação à casa, um atalho não faria nada
-          c.hidden = !n || HA.status !== "online";
-          c.querySelector(".num").textContent = fmt.n(n);
-          c.setAttribute("aria-label", n > 1 ? `Apagar ${fmt.n(n)} luzes: ${r.name}` : `Apagar a luz: ${r.name}`);
+          mostraAtalho(c, n > 0 && HA.status === "online");
+          if (n) {
+            c.querySelector(".tx").textContent = `Apagar ${fmt.n(n)}`;
+            c.setAttribute("aria-label", n > 1 ? `Apagar ${fmt.n(n)} luzes na ${r.name}` : `Apagar a luz na ${r.name}`);
+          }
         });
         atalhos.appendChild(c);
       }
       const rega = regaDe(r);
       if (rega) {
-        const c = el(`<button class="pl-atalho rega" aria-label="Desligar a rega"><span class="pl-pilula">${icon("rega", "ic-s")}<span>Rega</span></span></button>`);
+        const c = el(`<button class="pl-atalho rega" aria-label="Desligar a rega" hidden><span class="pl-pilula">${icon("rega", "ic-s")}<span>Desligar rega</span></span></button>`);
         c.addEventListener("click", () => K.emMassa({ nome: "Desligar a rega", ids: [rega.entity], fazer: () => HA.call("switch", "turn_off", rega.entity) }));
-        bind(c, entre([rega.entity]), () => (c.hidden = !HA.isOn(rega.entity) || HA.status !== "online"));
+        bind(c, entre([rega.entity]), () => mostraAtalho(c, HA.isOn(rega.entity) && HA.status === "online"));
         atalhos.appendChild(c);
       }
 
@@ -1213,8 +1236,8 @@
     const lista = node.querySelector(".pl-agora-lista");
     const cabe = K.cabem(lista);
     const zs = piso.zonas.filter((z) => divisaoDe(z));
-    const linha = ({ ic, fundo, frente, t, s, abre }) => {
-      const b = el(`<button class="pl-agora-li" role="listitem"><span class="pl-agora-ic">${icon(ic, "ic-s")}</span>
+    const linha = ({ ic, fundo, frente, t, s, abre, estado: eEstado }) => {
+      const b = el(`<button class="pl-agora-li" role="listitem"><span class="pl-agora-ic${eEstado ? " estado" : ""}">${icon(ic, "ic-s")}</span>
         <span class="pl-agora-tx"><span class="bd">${esc(t)}</span><span class="dim">${esc(s)}</span></span></button>`);
       const disco = b.querySelector(".pl-agora-ic");
       disco.style.background = fundo;
@@ -1235,14 +1258,14 @@
       });
       zs.forEach((z) => {
         const av = S.avisos[chave(z)];
-        if (av) linhas.push({ ic: av.i, fundo: `var(--${av.n})`, frente: `var(--${av.n}-ink)`, t: av.t, s: divisaoDe(z).name, abre: z.divisao });
+        if (av) linhas.push({ ic: av.i, fundo: `var(--${av.n})`, frente: `var(--${av.n}-ink)`, t: av.t, s: divisaoDe(z).name, abre: z.divisao, estado: true });
       });
       zs.forEach((z) => {
         const p = S.portas[chave(z)];
         if (!p || p.trancada === null) return;
-        linhas.push({ ic: p.trancada ? "lock" : "unlock", fundo: p.trancada ? "var(--good)" : "var(--warn)", frente: p.trancada ? "var(--good-ink)" : "var(--warn-ink)", t: `Porta da rua ${p.trancada ? "trancada" : "destrancada"}`, s: p.aberta ? "Aberta" : "Fechada", abre: z.divisao });
+        linhas.push({ ic: p.trancada ? "lock" : "unlock", fundo: p.trancada ? "var(--good)" : "var(--warn)", frente: p.trancada ? "var(--good-ink)" : "var(--warn-ink)", t: `Porta da rua ${p.trancada ? "trancada" : "destrancada"}`, s: p.aberta ? "Aberta" : "Fechada", abre: z.divisao, estado: true });
       });
-      zs.forEach((z) => S.mov[chave(z)] && linhas.push({ ic: "motion", fundo: "var(--tint)", frente: "var(--tint-ink)", t: "Movimento", s: `${divisaoDe(z).name}, agora`, abre: z.divisao }));
+      zs.forEach((z) => S.mov[chave(z)] && linhas.push({ ic: "motion", fundo: "var(--tint)", frente: "var(--tint-ink)", t: "Movimento", s: `${divisaoDe(z).name}, agora`, abre: z.divisao, estado: true }));
       if (S.robo && S.robo.estado === "limpar") {
         const z = zs.find((q) => q.divisao === S.robo.divisao);
         if (z) linhas.push({ ic: "robot", fundo: "var(--pl-pill)", frente: "var(--label)", t: "Robô a limpar", s: divisaoDe(z).name, abre: "robo" });

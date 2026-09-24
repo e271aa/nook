@@ -111,6 +111,13 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
   pílulas ficam do mesmo tamanho a qualquer distância.
 - Os atalhos por cima de cada divisão só aparecem para o que está ligado (apagar
   as luzes acesas, desligar a rega); o resto abre-se ao tocar na divisão.
+- **Ação e estado têm formas diferentes:** uma ação (Apagar 2, Desligar rega) é um
+  botão redondo, vidro neutro com contorno e o verbo; só o ícone leva cor. Um
+  estado (Janela aberta, Trancada, fumo) é uma etiqueta cheia de cantos 8 na cor
+  do sinal, sem contorno. O perigo pulsa enquanto dura. Na lista "Agora", o que
+  está aceso tem disco redondo e o estado da casa disco quadrado de raio 12.
+- **Janela aberta:** duas folhas em traço, a 70° a partir da face de dentro da
+  parede, com arco tracejado (sem arco na miniatura); o vidro não se desenha.
 - Com pouco espaço (o telemóvel) ficam os nomes; saem o clima, os atalhos e as
   câmaras, e o aviso e o cadeado ficam só com o ícone.
 - Na TV, ao lado da planta, a lista "Agora": luzes acesas, avisos, porta da rua,
