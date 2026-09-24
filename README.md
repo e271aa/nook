@@ -108,7 +108,7 @@ docker compose down                     # parar
 ## Estrutura do repositório
 
 ```
-acasa_demo/
+nook/
 ├── docker-compose.yml             Home Assistant e contentor de arranque
 ├── .env.example                   conta de administrador, porta, fuso horário
 ├── bootstrap/bootstrap.py         configuração inicial e utilizador Visitante
@@ -118,7 +118,7 @@ acasa_demo/
     ├── configuration.yaml         casa, painéis e entrada direta
     ├── automations.yaml           automações da casa (sol, rega, excedente solar)
     ├── scripts.yaml               cenas: Sair de casa, Boa noite, Bom dia, Modo cinema
-    ├── dashboards/nook.yaml      a entrada Nook na barra lateral
+    ├── dashboards/nook.yaml       a entrada Nook na barra lateral
     └── custom_components/
         ├── casa_os/               o painel (Python, JavaScript, CSS)
         ├── casa_demo/             a casa simulada
@@ -146,7 +146,6 @@ expor na internet:
    `http.use_x_forwarded_for` e `trusted_proxies` no `configuration.yaml`.
 3. Ter presente que qualquer visitante entra como Visitante e pode mexer em tudo
    o que é da casa (é esse o objetivo); a reposição das 04:00 limpa-a todos os dias.
-   respondem sem autenticação; ver [docs/NOOK.md](docs/NOOK.md).
 
 ### A entrada sem login
 
@@ -167,7 +166,6 @@ identificador do utilizador.
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Integrações, módulos do painel, fluxo de dados, configuração da casa |
 | [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) | Como trabalhar no painel: convenções, verificação, o que pede reinício |
 | [docs/DECISOES.md](docs/DECISOES.md) | Decisões de design e de comportamento, e porquê |
-| [docs/NOOK.md](docs/NOOK.md) | O painel Nook anterior e as correções feitas ao seu código |
 
 ## Licença
 

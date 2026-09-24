@@ -144,38 +144,3 @@
         source: "{{ trigger.to_state.state }}"
   mode: single
 
-- id: notificacoes_demo
-  alias: Notificações de exemplo no arranque
-  description: Enche o sino de notificações com avisos realistas.
-  triggers:
-    - trigger: homeassistant
-      event: start
-  actions:
-    - delay: "00:00:30"
-    - action: python_script.dashboard_clear_notifications
-    - repeat:
-        for_each:
-          - { icon: "washing", message: "A máquina de lavar roupa terminou o programa Algodão 40°." }
-          - { icon: "warning", message: "A janela da cozinha ficou aberta." }
-          - { icon: "info", message: "Cópia de segurança concluída esta noite às 03:12." }
-          - { icon: "energy", message: "Ontem exportaste 8,4 kWh para a rede." }
-        sequence:
-          - action: python_script.dashboard_add_notification
-            data:
-              icon: "{{ repeat.item.icon }}"
-              message: "{{ repeat.item.message }}"
-  mode: single
-
-- id: notificacao_programa_concluido
-  alias: Notificar quando um programa termina
-  triggers:
-    - trigger: event
-      event_type: casa_demo_programa_concluido
-  actions:
-    - action: python_script.dashboard_add_notification
-      data:
-        icon: washing
-        message: >-
-          {{ {'washer': 'A máquina de lavar roupa', 'dryer': 'A máquina de secar',
-              'dishwasher': 'A máquina da loiça'}[trigger.event.data.aparelho] }} terminou o programa.
-  mode: queued

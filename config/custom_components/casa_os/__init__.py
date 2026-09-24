@@ -23,7 +23,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Regista os ficheiros estáticos e as vistas HTTP."""
     domain_config = config.get(DOMAIN) or {}
     hass.data.setdefault(DOMAIN, {})["demo_user"] = domain_config.get("demo_user")
-    hass.data[DOMAIN]["title"] = domain_config.get("title", "Casa")
+    hass.data[DOMAIN]["title"] = domain_config.get("title", "Nook")
 
     static_path = Path(__file__).parent / "static"
     await hass.http.async_register_static_paths(
