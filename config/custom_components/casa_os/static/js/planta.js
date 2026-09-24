@@ -637,7 +637,7 @@
       if (!av || !mini) return;
       const cx = z.x + z.w / 2, cy = z.y + z.h / 2;
       cima[`av-${chave(z)}`] = Z(z, `fill:none;stroke:var(--${av.n});stroke-width:1.1`, 0.3) +
-        `<circle cx="${f(cx)}" cy="${f(cy)}" r="5.2" style="fill:var(--${av.n})"/><path d="M${f(cx)} ${f(cy - 2.6)}v3" style="stroke:var(--pl-on-accent);stroke-width:1.2;stroke-linecap:round"/><circle cx="${f(cx)}" cy="${f(cy + 2.3)}" r=".7" style="fill:var(--pl-on-accent)"/>`;
+        `<circle cx="${f(cx)}" cy="${f(cy)}" r="5.2" style="fill:var(--${av.n})"/><path d="M${f(cx)} ${f(cy - 2.6)}v3" style="stroke:var(--${av.n}-ink);stroke-width:1.2;stroke-linecap:round"/><circle cx="${f(cx)}" cy="${f(cy + 2.3)}" r=".7" style="fill:var(--${av.n}-ink)"/>`;
     });
     if (zSel) cima.sel = Z(zSel, "fill:none;stroke:var(--tint);stroke-width:.5", 0.45);
     if (S.offline) cima.off = R({ x: hb.x - 1.6, y: hb.y - 1.6, w: hb.w + 3.2, h: hb.h + 3.2 }, "fill:none;stroke:var(--label-3);stroke-width:.22;stroke-dasharray:1 .8");
@@ -1235,14 +1235,14 @@
       });
       zs.forEach((z) => {
         const av = S.avisos[chave(z)];
-        if (av) linhas.push({ ic: av.i, fundo: `var(--${av.n})`, frente: "var(--pl-on-accent)", t: av.t, s: divisaoDe(z).name, abre: z.divisao });
+        if (av) linhas.push({ ic: av.i, fundo: `var(--${av.n})`, frente: `var(--${av.n}-ink)`, t: av.t, s: divisaoDe(z).name, abre: z.divisao });
       });
       zs.forEach((z) => {
         const p = S.portas[chave(z)];
         if (!p || p.trancada === null) return;
-        linhas.push({ ic: p.trancada ? "lock" : "unlock", fundo: p.trancada ? "var(--good)" : "var(--warn)", frente: "var(--pl-on-accent)", t: `Porta da rua ${p.trancada ? "trancada" : "destrancada"}`, s: p.aberta ? "Aberta" : "Fechada", abre: z.divisao });
+        linhas.push({ ic: p.trancada ? "lock" : "unlock", fundo: p.trancada ? "var(--good)" : "var(--warn)", frente: p.trancada ? "var(--good-ink)" : "var(--warn-ink)", t: `Porta da rua ${p.trancada ? "trancada" : "destrancada"}`, s: p.aberta ? "Aberta" : "Fechada", abre: z.divisao });
       });
-      zs.forEach((z) => S.mov[chave(z)] && linhas.push({ ic: "motion", fundo: "var(--tint)", frente: "var(--pl-on-accent)", t: "Movimento", s: `${divisaoDe(z).name}, agora`, abre: z.divisao }));
+      zs.forEach((z) => S.mov[chave(z)] && linhas.push({ ic: "motion", fundo: "var(--tint)", frente: "var(--tint-ink)", t: "Movimento", s: `${divisaoDe(z).name}, agora`, abre: z.divisao }));
       if (S.robo && S.robo.estado === "limpar") {
         const z = zs.find((q) => q.divisao === S.robo.divisao);
         if (z) linhas.push({ ic: "robot", fundo: "var(--pl-pill)", frente: "var(--label)", t: "Robô a limpar", s: divisaoDe(z).name, abre: "robo" });

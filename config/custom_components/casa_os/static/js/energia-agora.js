@@ -89,7 +89,7 @@
     base.setAttribute("id", id);
     base.setAttribute("d", d);
     base.setAttribute("class", "fio");
-    base.style.stroke = `var(--${cor})`;
+    base.style.stroke = `var(--${cor === "solar" ? "solar-fg" : cor})`;
     svg.appendChild(base);
     const grupo = document.createElementNS(SVG, "g");
     svg.appendChild(grupo);
@@ -114,7 +114,7 @@
         const c = document.createElementNS(SVG, "circle");
         c.setAttribute("r", String(2.2 + e * 0.6));
         c.setAttribute("class", "particula");
-        c.style.fill = `var(--${cor})`;
+        c.style.fill = `var(--${cor === "solar" ? "solar-fg" : cor})`;
         const a = document.createElementNS(SVG, "animateMotion");
         a.setAttribute("dur", `${dur}s`);
         a.setAttribute("repeatCount", "indefinite");

@@ -104,10 +104,20 @@
   --tint: #4c9aff;
   --tint-ink: #04203d;
   --tint-soft: rgba(76, 154, 255, 0.16);
-  --warn: #ffb340;
-  --danger: #ff6961;
+  /* Sinais da interface. Cada um leva a sua tinta (-ink) para o texto e os
+     ícones postos por cima; -fg é a versão para quando a cor vai em texto ou
+     ícone sobre o fundo (no escuro é a mesma cor). A luz desenhada na planta
+     tem a cor de cada lâmpada; isto é só o que a interface diz. */
+  --solar: #fbde46;
+  --solar-ink: #372d02;
+  --solar-fg: var(--solar);
+  --warn: #ff9c3c;
+  --warn-ink: #431c03;
+  --warn-fg: var(--warn);
+  --danger: #fa5e72;
+  --danger-ink: #3a0d14;
   --good: #3fd68c;
-  --solar: #ffc75a;
+  --good-ink: #04261a;
   --grid: #98a7bd;
   --batt: #3fd68c;
   --mat: rgba(28, 28, 31, 0.72);
@@ -158,7 +168,9 @@
   --tint: #e0a94f;
   --tint-ink: #241601;
   --tint-soft: rgba(224, 169, 79, 0.18);
-  --solar: #e0a94f;
+  --solar: #f8ec80;
+  --warn: #ff8247;
+  --danger: #f65274;
   --mat: rgba(31, 26, 16, 0.74);
   --fill: rgba(200, 170, 120, 0.18);
   --fill-2: rgba(200, 170, 120, 0.3);
@@ -223,10 +235,16 @@
   --tint: #0a66d6;
   --tint-ink: #ffffff;
   --tint-soft: rgba(10, 102, 214, 0.12);
-  --warn: #9a5a06;
-  --danger: #c8352b;
+  /* no claro os sinais ficam claros, com tinta escura por cima (o disco é igual
+     de dia e de noite); -fg é a versão escura, para texto e ícones sobre branco */
+  --solar: #f4ce23;
+  --solar-fg: #897400;
+  --warn: #fe9135;
+  --warn-fg: #b45000;
+  --danger: #c12440;
+  --danger-ink: #ffffff;
   --good: #12855c;
-  --solar: #b8791a;
+  --good-ink: #ffffff;
   --grid: #5c6b82;
   --batt: #12855c;
   --mat: rgba(255, 255, 255, 0.76);
@@ -268,7 +286,11 @@
   --label-4: rgba(72, 58, 32, 0.24);
   --tint: #8f5f0c;
   --tint-soft: rgba(143, 95, 12, 0.12);
-  --solar: #a26a10;
+  --solar: #f0d947;
+  --solar-fg: #888500;
+  --warn: #ff8342;
+  --warn-fg: #b4410d;
+  --danger: #b4144a;
   --mat: rgba(255, 253, 249, 0.78);
   --sh-1: 0 1px 2px rgba(70, 50, 10, 0.06);
   --fill: rgba(150, 120, 60, 0.11);

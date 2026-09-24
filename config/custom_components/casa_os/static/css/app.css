@@ -528,7 +528,13 @@ button.li:active {
 }
 .pill.warn {
   background: color-mix(in oklab, var(--warn) 18%, transparent);
-  color: var(--warn);
+  color: var(--warn-fg);
+}
+/* no claro o fundo é mais leve, para o texto laranja escuro ler-se com folga */
+[data-modo="claro"] .pill.warn {
+  background: color-mix(in oklab, var(--warn) 11%, transparent);
+  /* sobre o cartão de uma divisão acesa (cinzento) o laranja escuro perde folga */
+  color: color-mix(in oklab, var(--warn-fg) 82%, black);
 }
 .pill .ic {
   width: calc(15px * var(--u));
@@ -787,11 +793,11 @@ button.li:active {
 }
 .fact .fi.vivo {
   background: color-mix(in oklab, var(--solar) 22%, transparent);
-  color: var(--solar);
+  color: var(--solar-fg);
 }
 .fact .fi.alerta {
   background: color-mix(in oklab, var(--warn) 22%, transparent);
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .fact .ft-tx {
   min-width: 0;
@@ -841,7 +847,7 @@ button.li:active {
 }
 .alert.g-aviso .ib {
   background: color-mix(in oklab, var(--warn) 20%, transparent);
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .alert.g-info .ib {
   background: var(--tint-soft);
@@ -976,7 +982,7 @@ button.li:active {
   color: var(--label-3);
 }
 .stat.sol .v {
-  color: var(--solar);
+  color: var(--solar-fg);
 }
 .stat.bat .v {
   color: var(--batt);
@@ -1920,7 +1926,7 @@ button.li:active {
 }
 .fonte.sol .badge {
   background: color-mix(in oklab, var(--solar) 20%, transparent);
-  color: var(--solar);
+  color: var(--solar-fg);
 }
 .fonte.rede .badge {
   background: color-mix(in oklab, var(--grid) 20%, transparent);
@@ -2093,7 +2099,7 @@ button.li:active {
   border-color: var(--tint);
 }
 .atraso {
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .pilulas {
   flex-wrap: wrap;
@@ -2364,8 +2370,6 @@ select.pill {
   --pl-rasto: color-mix(in oklab, var(--label) 7%, var(--l1));
   --pl-robo: color-mix(in oklab, var(--label) 88%, var(--l1));
   --pl-pill: color-mix(in oklab, var(--label) 8%, var(--l1));
-  --pl-on-accent: var(--bg);
-  --pl-solar: var(--solar);
   --pl-jardim: color-mix(in oklab, var(--good) 6%, var(--l1));
   --pl-planta: color-mix(in oklab, var(--good) 30%, var(--l1));
   --pl-caminho: color-mix(in oklab, var(--bg) 70%, var(--l1));
@@ -2376,9 +2380,6 @@ select.pill {
   --pl-parede-int: color-mix(in oklab, var(--label) 34%, var(--l1));
   --pl-movel: color-mix(in oklab, var(--label) 22%, var(--l1));
   --pl-rasto: color-mix(in oklab, var(--tint) 7%, var(--l1));
-  /* o texto sobre cor é branco puro, e o âmbar escurece o bastante para o ler */
-  --pl-on-accent: var(--tint-ink);
-  --pl-solar: color-mix(in oklab, var(--solar) 82%, black);
   --pl-jardim: color-mix(in oklab, var(--good) 7%, var(--l1));
   --pl-planta: color-mix(in oklab, var(--good) 42%, var(--l1));
   --pl-caminho: color-mix(in oklab, var(--label) 6%, var(--l3));
@@ -2576,7 +2577,7 @@ select.pill {
   padding: calc(3px * var(--u)) calc(9px * var(--u)) calc(3px * var(--u)) calc(6px * var(--u));
   border-radius: var(--rp);
   background: var(--warn);
-  color: var(--pl-on-accent);
+  color: var(--warn-ink);
   font-size: calc(12.5px * var(--u));
   font-weight: var(--w-s);
   line-height: 1.2;
@@ -2584,6 +2585,7 @@ select.pill {
 }
 .pl-av[data-n="danger"] {
   background: var(--danger);
+  color: var(--danger-ink);
 }
 .pl-av .ic {
   width: calc(14px * var(--u));
@@ -2628,8 +2630,8 @@ select.pill {
   min-width: calc(30px * var(--u));
   padding: 0 calc(9px * var(--u)) 0 calc(7px * var(--u));
   border-radius: var(--rp);
-  background: var(--pl-solar);
-  color: var(--pl-on-accent);
+  background: var(--solar);
+  color: var(--solar-ink);
   font-size: calc(13px * var(--u));
   font-weight: var(--w-s);
   line-height: 1;
@@ -2652,12 +2654,12 @@ select.pill {
 }
 .pl-porta[data-estado="trancada"] .pl-pilula {
   background: var(--good);
-  color: var(--pl-on-accent);
+  color: var(--good-ink);
 }
 .pl-porta[data-estado="destrancada"] .pl-pilula,
 .pl-porta[data-estado="aberta"] .pl-pilula {
   background: var(--warn);
-  color: var(--pl-on-accent);
+  color: var(--warn-ink);
 }
 .pl-porta .pl-pilula .ic {
   width: calc(14px * var(--u));
@@ -2915,11 +2917,14 @@ select.pill {
   white-space: nowrap;
 }
 .pp-div[data-tom="acesa"] .ig {
-  color: var(--solar);
+  color: var(--solar-fg);
 }
-.pp-div[data-tom="aviso"] .ig,
+.pp-div[data-tom="aviso"] .ig {
+  color: var(--warn-fg);
+}
+/* o texto (e não só o ícone) precisa de mais folga no claro Preto e branco */
 .pp-div[data-tom="aviso"] .vl {
-  color: var(--warn);
+  color: color-mix(in oklab, var(--warn-fg) 85%, var(--label));
 }
 .pp-acoes {
   display: flex;
@@ -3012,7 +3017,7 @@ select.pill {
   color: var(--tint);
 }
 .pp-clima.quente .modo {
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .pp-topo {
   display: flex;
@@ -3554,7 +3559,7 @@ select.pill {
   height: var(--ic-s);
   border-radius: var(--rp);
   border: calc(2px * var(--u)) solid var(--fill-2);
-  border-top-color: var(--warn);
+  border-top-color: var(--warn-fg);
   animation: spin 0.9s linear infinite;
   flex: 0 0 auto;
 }
@@ -3893,7 +3898,7 @@ button,
   max-width: 34ch;
 }
 .sem-casa .sc-ic {
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .sem-casa .sc-estado {
   gap: var(--s2);
@@ -3901,11 +3906,11 @@ button,
   color: var(--label-2);
 }
 .verdict.sem-ligacao .vline {
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .calm.incerto .mark {
   background: color-mix(in oklab, var(--warn) 22%, transparent);
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 
 /* a nota: em baixo, ao centro, acima da barra do telemóvel */
@@ -3943,7 +3948,7 @@ button,
   flex: 0 0 auto;
 }
 .nota.erro > .ic {
-  color: var(--warn);
+  color: var(--warn-fg);
 }
 .nota .nt-tx {
   flex: 1;

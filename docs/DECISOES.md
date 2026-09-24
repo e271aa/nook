@@ -23,6 +23,12 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
 - **Preto puro** só no Preto e branco escuro, pensado para ecrãs OLED; o Grafite
   usa um quase-preto, que dá profundidade aos cartões.
 - **Câmaras** sempre em fundo escuro, em todas as paletas.
+- **Sinais da interface:** a luz acesa (`--solar`) é amarela e o aviso (`--warn`)
+  é laranja; o perigo (`--danger`) é um vermelho rosado. Cada um tem `-ink` (o
+  texto por cima) e, no claro, `-fg` (a versão escura, para texto e ícones sobre
+  branco; `--warn-fg` pode ir em texto, `--solar-fg` só em ícones e linhas). O
+  destaque de cada paleta não muda e não se confunde com os sinais. A luz
+  desenhada na planta continua na cor de cada lâmpada.
 
 ## Comportamento
 

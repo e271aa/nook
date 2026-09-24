@@ -247,7 +247,7 @@
 
   const cartaoGrafico = (titulo, legenda) => {
     const c = el(`<div class="chart"><div class="sb"><span class="cap">${esc(titulo)}</span>
-      <div class="lg">${legenda.map(([cor, nome]) => `<span><i style="background:var(--${cor})"></i>${esc(nome)}</span>`).join("")}</div></div>
+      <div class="lg">${legenda.map(([cor, nome]) => `<span><i style="background:var(--${cor === "solar" ? "solar-fg" : cor})"></i>${esc(nome)}</span>`).join("")}</div></div>
       <div class="gf-caixa"></div></div>`);
     return c;
   };
@@ -571,7 +571,7 @@
         circuitos = novo;
         strip.innerHTML = totais(stats);
       } catch (e) {
-        principal.querySelector(".gf-caixa").innerHTML = '<div class="empty-mini" style="color:var(--warn)">Não foi possível ler o histórico.</div>';
+        principal.querySelector(".gf-caixa").innerHTML = '<div class="empty-mini" style="color:var(--warn-fg)">Não foi possível ler o histórico.</div>';
         console.error("Casa OS: estatísticas", e);
       }
     };

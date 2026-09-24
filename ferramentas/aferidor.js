@@ -23,7 +23,21 @@ window.AFERIR = (function () {
     });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
+  // cores em oklab(), color-mix() e afins: o browser converte-as para RGB
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 1;
+  const cx2 = cv.getContext("2d", { willReadFrequently: true });
+  const emRgb = (s) => {
+    if (!/^(oklab|oklch|lab|lch|color)\(/.test(s || "")) return s;
+    cx2.clearRect(0, 0, 1, 1);
+    cx2.fillStyle = "#000";
+    cx2.fillStyle = s;
+    cx2.fillRect(0, 0, 1, 1);
+    const d = cx2.getImageData(0, 0, 1, 1).data;
+    return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${d[3] / 255})`;
+  };
   const cor = (s) => {
+    s = emRgb(s);
     const m = (s || "").match(/[\d.]+/g);
     if (!m) return null;
     const v = m.map(Number);

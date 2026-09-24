@@ -200,7 +200,7 @@
 
   function linha(ic, nome, valor, tom) {
     return el(`<div class="li">
-      <span class="ig"${tom ? ` style="color:var(--${tom})"` : ""}>${icon(ico(ic), "ic-s")}</span>
+      <span class="ig"${tom ? ` style="color:var(--${tom === 'warn' ? 'warn-fg' : tom})"` : ""}>${icon(ico(ic), "ic-s")}</span>
       <span class="nm">${esc(nome)}</span><span class="vl">${esc(valor || "")}</span>
     </div>`);
   }
@@ -392,7 +392,7 @@
       bind(li, entre([w]), () => {
         const aberta = HA.isOn(w);
         li.querySelector(".vl").textContent = aberta ? "Aberta" : "Fechada";
-        li.querySelector(".ig").style.color = aberta ? "var(--warn)" : "";
+        li.querySelector(".ig").style.color = aberta ? "var(--warn-fg)" : "";
       });
       linhas.push(li);
     });
@@ -402,7 +402,7 @@
       bind(li, entre([r.contact]), () => {
         const aberta = HA.isOn(r.contact);
         li.querySelector(".vl").textContent = aberta ? "Aberta" : "Fechada";
-        li.querySelector(".ig").style.color = aberta ? "var(--warn)" : "";
+        li.querySelector(".ig").style.color = aberta ? "var(--warn-fg)" : "";
       });
       linhas.push(li);
     }
@@ -418,7 +418,7 @@
       bind(li, entre([r.lock]), () => {
         const trancada = (HA.get(r.lock) || {}).state === "locked";
         li.querySelector(".vl").textContent = trancada ? "Trancada" : "Destrancada";
-        li.querySelector(".ig").style.color = trancada ? "" : "var(--warn)";
+        li.querySelector(".ig").style.color = trancada ? "" : "var(--warn-fg)";
         b.textContent = trancada ? "Destrancar" : "Trancar";
       });
       linhas.push(li);

@@ -59,7 +59,7 @@
         const trancada = r.lock ? (HA.get(r.lock) || {}).state === "locked" : null;
         const texto = aberta ? "Aberta" : trancada === false ? "Destrancada" : trancada ? "Trancada" : "Fechada";
         li.querySelector(".vl").textContent = texto;
-        li.querySelector(".ig").style.color = aberta || trancada === false ? "var(--warn)" : "";
+        li.querySelector(".ig").style.color = aberta || trancada === false ? "var(--warn-fg)" : "";
       });
       linhas.push({ li, ids: [r.contact, r.lock] });
     });
@@ -70,7 +70,7 @@
         const st = (HA.get(id) || {}).state;
         li.querySelector(".vl").textContent =
           st === "opening" ? "A abrir" : st === "closing" ? "A fechar" : st === "open" ? "Aberto" : "Fechado";
-        li.querySelector(".ig").style.color = st === "open" ? "var(--warn)" : "";
+        li.querySelector(".ig").style.color = st === "open" ? "var(--warn-fg)" : "";
       });
       linhas.push({ li, ids: [id] });
     });
@@ -80,7 +80,7 @@
       bind(li, entre([id]), () => {
         const aberta = HA.isOn(id);
         li.querySelector(".vl").textContent = aberta ? "Aberta" : "Fechada";
-        li.querySelector(".ig").style.color = aberta ? "var(--warn)" : "";
+        li.querySelector(".ig").style.color = aberta ? "var(--warn-fg)" : "";
         li.querySelector(".ig").innerHTML = `<svg class="ic ic-s" aria-hidden="true"><use href="#i-${aberta ? "janela-aberta" : "window"}"/></svg>`;
       });
       linhas.push({ li, ids: [id] });

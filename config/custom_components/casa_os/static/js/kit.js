@@ -513,7 +513,7 @@
   /** Uma linha de lista: ícone, nome e valor. */
   function linha(ic, nome, valor, tom) {
     return el(`<div class="li">
-      <span class="ig"${tom ? ` style="color:var(--${tom})"` : ""}>${icon(ico(ic), "ic-s")}</span>
+      <span class="ig"${tom ? ` style="color:var(--${tom === 'warn' ? 'warn-fg' : tom})"` : ""}>${icon(ico(ic), "ic-s")}</span>
       <span class="nm">${esc(nome)}</span><span class="vl">${esc(valor || "")}</span>
     </div>`);
   }

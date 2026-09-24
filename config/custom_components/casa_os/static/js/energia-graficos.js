@@ -129,7 +129,7 @@
             svg.appendChild(mk("rect", {
               class: "gf-barra", x: xi(i) - lb / 2, width: lb, rx: 2,
               y: Math.min(y(v), y(0)), height: Math.max(1, Math.abs(y(v) - y(0))),
-              style: `fill:var(--${s.cor})`,
+              style: `fill:var(--${s.cor === "solar" ? "solar-fg" : s.cor})`,
             }));
           }
           return;
@@ -139,11 +139,11 @@
         const d = pts.map((p, k) => `${k ? "L" : "M"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
         if (s.tipo === "area") {
           svg.appendChild(mk("path", {
-            class: "gf-area", style: `fill:var(--${s.cor})`,
+            class: "gf-area", style: `fill:var(--${s.cor === "solar" ? "solar-fg" : s.cor})`,
             d: `${d} L ${pts[pts.length - 1][0]} ${y(0)} L ${pts[0][0]} ${y(0)} Z`,
           }));
         }
-        svg.appendChild(mk("path", { class: `gf-linha${s.tracejada ? " tracejada" : ""}`, d, style: `stroke:var(--${s.cor})` }));
+        svg.appendChild(mk("path", { class: `gf-linha${s.tracejada ? " tracejada" : ""}`, d, style: `stroke:var(--${s.cor === "solar" ? "solar-fg" : s.cor})` }));
       });
 
       // cursor, seleção
@@ -171,7 +171,7 @@
       lay.cursor.setAttribute("x2", lay.xi(i));
       tip.hidden = false;
       tip.innerHTML = `<div class="ft dim2">${esc(o.rotuloTip(o.tempos[i]))}</div>${o.series
-        .map((s) => `<div class="gf-tip-linha"><i style="background:var(--${s.cor})"></i><span>${esc(s.nome)}</span><b class="num">${esc(fmt.n(s.valores[i] || 0, 2))} ${esc(o.unidade)}</b></div>`)
+        .map((s) => `<div class="gf-tip-linha"><i style="background:var(--${s.cor === "solar" ? "solar-fg" : s.cor})"></i><span>${esc(s.nome)}</span><b class="num">${esc(fmt.n(s.valores[i] || 0, 2))} ${esc(o.unidade)}</b></div>`)
         .join("")}`;
       const r = container.getBoundingClientRect();
       const px = e.clientX - r.left;
@@ -297,8 +297,8 @@
           const hr = v * kD;
           const id = `sk-${Math.random().toString(36).slice(2, 8)}-${g++}`;
           const lg = mk("linearGradient", { id, x1: "0", x2: "1", y1: "0", y2: "0" });
-          lg.appendChild(mk("stop", { offset: "0", style: `stop-color:var(--${f.cor});stop-opacity:.7` }));
-          lg.appendChild(mk("stop", { offset: "1", style: `stop-color:var(--${d.cor});stop-opacity:.32` }));
+          lg.appendChild(mk("stop", { offset: "0", style: `stop-color:var(--${f.cor === "solar" ? "solar-fg" : f.cor});stop-opacity:.7` }));
+          lg.appendChild(mk("stop", { offset: "1", style: `stop-color:var(--${d.cor === "solar" ? "solar-fg" : d.cor});stop-opacity:.32` }));
           defs.appendChild(lg);
           const ya = f.cursor;
           const yb = d.cursor;
@@ -321,7 +321,7 @@
 
       // nós e etiquetas
       const no = (n, x, lado) => {
-        svg.appendChild(mk("rect", { class: "sk-no", x, y: n.y, width: nx, height: Math.max(3, n.h), rx: 3, style: `fill:var(--${n.cor})` }));
+        svg.appendChild(mk("rect", { class: "sk-no", x, y: n.y, width: nx, height: Math.max(3, n.h), rx: 3, style: `fill:var(--${n.cor === "solar" ? "solar-fg" : n.cor})` }));
         if (n.h < 14) return; // sem altura para etiqueta: fica só o nó e a dica
         const ty = n.y + n.h / 2;
         const nome = mk("text", { class: "sk-nome", x: lado === "e" ? x - 8 : x + nx + 8, y: ty - 1, "text-anchor": lado === "e" ? "end" : "start" });
