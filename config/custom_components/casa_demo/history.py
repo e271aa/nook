@@ -126,6 +126,12 @@ async def async_backfill(hass: HomeAssistant, engine: Engine) -> None:
     circuit_totals = {c["id"]: 0.0 for c in CIRCUITS}
     circuit_totals.update(iluminacao=212.4, climatizacao=1480.9, cozinha=1106.3, lavandaria=402.8, aguas_quentes=1287.1, carregador_ve=1062.5, outros=458.7)
 
+    # `state` é a leitura do contador (já com meses de casa); `sum` é o acumulado
+    # desde o início do histórico, que começa em zero. Se o `sum` levasse a leitura
+    # inicial, o primeiro dia do histórico aparecia com milhares de kWh.
+    base = dict(counters)
+    base_circuitos = dict(circuit_totals)
+
     e_bat = BATTERY_KWH * 0.5
     series: dict[str, list[dict]] = {}
 
@@ -179,10 +185,10 @@ async def async_backfill(hass: HomeAssistant, engine: Engine) -> None:
 
         start_utc = dt_util.as_utc(t)
         for key, eid in ENERGY_ENTITIES.items():
-            add(eid, {"start": start_utc, "state": round(counters[key], 3), "sum": round(counters[key], 3)})
+            add(eid, {"start": start_utc, "state": round(counters[key], 3), "sum": round(counters[key] - base[key], 3)})
         for c in CIRCUITS:
             v = round(circuit_totals[c["id"]], 3)
-            add(f"sensor.energia_{c['id']}", {"start": start_utc, "state": v, "sum": v})
+            add(f"sensor.energia_{c['id']}", {"start": start_utc, "state": v, "sum": round(v - base_circuitos[c["id"]], 3)})
             w = loads[c["id"]] * 1000
             add(f"sensor.potencia_{c['id']}", {"start": start_utc, "mean": w, "min": w * 0.6, "max": w * 1.6})
 
