@@ -23,7 +23,7 @@ homeassistant:
       trusted_networks:
         - 0.0.0.0/0
         - ::/0
-      trusted_users: !include demo_trusted_users.yaml
+      trusted_users: !include_dir_merge_named trusted
       allow_bypass_login: true
     - type: homeassistant
 

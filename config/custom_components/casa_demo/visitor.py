@@ -2,7 +2,7 @@
 
 Exposto como endpoint só para administradores: o bootstrap chama-o depois do
 onboarding. Cria o utilizador (grupo system-users, sem admin), escreve o ficheiro
-`demo_trusted_users.yaml` usado pelo trusted_networks e diz se é preciso
+`trusted/demo.yaml` usado pelo trusted_networks e diz se é preciso
 reiniciar para o novo mapeamento entrar em vigor.
 """
 
@@ -24,7 +24,9 @@ _LOGGER = logging.getLogger(__name__)
 
 VISITOR_NAME = "Visitante"
 VISITOR_USERNAME = "visitante"
-TRUSTED_FILE = "demo_trusted_users.yaml"
+# numa pasta seguida pelo git (só com um .gitkeep): num clone novo a pasta existe e o
+# HA arranca; o ficheiro que aqui se escreve é gerado e fica de fora do git
+TRUSTED_FILE = "trusted/demo.yaml"
 # Divisões criadas pelo onboarding do HA que não fazem parte da casa demo
 DEFAULT_AREAS = {"Sala de estar", "Living Room", "Kitchen", "Bedroom"}
 
@@ -77,6 +79,7 @@ class VisitorSetupView(HomeAssistantView):
         path = Path(hass.config.path(TRUSTED_FILE))
 
         def _write() -> bool:
+            path.parent.mkdir(parents=True, exist_ok=True)
             old = path.read_text(encoding="utf-8") if path.exists() else ""
             if old == content:
                 return False

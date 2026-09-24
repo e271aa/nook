@@ -11,7 +11,7 @@ config/home-assistant.log*
 config/home-assistant_v2.db*
 config/.HA_VERSION
 config/secrets.yaml
-config/demo_trusted_users.yaml
+config/trusted/*.yaml
 
 # Python / macOS
 __pycache__/

@@ -153,9 +153,8 @@ expor na internet:
 O `configuration.yaml` liga o fornecedor `trusted_networks` para toda a rede, mas
 restrito a um único utilizador, o Visitante, que não pode alterar a configuração.
 O administrador continua a entrar com palavra-passe ("Home Assistant Local" no
-ecrã de login). Até o `bootstrap` correr, o ficheiro `demo_trusted_users.yaml`
-aponta para um identificador inexistente, ou seja, ninguém entra sem
-palavra-passe.
+ecrã de login). Até o `bootstrap` correr, a pasta `config/trusted/` está vazia, ou seja,
+ninguém entra sem palavra-passe; o `bootstrap` escreve lá o Visitante.
 
 O Home Assistant também aceita um grupo em `trusted_users`, mas essa variante está
 avariada no core (percorre o nome do grupo letra a letra); por isso usa-se o
