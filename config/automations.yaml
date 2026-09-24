@@ -12,7 +12,7 @@
   mode: single
 
 - id: luzes_exterior_por_do_sol
-  alias: Luzes exteriores ao pôr-do-sol
+  alias: Luzes exteriores ao pôr do sol
   triggers:
     - trigger: sun
       event: sunset
