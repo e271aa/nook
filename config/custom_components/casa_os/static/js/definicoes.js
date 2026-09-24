@@ -225,6 +225,56 @@
     return node;
   }
 
+  // ───────── Demonstração ─────────
+  // Só na demo (config.json → demo): põe a casa simulada numa situação para
+  // se poder mostrar o que o painel diz, sem esperar que algo corra mal.
+
+  const SITUACOES = [
+    { nome: "Movimento na entrada", ic: "motion" },
+    { nome: "Fumo na cozinha", ic: "flame" },
+    { nome: "Fuga de água", ic: "drop" },
+    { nome: "Janela aberta com o ar ligado", ic: "janela-aberta" },
+    { nome: "Porta aberta há muito tempo", ic: "door" },
+    { nome: "Ninguém em casa", ic: "person" },
+    { nome: "Máquina da roupa terminada", ic: "washer" },
+    { nome: "Carro carregado", ic: "ev" },
+  ];
+
+  function demo() {
+    const { node, corpo } = grupo("Demonstração", "Só nesta casa de demonstração: mostra o que o painel diz quando algo corre mal, sem esperar que aconteça.");
+    const grelha = el('<div class="def-demo"></div>');
+    SITUACOES.forEach((s) => {
+      const b = el(`<button class="pill">${icon(K.ico(s.ic), "ic-s")}${esc(s.nome)}</button>`);
+      b.addEventListener("click", async () => {
+        await HA.call("casa_demo", "simular", null, { situacao: s.nome });
+        K.nota({ texto: `Simulado: ${s.nome.charAt(0).toLowerCase()}${s.nome.slice(1)}` });
+      });
+      grelha.appendChild(b);
+    });
+    corpo.appendChild(grelha);
+
+    const limpar = el('<button class="pill on">Limpar tudo</button>');
+    limpar.addEventListener("click", async () => {
+      await HA.call("casa_demo", "simular", null, { situacao: "Limpar tudo" });
+      K.nota({ texto: "Situações limpas" });
+    });
+    const repor = el('<button class="pill">Repor a demonstração</button>');
+    repor.addEventListener("click", async () => {
+      const ok = await K.folha({
+        titulo: "Repor a demonstração?",
+        texto: "As luzes, os estores, o ar e as tomadas voltam ao início.",
+        confirmar: "Repor",
+      });
+      if (!ok) return;
+      await HA.call("casa_demo", "repor", null, {});
+      K.nota({ texto: "Demonstração reposta" });
+    });
+    const fim = el('<div class="def-demo"></div>');
+    fim.append(limpar, repor);
+    corpo.appendChild(fim);
+    return node;
+  }
+
   // ───────── Sobre ─────────
 
   function sobre() {
@@ -276,6 +326,7 @@
     esq.append(tamanho(), aparencia());
     dir.append(ecraGrupo());
     if (ecra() === "braco") dir.appendChild(parede());
+    if (window.CASA && window.CASA.config && window.CASA.config.demo) dir.appendChild(demo());
     dir.appendChild(sobre());
     corpo.append(esq, dir);
     raiz.appendChild(corpo);

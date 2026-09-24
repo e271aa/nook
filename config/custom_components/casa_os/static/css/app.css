@@ -3207,6 +3207,19 @@ select.pill {
 .def-nota {
   padding: 0 var(--s2);
 }
+/* os botões de situações da demonstração: 44 px de alvo, quebram linha */
+.def-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.def-demo + .def-demo {
+  margin-top: var(--s3);
+}
+.def-demo .pill {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+}
 .def-linha {
   display: flex;
   align-items: center;

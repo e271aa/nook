@@ -58,6 +58,11 @@ O que foi decidido, e porquê. Quando uma decisão muda, muda aqui primeiro.
   um piso escolhido, todas as ações da fila são desse piso.
 - **Janelas por cima** (menu, câmara ampliada, calendário, confirmações) prendem
   o foco enquanto estão abertas e devolvem-no ao fechar (`K.prenderFoco`).
+- **Demonstração** (Definições, só com `"demo": true` no `config.json`): botões que
+  chamam o serviço `casa_demo.simular` (movimento na entrada, fumo, fuga de água,
+  janela aberta com o ar ligado, porta aberta, ninguém em casa, máquina da roupa,
+  carro carregado), "Limpar tudo" e "Repor a demonstração" (com confirmação).
+  Uma casa a sério não tem o `"demo"` e não vê nada disto.
 - **Dashboard** (a vista antiga em três colunas) está fora de vista: sem
   separador na barra nem linha no menu (`oculta: true` em `SECTIONS`, `app.js`).
   O código e a rota `#/dashboard` continuam a funcionar — para o repor na
