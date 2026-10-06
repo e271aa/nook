@@ -1,9 +1,9 @@
-name: acasa-demo
+name: nook
 
 services:
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2026.9.3
-    container_name: acasa-demo-ha
+    container_name: nook-ha
     restart: unless-stopped
     # Só na própria máquina. Para abrir à rede local, DEMO_BIND=0.0.0.0 no .env.
     ports:
@@ -35,7 +35,7 @@ services:
   # permissões de administrador) e liga a entrada direta. Depois termina.
   bootstrap:
     image: python:3.13-alpine
-    container_name: acasa-demo-bootstrap
+    container_name: nook-bootstrap
     restart: "no"
     depends_on:
       homeassistant:
