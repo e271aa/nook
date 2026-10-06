@@ -1,6 +1,7 @@
 """Gera 30 dias de histórico (estatísticas horárias) para a demo não nascer vazia.
 
-Corre uma única vez, no primeiro arranque. Usa um modelo horário simplificado do
+Corre no primeiro arranque e sempre que o recorder nasce sem estatísticas (é o
+que acontece com a base de dados em memória). Usa um modelo horário simplificado do
 mesmo motor (solar pelo sol real, perfis de consumo por hora/dia da semana,
 bateria) e importa as estatísticas no recorder. No fim devolve os contadores
 acumulados, para os sensores continuarem exatamente onde o histórico acaba.
@@ -19,7 +20,7 @@ from astral.sun import elevation as sun_elevation
 from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.db_schema import StatisticsShortTerm
 from homeassistant.components.recorder.models import StatisticMeanType
-from homeassistant.components.recorder.statistics import async_import_statistics
+from homeassistant.components.recorder.statistics import async_import_statistics, get_last_statistics
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
@@ -110,6 +111,13 @@ def _hour_loads(t: datetime, outdoor: float, rng: random.Random) -> dict[str, fl
         other += rng.uniform(0.1, 0.17)  # computador
     loads["outros"] = other
     return loads
+
+
+async def async_tem_historico(hass: HomeAssistant) -> bool:
+    """Diz se o recorder ainda tem as estatísticas de energia."""
+    eid = ENERGY_ENTITIES["home"]
+    ultimas = await get_instance(hass).async_add_executor_job(get_last_statistics, hass, 1, eid, False, {"sum"})
+    return bool(ultimas.get(eid))
 
 
 async def async_backfill(hass: HomeAssistant, engine: Engine) -> None:

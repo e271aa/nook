@@ -20,8 +20,8 @@ from homeassistant.util import dt as dt_util
 
 from .const import AREAS, DOMAIN, ENTIDADES_ANTIGAS, FLOORS, PLATFORMS, WEATHER_OPTIONS
 from .engine import Engine
-from .history import async_backfill
-from .visitor import VisitorSetupView
+from .history import async_backfill, async_tem_historico
+from .visitor import VisitorSetupView, async_fechar_demo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ type CasaDemoConfigEntry = ConfigEntry[Engine]
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Arranque via YAML: cria a entrada de configuração se ainda não existir."""
     hass.http.register_view(VisitorSetupView())
+    async_fechar_demo(hass)
     if DOMAIN in config and not hass.config_entries.async_entries(DOMAIN):
         hass.async_create_task(
             hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_IMPORT}, data={})
@@ -66,8 +67,9 @@ def _async_limpar_entidades_antigas(hass: HomeAssistant, entry: ConfigEntry) -> 
 
 async def async_setup_entry(hass: HomeAssistant, entry: CasaDemoConfigEntry) -> bool:
     engine = Engine(hass)
-    if not await engine.async_load():
-        # Primeiro arranque: 30 dias de histórico para os gráficos não nascerem vazios
+    if not await engine.async_load() or not await async_tem_historico(hass):
+        # Primeiro arranque, ou base de dados nova (em memória, refaz-se a cada
+        # arranque): 30 dias de histórico para os gráficos não nascerem vazios
         await async_backfill(hass, engine)
         await engine.async_save_now()
     entry.runtime_data = engine

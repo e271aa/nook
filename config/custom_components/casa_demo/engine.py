@@ -49,6 +49,9 @@ _LOGGER = logging.getLogger(__name__)
 
 STORE_VERSION = 1
 TICK = timedelta(seconds=1)
+# Os contadores de energia guardam-se de 10 em 10 minutos (em tiques): cada
+# gravação é uma escrita no disco, e de minuto a minuto era a maior da demo.
+GUARDAR_A_CADA = 600
 SLOW_EVERY = 5  # sensores de energia/ambiente a cada 5 ticks
 
 SOLAR_KWP = 5.4
@@ -739,7 +742,7 @@ class Engine:
             self.energy["home"] += load / 1000 * h
             for c, w in circ.items():
                 self.circuit_energy[c] = self.circuit_energy.get(c, 0.0) + w / 1000 * h
-            if self._tick_n % 60 == 0:
+            if self._tick_n % GUARDAR_A_CADA == 0:
                 self.schedule_save()
 
         self.power = {

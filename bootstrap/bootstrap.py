@@ -2,8 +2,9 @@
 
 1. Espera pelo Home Assistant.
 2. Faz o onboarding (conta de administrador, localização, analytics, integrações).
-3. Cria o utilizador "Visitante" (sem admin) através da integração casa_demo.
-4. Se o mapeamento da entrada direta mudou, reinicia o HA uma vez.
+3. Cria o utilizador "Visitante" (sem admin) através da integração casa_demo
+   e diz-lhe em que proxy o Home Assistant pode acreditar.
+4. Se a entrada direta ou a configuração HTTP mudaram, reinicia o HA uma vez.
 
 É idempotente: pode correr quantas vezes quiser.
 """
@@ -23,6 +24,7 @@ CLIENT_ID = f"{HA}/"
 USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 PASSWORD = os.environ["ADMIN_PASSWORD"]
 NAME = os.environ.get("ADMIN_NAME", "Administrador")
+TRUSTED_PROXY = os.environ.get("TRUSTED_PROXY", "")
 
 
 def log(msg: str) -> None:
@@ -114,7 +116,7 @@ def main() -> None:
     # O casa_demo pode demorar uns segundos a registar o endpoint
     for _ in range(60):
         try:
-            res = call("POST", "/api/casa_demo/visitante", data={}, token=token)
+            res = call("POST", "/api/casa_demo/visitante", data={"trusted_proxy": TRUSTED_PROXY}, token=token)
             break
         except urllib.error.HTTPError as err:
             if err.code != 404:
@@ -130,13 +132,13 @@ def main() -> None:
     try:
         entries = call("GET", "/api/config/config_entries/entry", token=token) or []
         for entry in entries:
-            if entry.get("domain") in ("met", "radio_browser", "shopping_list"):
+            if entry.get("domain") in ("met", "radio_browser", "shopping_list", "google_translate"):
                 call("DELETE", f"/api/config/config_entries/entry/{entry['entry_id']}", token=token)
                 log(f"Integração '{entry['domain']}' removida.")
     except urllib.error.HTTPError as err:
         log(f"Não foi possível limpar integrações do onboarding: {err}")
     if res.get("restart_needed"):
-        log("A reiniciar o Home Assistant para ativar a entrada direta…")
+        log("A reiniciar o Home Assistant para ativar a entrada direta e o proxy…")
         try:
             call("POST", "/api/services/homeassistant/restart", data={}, token=token)
         except (urllib.error.URLError, ConnectionError, TimeoutError):

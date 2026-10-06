@@ -110,7 +110,7 @@ docker compose down                     # parar
 ```
 nook/
 ├── docker-compose.yml             Home Assistant e contentor de arranque
-├── .env.example                   conta de administrador, porta, fuso horário
+├── .env.example                   conta de administrador, porta, fuso horário, histórico
 ├── bootstrap/bootstrap.py         configuração inicial e utilizador Visitante
 ├── ferramentas/aferidor.js        medição de transbordo, contraste e alvos de toque
 ├── docs/                          arquitetura, desenvolvimento, decisões, imagens
@@ -138,22 +138,44 @@ Pormenores em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 ## Publicar a demo
 
-A demo foi pensada para uma rede local ou para ficar atrás de um proxy. Antes de a
-expor na internet:
+Numa rede local a demo corre sem mais nada. Para a expor na internet:
 
 1. Mudar a `ADMIN_PASSWORD` no `.env`.
-2. Pôr um proxy com HTTPS à frente (Caddy, Traefik ou nginx) e configurar
-   `http.use_x_forwarded_for` e `trusted_proxies` no `configuration.yaml`.
-3. Ter presente que qualquer visitante entra como Visitante e pode mexer em tudo
+2. Pôr à frente um proxy com HTTPS ou um túnel, ligado à rede `nook` do Compose
+   com o endereço `10.124.0.3`. É o único de quem o Home Assistant aceita o
+   cabeçalho `X-Forwarded-For`, e é por esse cabeçalho que distingue quem vem
+   de fora de quem está em casa. O `bootstrap` grava esta configuração em
+   `.storage/http` (desde o Home Assistant 2026.9 já não se lê do YAML).
+3. Ligar o proxy só depois de o `bootstrap` terminar. Até lá o Home Assistant
+   ainda não tem contas, e quem chegar primeiro cria a de administrador.
+4. Num cartão SD, pôr `RECORDER_DB_URL=sqlite:////ram/home-assistant_v2.db` no
+   `.env`: a base de dados do histórico fica em memória e não gasta o cartão.
+   Perde-se quando o contentor reinicia, e a casa simulada refaz os 30 dias de
+   energia no arranque.
+5. Ter presente que qualquer visitante entra como Visitante e pode mexer em tudo
    o que é da casa (é esse o objetivo); a reposição das 04:00 limpa-a todos os dias.
+
+### O que fica fechado
+
+- A porta só abre na própria máquina (`DEMO_BIND=127.0.0.1`).
+- O administrador só entra a partir da rede local. De fora, o Home Assistant
+  recusa-o no login, na renovação da sessão, nos pedidos e no WebSocket, mesmo
+  com a palavra-passe certa. O `casa_demo` marca assim todas as contas que não
+  são o Visitante, no arranque e quando nascem.
+- Cinco palavras-passe erradas bloqueiam o endereço de quem as tentou. Os
+  bloqueios ficam em `config/ip_bans.yaml`; apagar a linha e reiniciar desbloqueia.
+- Sem `default_config`: o Home Assistant não procura aparelhos na rede nem liga
+  à cloud.
+- O Visitante não escreve no registo do sistema, no diário nem em ficheiros.
 
 ### A entrada sem login
 
-O `configuration.yaml` liga o fornecedor `trusted_networks` para toda a rede, mas
-restrito a um único utilizador, o Visitante, que não pode alterar a configuração.
-O administrador continua a entrar com palavra-passe ("Home Assistant Local" no
-ecrã de login). Até o `bootstrap` correr, a pasta `config/trusted/` está vazia, ou seja,
-ninguém entra sem palavra-passe; o `bootstrap` escreve lá o Visitante.
+A página `/casa` entrega a quem a abre uma sessão do Visitante, que não pode
+alterar a configuração. Para a interface do Home Assistant, o `configuration.yaml`
+liga o fornecedor `trusted_networks` para toda a rede, restrito ao Visitante pelo
+ficheiro que o `bootstrap` escreve em `config/trusted/`. Enquanto esse ficheiro
+não existir (os segundos entre a criação do administrador e o fim do `bootstrap`),
+o `trusted_networks` oferece todas as contas; por isso o proxy só se liga depois.
 
 O Home Assistant também aceita um grupo em `trusted_users`, mas essa variante está
 avariada no core (percorre o nome do grupo letra a letra); por isso usa-se o

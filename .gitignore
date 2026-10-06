@@ -12,6 +12,7 @@ config/home-assistant_v2.db*
 config/.HA_VERSION
 config/secrets.yaml
 config/trusted/*.yaml
+config/ip_bans.yaml
 
 # Python / macOS
 __pycache__/

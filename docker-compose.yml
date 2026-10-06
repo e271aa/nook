@@ -5,12 +5,25 @@ services:
     image: ghcr.io/home-assistant/home-assistant:2026.9.3
     container_name: acasa-demo-ha
     restart: unless-stopped
+    # Só na própria máquina. Para abrir à rede local, DEMO_BIND=0.0.0.0 no .env.
     ports:
-      - "${DEMO_PORT:-8123}:8123"
+      - "${DEMO_BIND:-127.0.0.1}:${DEMO_PORT:-8123}:8123"
     environment:
       TZ: ${TZ:-Europe/Lisbon}
+      RECORDER_DB_URL: ${RECORDER_DB_URL:-sqlite:////config/home-assistant_v2.db}
     volumes:
       - ./config:/config
+    # Para o histórico em memória (RECORDER_DB_URL no .env.example)
+    tmpfs:
+      - /ram:size=512m
+    networks:
+      nook:
+        ipv4_address: 10.124.0.2
+    logging: &registo
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8123/manifest.json"]
       interval: 15s
@@ -32,6 +45,22 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD no ficheiro .env}
       ADMIN_NAME: ${ADMIN_NAME:-Administrador}
+      # O único endereço de quem o Home Assistant aceita o X-Forwarded-For
+      TRUSTED_PROXY: 10.124.0.3
     volumes:
       - ./bootstrap/bootstrap.py:/bootstrap.py:ro
+    networks:
+      - nook
+    logging: *registo
     command: ["python", "-u", "/bootstrap.py"]
+
+# Rede própria, com endereços fixos: o Home Assistant só confia no proxy que
+# estiver em 10.124.0.3 (o TRUSTED_PROXY que o bootstrap lhe entrega).
+# Os endereços automáticos saem da metade de cima, para nunca calharem nesse.
+networks:
+  nook:
+    ipam:
+      config:
+        - subnet: 10.124.0.0/24
+          gateway: 10.124.0.1
+          ip_range: 10.124.0.128/25

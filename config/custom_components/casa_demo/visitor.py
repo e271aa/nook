@@ -4,6 +4,10 @@ Exposto como endpoint só para administradores: o bootstrap chama-o depois do
 onboarding. Cria o utilizador (grupo system-users, sem admin), escreve o ficheiro
 `trusted/demo.yaml` usado pelo trusted_networks e diz se é preciso
 reiniciar para o novo mapeamento entrar em vigor.
+
+Também aqui: todas as outras contas só entram a partir da rede local, saem os
+serviços com que um visitante podia encher o disco, e o HTTP fica pronto para
+um proxy quando o bootstrap diz qual é.
 """
 
 from __future__ import annotations
@@ -13,10 +17,13 @@ from pathlib import Path
 
 from aiohttp import web
 
+from homeassistant.auth import EVENT_USER_ADDED
 from homeassistant.auth.const import GROUP_ID_USER
 from homeassistant.components.http import KEY_HASS, KEY_HASS_USER, HomeAssistantView
-from homeassistant.core import HomeAssistant
+from homeassistant.components.http.config import HTTP_STORAGE_SCHEMA, async_get_and_load_store
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers.start import async_at_started
 
 from .const import AREAS
 
@@ -29,6 +36,81 @@ VISITOR_USERNAME = "visitante"
 TRUSTED_FILE = "trusted/demo.yaml"
 # Divisões criadas pelo onboarding do HA que não fazem parte da casa demo
 DEFAULT_AREAS = {"Sala de estar", "Living Room", "Kitchen", "Bedroom"}
+# Serviços que qualquer utilizador pode chamar, que escrevem no disco sem limite
+# (registo, diário, ficheiros em /config/www) e de que a casa não precisa
+SERVICOS_FECHADOS = (
+    ("system_log", "write"),
+    ("logbook", "log"),
+    ("camera", "snapshot"),
+    ("homeassistant", "save_persistent_states"),
+)
+
+
+# Cinco palavras-passe erradas bloqueiam o endereço de quem as tentou
+TENTATIVAS_DE_LOGIN = 5
+
+
+async def async_http_atras_de_proxy(hass: HomeAssistant, proxy: str) -> bool:
+    """Põe o HTTP a acreditar no X-Forwarded-For desse proxy. True se mudou.
+
+    Desde o HA 2026.9 esta configuração vive em `.storage/http` e já não no
+    YAML. Uma configuração nova fica "pendente" e o HA desfá-la ao fim de
+    5 minutos se ninguém a confirmar; aqui confirma-se logo, e o bootstrap
+    reinicia o HA para ela entrar em vigor.
+    """
+    store = await async_get_and_load_store(hass)
+    config = HTTP_STORAGE_SCHEMA(
+        {
+            "use_x_forwarded_for": True,
+            "trusted_proxies": [proxy],
+            "ip_ban_enabled": True,
+            "login_attempts_threshold": TENTATIVAS_DE_LOGIN,
+        }
+    )
+    await store.async_set_pending(config)
+    if store.pending is None:  # já era esta a configuração confirmada
+        return False
+    await store.async_promote_pending()
+    _LOGGER.info("Casa Demo: HTTP atrás do proxy %s", proxy)
+    return True
+
+
+def _e_visitante(user) -> bool:
+    return user.name == VISITOR_NAME and not user.is_admin and not user.system_generated
+
+
+async def async_so_rede_local(hass: HomeAssistant) -> None:
+    """Todas as contas menos o Visitante só entram a partir da rede local.
+
+    O Home Assistant recusa-as fora dela no login, na renovação da sessão, nos
+    pedidos e no WebSocket, mesmo com a palavra-passe certa. Atrás de um proxy
+    isto depende de `http.trusted_proxies` estar certo.
+    """
+    for user in await hass.auth.async_get_users():
+        if user.system_generated or user.local_only or _e_visitante(user):
+            continue
+        await hass.auth.async_update_user(user, local_only=True)
+        _LOGGER.info("Casa Demo: a conta '%s' só entra a partir da rede local", user.name)
+
+
+@callback
+def async_fechar_demo(hass: HomeAssistant) -> None:
+    """Fecha a demo a quem vem de fora: no arranque e sempre que nasce uma conta."""
+
+    async def _utilizador_novo(_: Event) -> None:
+        await async_so_rede_local(hass)
+
+    hass.bus.async_listen(EVENT_USER_ADDED, _utilizador_novo)
+    hass.async_create_task(async_so_rede_local(hass))
+
+    @callback
+    def _fechar_servicos(_: HomeAssistant) -> None:
+        for dominio, servico in SERVICOS_FECHADOS:
+            if hass.services.has_service(dominio, servico):
+                hass.services.async_remove(dominio, servico)
+
+    # só depois do arranque: até lá o serviço pode ainda não existir
+    async_at_started(hass, _fechar_servicos)
 
 
 async def async_get_or_create_visitor(hass: HomeAssistant, password: str):
@@ -87,6 +169,8 @@ class VisitorSetupView(HomeAssistantView):
             return True
 
         changed = await hass.async_add_executor_job(_write)
+        if proxy := body.get("trusted_proxy"):
+            changed = await async_http_atras_de_proxy(hass, proxy) or changed
         return self.json({"user_id": user.id, "restart_needed": changed})
 
 
